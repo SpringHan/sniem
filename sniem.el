@@ -161,6 +161,16 @@
   "Set the leader key for normal mode."
   (define-key sniem-normal-mode-keymap (kbd key) sniem-leader-keymap))
 
+(defun sniem-leader-set-key (&rest keys)
+  "Bind key to leader keymap.
+
+\(fn KEY FUNC...)"
+  (let (key func)
+    (while keys
+      (setq key (pop keys)
+            func (pop keys))
+      (define-key sniem-leader-keymap (kbd key) func))))
+
 ;;; Initialize
 (sniem-set-leader-key ",")
 
