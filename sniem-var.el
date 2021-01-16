@@ -74,34 +74,54 @@
   :type 'keymap
   :group 'sniem)
 
-(defcustom sniem-normal-mode-keymap
+(defcustom sniem-normal-state-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map "a" 'sniem-append)
+    (define-key map "o" 'sniem-open-line)
+    (define-key map "O" 'sniem-open-line-previous)
     (define-key map "s" 'eval-last-sexp)
     (define-key map "S" 'save-buffer)
-    (define-key map "r" 'sniem-reverse)
+    (define-key map "r" 'sniem-replace-char)
+    (define-key map "R" 'sniem-replace-word)
     (define-key map "z" 'sniem-center)
     (define-key map "x" 'sniem-delete-char)
+    (define-key map "X" 'execute-extended-command)
     (define-key map "c" 'sniem-change)
-    (define-key map "b" 'sniem-line-beginning)
-    (define-key map "B" 'sniem-buffer-beginning)
+    (define-key map "C" 'sniem-change-in-region)
+    (define-key map "d" 'sniem-delete)
+    (define-key map "D" 'sniem-delete-in-region)
+    (define-key map "b" 'beginning-of-line)
+    (define-key map "B" 'sniem-end-of-line)
     (define-key map "m" 'sniem-mark)
     (define-key map "." 'sniem-repeat)
     (define-key map "/" 'sniem-search)
-    (define-key map "w" 'sniem-word)
-    (define-key map "f" 'sniem-find)
+    (define-key map "w" 'sniem-next-word)
+    (define-key map "W" 'sniem-prev-word)
+    (define-key map "t" 'sniem-next-text)
+    (define-key map "T" 'sniem-prev-text)
+    (define-key map "f" 'sniem-find-forward)
+    (define-key map "F" 'sniem-find-backward)
     (define-key map "p" 'sniem-paste)
-    (define-key map "g" 'keyboard-quit)
+    (define-key map "g" 'sniem-first-line)
+    (define-key map "G" 'sniem-goto-line)
     (define-key map "y" 'sniem-yank)
     (define-key map "v" 'scroll-down-command)
     (define-key map "V" 'scroll-up-command)
+    (define-key map "q" 'sniem-macro)
+    (define-key map "Q" 'save-buffers-kill-terminal)
+    (define-key map ";" 'keyboard-quit)
+    (define-key map "'" 'sniem-end-of-mark)
+    (define-key map "\"" 'sniem-beg-of-mark)
+    (define-key map "<" 'sniem-goto-prev)
+    (define-key map ">" 'sniem-goto-next)
+    (define-key map (kbd "SPC") 'sniem-digit-argument)
     (define-key map (kbd "RET") 'sniem-object-catch)
     map)
   "Normal mode keymap."
   :type 'keymap
   :group 'sniem)
 
-(defcustom sniem-insert-mode-keymap
+(defcustom sniem-insert-state-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-<return>") 'sniem-quit-insert)
     map)
@@ -109,7 +129,7 @@
   :type 'keymap
   :group 'sniem)
 
-(defcustom sniem-motion-mode-keymap
+(defcustom sniem-motion-state-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "SPC") sniem-leader-keymap)
     map)

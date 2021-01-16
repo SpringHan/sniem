@@ -45,21 +45,24 @@
       (sniem--enable)
     (sniem--disable)))
 
+(define-globalized-minor-mode global-sniem-mode
+  sniem-mode sniem-initialize)
+
 (define-minor-mode sniem-normal-mode
   "Normal mode for sniem."
-  nil nil sniem-normal-mode-keymap
+  nil nil sniem-normal-state-keymap
   (when sniem-normal-mode
     (sniem-normal-mode-init)))
 
 (define-minor-mode sniem-insert-mode
   "Insert mode for sniem."
-  nil nil sniem-insert-mode-keymap
+  nil nil sniem-insert-state-keymap
   (when sniem-insert-mode
     (sniem-insert-mode-init)))
 
 (define-minor-mode sniem-motion-mode
   "Motion mode for sniem."
-  nil nil sniem-motion-mode-keymap
+  nil nil sniem-motion-state-keymap
   (when sniem-motion-mode
     (sniem-motion-mode-init)))
 
@@ -85,7 +88,7 @@
   (if (apply #'derived-mode-p sniem-normal-mode-alist)
       (sniem-change-mode 'normal)
     (sniem-change-mode 'motion))
-  (add-to-list 'emulation-mode-map-alists 'sniem-normal-mode-keymap))
+  (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap))
 
 (defun sniem--disable ()
   "Disable sniem."
@@ -104,6 +107,12 @@
   "Quit insert mode."
   (interactive)
   (sniem-change-mode 'normal))
+
+;; <TODO(SpringHan)> Add the function more [Sat Jan 16 22:23:54 2021]
+(defun sniem-insert ()
+  "Insert."
+  (interactive)
+  (sniem-change-mode 'insert))
 
 (defun sniem-keypad ()
   "Execute the keypad command."
@@ -133,6 +142,11 @@
 
 ;;; Functional functions
 
+(defun sniem-initialize ()
+  "Initialize sniem."
+  (unless (minibufferp)
+    (sniem-mode t)))
+
 (defun sniem-change-mode (mode)
   "Change edition mode."
   (if (eq sniem-current-mode mode)
@@ -159,7 +173,7 @@
 
 (defun sniem-set-leader-key (key)
   "Set the leader key for normal mode."
-  (define-key sniem-normal-mode-keymap (kbd key) sniem-leader-keymap))
+  (define-key sniem-normal-state-keymap (kbd key) sniem-leader-keymap))
 
 (defun sniem-leader-set-key (&rest keys)
   "Bind key to leader keymap.
@@ -171,8 +185,22 @@
             func (pop keys))
       (define-key sniem-leader-keymap (kbd key) func))))
 
+(defun sniem-normal-set-key (&rest keys)
+  "Bind key to normal mode keymap.
+
+\(fn KEY FUNC...)"
+  (let (key func)
+    (while keys
+      (setq key (pop keys)
+            func (pop keys))
+      (define-key sniem-normal-state-keymap (kbd key) func))))
+
 ;;; Initialize
 (sniem-set-leader-key ",")
+
+;;; Debug
+(sniem-normal-set-key
+ "h" 'sniem-insert)
 
 (provide 'sniem)
 
