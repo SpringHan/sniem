@@ -61,6 +61,9 @@
 (defvar sniem-motion-mode-cursor t
   "Cursor type for motion mode.")
 
+(defvar sniem-on-newline-point nil
+  "If the cursor can be on the newline point.")
+
 (defcustom sniem-leader-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map "x" 'sniem-keypad)
@@ -76,10 +79,12 @@
 
 (defcustom sniem-normal-state-keymap
   (let ((map (make-sparse-keymap)))
+    (suppress-keymap map t)
     (define-key map "a" 'sniem-append)
+    (define-key map "A" 'sniem-append-line)
     (define-key map "o" 'sniem-open-line)
     (define-key map "O" 'sniem-open-line-previous)
-    (define-key map "s" 'eval-last-sexp)
+    (define-key map "s" 'sniem-eval-last-sexp)
     (define-key map "S" 'save-buffer)
     (define-key map "r" 'sniem-replace-char)
     (define-key map "R" 'sniem-replace-word)

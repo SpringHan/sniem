@@ -36,6 +36,7 @@
 
 (require 'sniem-var)
 (require 'sniem-macro)
+(require 'sniem-operation)
 
 
 (define-minor-mode sniem-mode
@@ -106,13 +107,9 @@
 (defun sniem-quit-insert ()
   "Quit insert mode."
   (interactive)
+  (when (and (eolp) (null sniem-on-newline-point))
+    (backward-char))
   (sniem-change-mode 'normal))
-
-;; <TODO(SpringHan)> Add the function more [Sat Jan 16 22:23:54 2021]
-(defun sniem-insert ()
-  "Insert."
-  (interactive)
-  (sniem-change-mode 'insert))
 
 (defun sniem-keypad ()
   "Execute the keypad command."
@@ -195,12 +192,46 @@
             func (pop keys))
       (define-key sniem-normal-state-keymap (kbd key) func))))
 
+(defun sniem-set-keyboard-layout (layout)
+  "Set the keyboard layout, then you can use the default keymap for your layout.
+
+LAYOUT can be qwerty, colemak or dvorak."
+  (pcase layout
+    ('qwerty (sniem-normal-set-key
+              "e" 'sniem-join
+              "u" 'undo
+              "k" 'sniem-prev-line
+              "K" 'sniem-5-prev-line
+              "j" 'sniem-next-line
+              "J" 'sniem-5-next-line
+              "i" 'sniem-insert
+              "I" 'sniem-insert-line
+              "h" 'sniem-backward-char
+              "H" 'sniem-5-backward-char
+              "l" 'sniem-forward-char
+              "L" 'sniem-5-forward-char
+              "n" 'kill-current-buffer
+              "N" 'kill-buffer-and-window))
+    ('colemak (sniem-normal-set-key
+              "j" 'sniem-join
+              "l" 'undo
+              "u" 'sniem-prev-line
+              "U" 'sniem-5-prev-line
+              "e" 'sniem-next-line
+              "E" 'sniem-5-next-line
+              "h" 'sniem-insert
+              "H" 'sniem-insert-line
+              "n" 'sniem-backward-char
+              "N" 'sniem-5-backward-char
+              "i" 'sniem-forward-char
+              "I" 'sniem-5-forward-char
+              "k" 'kill-current-buffer
+              "K" 'kill-buffer-and-window))
+    ('dvorak (message "[Sniem]: The dvorak layout will be added later."))
+    (_ (message "[Sniem]: The %s layout is not supplied." layout))))
+
 ;;; Initialize
 (sniem-set-leader-key ",")
-
-;;; Debug
-(sniem-normal-set-key
- "h" 'sniem-insert)
 
 (provide 'sniem)
 
