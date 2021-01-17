@@ -68,7 +68,7 @@
 
 (defun sniem-eval-last-sexp ()
   "Like `eval-last-sexp', but it can also eval in the ()."
-  (if))
+  )
 
 (provide 'sniem-operation)
 
