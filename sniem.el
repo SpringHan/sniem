@@ -144,6 +144,15 @@
   (unless (minibufferp)
     (sniem-mode t)))
 
+;; <TODO(SpringHan)> Fix this function [Fri Jan 22 23:41:10 2021]
+(defun sniem-update-cursor ()
+  "Update sniem fake cursor."
+  (interactive) ; Debug
+  (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) nil nil nil))
+  (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color)
+  (overlay-put sniem-cursor-overlay 'type 'fake-cursor)
+  (overlay-put sniem-cursor-overlay 'priority 100))
+
 (defun sniem-change-mode (mode)
   "Change edition mode."
   (if (eq sniem-current-mode mode)
@@ -229,6 +238,11 @@ LAYOUT can be qwerty, colemak or dvorak."
               "K" 'kill-buffer-and-window))
     ('dvorak (message "[Sniem]: The dvorak layout will be added later."))
     (_ (message "[Sniem]: The %s layout is not supplied." layout))))
+
+;;; Update sniem-cursor-color when user changed the cursor color.
+(advice-add 'set-cursor-color :after
+            (lambda (color-name)
+              (setq sniem-cursor-color color-name)))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

@@ -142,6 +142,16 @@
   :type 'keymap
   :group 'sniem)
 
+(defcustom sniem-cursor-color (frame-parameter nil 'cursor-color)
+  "The cursor color for the sniem fake cursor."
+  :type 'string
+  :group 'sniem)
+
+(defcustom sniem-cursor-overlay nil
+  "The overlay for the sniem fake cursor."
+  :type 'overlay
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode eshell-mode
     vterm-mode json-mode wdired-mode deft-mode pass-view-mode

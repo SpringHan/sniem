@@ -63,12 +63,15 @@
   (interactive)
   (if sniem-on-newline-point
       (end-of-line)
-    (end-of-line)
-    (backward-char)))
+    (end-of-line)))
 
 (defun sniem-eval-last-sexp ()
-  "Like `eval-last-sexp', but it can also eval in the ()."
+  "Like `eval-last-sexp'."
   )
+
+(defun sniem-change-point ()
+  "Change point."
+  (when (and (eolp))))
 
 (provide 'sniem-operation)
 
