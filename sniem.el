@@ -52,8 +52,11 @@
 (define-minor-mode sniem-normal-mode
   "Normal mode for sniem."
   nil nil sniem-normal-state-keymap
-  (when sniem-normal-mode
-    (sniem-normal-mode-init)))
+  (if sniem-normal-mode
+      (progn
+        (sniem-normal-mode-init)
+        (add-hook 'post-command-hook #'sniem-update-cursor t t))
+    (remove-hook 'post-command-hook #'sniem-update-cursor t)))
 
 (define-minor-mode sniem-insert-mode
   "Insert mode for sniem."
@@ -144,14 +147,15 @@
   (unless (minibufferp)
     (sniem-mode t)))
 
-;; <TODO(SpringHan)> Fix this function [Fri Jan 22 23:41:10 2021]
-(defun sniem-update-cursor ()
+(defun sniem-update-cursor (&optional disable)
   "Update sniem fake cursor."
-  (interactive) ; Debug
-  (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) nil nil nil))
-  (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color)
-  (overlay-put sniem-cursor-overlay 'type 'fake-cursor)
-  (overlay-put sniem-cursor-overlay 'priority 100))
+  (if disable
+      (delete-overlay sniem-cursor-overlay)
+    (setq-local cursor-type nil)
+    (when sniem-cursor-overlay
+      (delete-overlay sniem-cursor-overlay))
+    (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) (current-buffer) t t))
+    (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color)))
 
 (defun sniem-change-mode (mode)
   "Change edition mode."
@@ -165,8 +169,8 @@
 
 (defun sniem-cursor-change ()
   "Change cursor type."
+  (sniem-update-cursor (if (not (eq (sniem-current-mode) 'normal)) t))
   (setq-local cursor-type (pcase (sniem-current-mode)
-                            ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
                             ('motion sniem-motion-mode-cursor))))
 
@@ -242,7 +246,7 @@ LAYOUT can be qwerty, colemak or dvorak."
 ;;; Update sniem-cursor-color when user changed the cursor color.
 (advice-add 'set-cursor-color :after
             (lambda (color-name)
-              (setq sniem-cursor-color color-name)))
+              (set-face-attribute 'sniem-cursor-color nil `((t :foreground ,(get 'cursor 'face-defface-spec))))))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

@@ -142,9 +142,9 @@
   :type 'keymap
   :group 'sniem)
 
-(defcustom sniem-cursor-color (frame-parameter nil 'cursor-color)
+(defface sniem-cursor-color
+  `((t (:foreground ,(frame-parameter nil 'background-color) :background ,(frame-parameter nil 'cursor-color))))
   "The cursor color for the sniem fake cursor."
-  :type 'string
   :group 'sniem)
 
 (defcustom sniem-cursor-overlay nil
