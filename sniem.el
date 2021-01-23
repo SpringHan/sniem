@@ -52,11 +52,8 @@
 (define-minor-mode sniem-normal-mode
   "Normal mode for sniem."
   nil nil sniem-normal-state-keymap
-  (if sniem-normal-mode
-      (progn
-        (sniem-normal-mode-init)
-        (add-hook 'post-command-hook #'sniem-update-cursor t t))
-    (remove-hook 'post-command-hook #'sniem-update-cursor t)))
+  (when sniem-normal-mode
+    (sniem-normal-mode-init)))
 
 (define-minor-mode sniem-insert-mode
   "Insert mode for sniem."
@@ -110,8 +107,6 @@
 (defun sniem-quit-insert ()
   "Quit insert mode."
   (interactive)
-  (when (and (eolp) (null sniem-on-newline-point))
-    (backward-char))
   (sniem-change-mode 'normal))
 
 (defun sniem-keypad ()
@@ -121,7 +116,7 @@
                (120 "C-x ") (109 "M-") (98 "C-M-") (118 "C-")))
         tmp)
     (when (null key)
-      (setq key (concat "C-" (char-to-string last-input-event))))
+      (setq key (concat "C-" (char-to-string last-input-event) " ")))
 
     (message key)
     (while (not (= 13 (setq tmp (read-char))))
@@ -147,15 +142,23 @@
   (unless (minibufferp)
     (sniem-mode t)))
 
-(defun sniem-update-cursor (&optional disable)
-  "Update sniem fake cursor."
-  (if disable
-      (delete-overlay sniem-cursor-overlay)
-    (setq-local cursor-type nil)
-    (when sniem-cursor-overlay
-      (delete-overlay sniem-cursor-overlay))
-    (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) (current-buffer) t t))
-    (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color)))
+;; (defun sniem-update-cursor (&optional disable)
+;;   "Update sniem fake cursor."
+;;   (if disable
+;;       (delete-overlay sniem-cursor-overlay)
+;;     (when sniem-cursor-overlay
+;;       (delete-overlay sniem-cursor-overlay))
+;;     (if (sniem-not-use-fake-cursor-p)
+;;       (setq-local cursor-type nil)
+;;       (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) (current-buffer) t t))
+;;       (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color))))
+
+(defun sniem--ele-exists-p (ele list)
+  "Check if ELE is belong to the LIST."
+  (catch 'exists
+    (dolist (item list)
+      (when (equal ele item)
+        (throw 'exists t)))))
 
 (defun sniem-change-mode (mode)
   "Change edition mode."
@@ -169,8 +172,8 @@
 
 (defun sniem-cursor-change ()
   "Change cursor type."
-  (sniem-update-cursor (if (not (eq (sniem-current-mode) 'normal)) t))
   (setq-local cursor-type (pcase (sniem-current-mode)
+                            ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
                             ('motion sniem-motion-mode-cursor))))
 
@@ -242,11 +245,6 @@ LAYOUT can be qwerty, colemak or dvorak."
               "K" 'kill-buffer-and-window))
     ('dvorak (message "[Sniem]: The dvorak layout will be added later."))
     (_ (message "[Sniem]: The %s layout is not supplied." layout))))
-
-;;; Update sniem-cursor-color when user changed the cursor color.
-(advice-add 'set-cursor-color :after
-            (lambda (color-name)
-              (set-face-attribute 'sniem-cursor-color nil `((t :foreground ,(get 'cursor 'face-defface-spec))))))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

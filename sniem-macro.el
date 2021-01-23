@@ -30,9 +30,21 @@
 
 ;;; Code:
 
-(defmacro sniem-defun (name arg)
-  "Define sniem function."
-  )
+(defmacro sniem-define-motion (name arg docstring &rest body)
+  "Define motion for sniem."
+  (declare (indent defun)
+           (doc-string 3))
+  (let ((inter (if (eq (car-safe (car-safe `,body)) 'interactive)
+                   (pop `,body)
+                 '(interactive))))
+    (unless (memq '&optional `,arg)
+      (setq `,arg (append `,arg '(&optional))))
+    `(defun ,name (,@arg non-point-set)
+       ,docstring
+       ,inter
+       (unless non-point-set
+         (setq-local sniem-last-point (1- (point))))
+       ,@body)))
 
 (provide 'sniem-macro)
 

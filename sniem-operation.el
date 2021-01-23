@@ -33,9 +33,10 @@
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
   (interactive)
-  (when (region-active-p)
-    (goto-char (region-beginning)))
-  (sniem-change-mode 'insert))
+  (unless (eq (sniem-current-mode) 'insert)
+    (when (region-active-p)
+      (goto-char (region-beginning)))
+    (sniem-change-mode 'insert)))
 
 (defun sniem-insert-line ()
   "Insert at the beginning of line."
@@ -57,21 +58,75 @@
   (end-of-line)
   (sniem-insert))
 
-;; <TODO(SpringHan)> This function has bug. [Sun Jan 17 08:56:23 2021]
-(defun sniem-end-of-line ()
-  "Goto end of line."
+(defun sniem--open-line (&optional above)
+  "Open new line for other function."
+  (when above
+    (sniem-prev-line nil t))
+  (sniem-end-of-line t)
+  (insert "\n"))
+
+(defun sniem-open-line ()
+  "Open new line."
   (interactive)
-  (if sniem-on-newline-point
-      (end-of-line)
-    (end-of-line)))
+  (sniem--open-line)
+  (indent-according-to-mode)
+  (sniem-insert))
 
-(defun sniem-eval-last-sexp ()
-  "Like `eval-last-sexp'."
-  )
+(defun sniem-open-line-previous ()
+  "Open new line."
+  (interactive)
+  (sniem--open-line t)
+  (indent-according-to-mode)
+  (sniem-insert))
 
-(defun sniem-change-point ()
-  "Change point."
-  (when (and (eolp))))
+(defun sniem-center (action)
+  "Center action for sniem."
+  (interactive "c[z] for center, [t] for top, [b] for buttom:")
+  (pcase action
+    (122 (recenter nil t))
+    (116 (recenter-top-bottom 0))
+    (98 (recenter-top-bottom -1))
+    (t (message "[Sniem]: The key you press is not exsits for center."))))
+
+;;; Motions
+
+(sniem-define-motion sniem-beginning-of-line ()
+  (beginning-of-line))
+
+(sniem-define-motion sniem-end-of-line ()
+  (end-of-line))
+
+(sniem-define-motion sniem-forward-char (&optional times)
+  (setq times (or times 1))
+  (unless (eolp)
+    (forward-char times)))
+
+(sniem-define-motion sniem-5-forward-char ()
+  (sniem-forward-char 5 t))
+
+(sniem-define-motion sniem-backward-char (&optional times)
+  (setq times (or times 1))
+  (unless (bolp)
+    (backward-char times)))
+
+(sniem-define-motion sniem-5-backward-char ()
+  (sniem-backward-char 5 t))
+
+(sniem-define-motion sniem-prev-line (&optional times)
+  (setq times (or times 1))
+  (unless (bobp)
+    (previous-line times)))
+
+(sniem-define-motion sniem-5-prev-line ()
+  (sniem-prev-line 5 t))
+
+(sniem-define-motion sniem-next-line (&optional times)
+  (setq times (or times 1))
+  (unless (eobp)
+    (next-line times)))
+
+(sniem-define-motion sniem-5-next-line ()
+  (sniem-next-line 5 t))
 
 (provide 'sniem-operation)
 

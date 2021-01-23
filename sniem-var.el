@@ -35,16 +35,16 @@
   :type 'symbol
   :group 'sniem)
 
-(defcustom sniem-reverse-status nil
-  "The reverse status."
-  :type 'symbol
-  :group 'sniem)
-
 (defcustom sniem-mode-keymap
   (let ((map (make-sparse-keymap)))
     map)
   "Mode keymap for sniem."
   :type 'keymap
+  :group 'sniem)
+
+(defcustom sniem-last-point nil
+  "The last point."
+  :type 'number
   :group 'sniem)
 
 (defcustom sniem-current-mode nil
@@ -60,9 +60,6 @@
 
 (defvar sniem-motion-mode-cursor t
   "Cursor type for motion mode.")
-
-(defvar sniem-on-newline-point nil
-  "If the cursor can be on the newline point.")
 
 (defcustom sniem-leader-keymap
   (let ((map (make-sparse-keymap)))
@@ -84,7 +81,7 @@
     (define-key map "A" 'sniem-append-line)
     (define-key map "o" 'sniem-open-line)
     (define-key map "O" 'sniem-open-line-previous)
-    (define-key map "s" 'sniem-eval-last-sexp)
+    (define-key map "s" 'eval-last-sexp)
     (define-key map "S" 'save-buffer)
     (define-key map "r" 'sniem-replace-char)
     (define-key map "R" 'sniem-replace-word)
@@ -95,7 +92,7 @@
     (define-key map "C" 'sniem-change-in-region)
     (define-key map "d" 'sniem-delete)
     (define-key map "D" 'sniem-delete-in-region)
-    (define-key map "b" 'beginning-of-line)
+    (define-key map "b" 'sniem-beginning-of-line)
     (define-key map "B" 'sniem-end-of-line)
     (define-key map "m" 'sniem-mark)
     (define-key map "." 'sniem-repeat)
@@ -140,16 +137,6 @@
     map)
   "Motion mode keymap."
   :type 'keymap
-  :group 'sniem)
-
-(defface sniem-cursor-color
-  `((t (:foreground ,(frame-parameter nil 'background-color) :background ,(frame-parameter nil 'cursor-color))))
-  "The cursor color for the sniem fake cursor."
-  :group 'sniem)
-
-(defcustom sniem-cursor-overlay nil
-  "The overlay for the sniem fake cursor."
-  :type 'overlay
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist
