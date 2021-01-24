@@ -128,8 +128,9 @@
 (defun sniem-delete-char ()
   "Delete the char under cursor."
   (interactive)
-  (kill-ring-save (point) (1+ (point)))
-  (delete-forward-char 1))
+  (unless (eolp)
+    (kill-ring-save (point) (1+ (point))))
+  (delete-char -1))
 
 (defun sniem-delete (action)
   "Delete action."
@@ -138,7 +139,10 @@
                        (read-char sniem-delete-message))))
   (pcase action
     ((pred symbolp) (sniem-delete-region (region-beginning) (region-end)))
-    (100 (sniem-delete-region (line-beginning-position) (1+ (line-end-position))))
+    (100 (if (eolp)
+             (sniem-delete-char)
+           (sniem-delete-region (line-beginning-position) (line-end-position))
+           (sniem-delete-char)))
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point)))))
 
