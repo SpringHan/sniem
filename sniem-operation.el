@@ -128,9 +128,10 @@
 (defun sniem-delete-char ()
   "Delete the char under cursor."
   (interactive)
-  (unless (eolp)
-    (kill-ring-save (point) (1+ (point))))
-  (delete-char -1))
+  (if (eolp)
+      (delete-char -1)
+    (kill-ring-save (point) (1+ (point)))
+    (delete-char 1)))
 
 (defun sniem-delete (action)
   "Delete action."
