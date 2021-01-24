@@ -74,7 +74,7 @@
   (sniem-motion-mode -1)
   (when current-input-method
     (toggle-input-method)
-    (setq sniem-input-method-closed t)))
+    (setq-local sniem-input-method-closed t)))
 
 (defun sniem-insert-mode-init ()
   "Insert mode init."
@@ -94,9 +94,11 @@
   (unless (apply #'derived-mode-p sniem-close-mode-alist)
     (unless sniem-space-command
       (setq sniem-space-command (key-binding (kbd "SPC"))))
-    (if (apply #'derived-mode-p sniem-normal-mode-alist)
-        (sniem-change-mode 'normal)
-      (sniem-change-mode 'motion))
+    (cond ((apply #'derived-mode-p sniem-normal-mode-alist)
+           (sniem-change-mode 'normal))
+          ((apply #'derived-mode-p sniem-insert-mode-alist)
+           (sniem-change-mode 'insert))
+          (t (sniem-change-mode 'motion)))
     (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)))
 
 (defun sniem--disable ()

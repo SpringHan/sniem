@@ -167,10 +167,13 @@
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist
-  '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode eshell-mode
-    vterm-mode json-mode wdired-mode deft-mode pass-view-mode
-    telega-chat-mode restclient-mode help-mode deadgrep-edit-mode mix-mode)
+  '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
+    json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode
+    restclient-mode help-mode deadgrep-edit-mode mix-mode)
   "The alist of major modes that make sniem open normal mode.")
+
+(defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode)
+  "The alist of major modes that make sniem open insert mode.")
 
 (defvar sniem-input-method-closed nil
   "If the input method was closed when user changed to normal state.")
@@ -192,6 +195,9 @@
 
 (defvar sniem-yank-message "[y] for line, [p] for From last point:"
   "The message for `sniem-yank'.")
+
+(defvar sniem-macro-message "[q] for record, [e] for Eval last kbd macro, [n] for Name for it:"
+  "The message for `sniem-macro'.")
 
 ;;; Awesome tray support
 (when (featurep 'awesome-tray)

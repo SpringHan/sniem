@@ -204,6 +204,17 @@
     (dotimes (_ lines)
       (join-line 1))))
 
+(defun sniem-macro (action)
+  "Macro action."
+  (interactive (list (unless defining-kbd-macro
+                       (read-char sniem-macro-message))))
+  (if defining-kbd-macro
+      (end-kbd-macro)
+    (pcase action
+      (113 (start-kbd-macro nil))
+      (101 (call-last-kbd-macro))
+      (110 (call-interactively (name-last-kbd-macro))))))
+
 ;;; Motions
 
 (sniem-define-motion sniem-beginning-of-line ()
