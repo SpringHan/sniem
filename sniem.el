@@ -148,7 +148,8 @@
 (defun sniem-move-last-point ()
   "Move the last point to current point."
   (interactive)
-  (setq-local sniem-last-point (point)))
+  (setq-local sniem-last-point (point))
+  (sniem-lock/unlock-last-point))
 
 ;;; Functional functions
 
