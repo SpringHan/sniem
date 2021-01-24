@@ -386,9 +386,13 @@
   "Goto next lines with `sniem-digit-argument-get'."
   (sniem-next-line (sniem-digit-argument-get "Move down: ") t))
 
-(sniem-define-motion sniem-goto-last-point ()
+(defun sniem-goto-last-point (&optional no-set-point)
   "Goto `sniem-last-point'."
-  (goto-char sniem-last-point))
+  (interactive)
+  (let ((current-point (point)))
+    (goto-char sniem-last-point)
+    (unless (or sniem-last-point-locked no-set-point)
+      (setq-local sniem-last-point current-point))))
 
 (provide 'sniem-operation)
 
