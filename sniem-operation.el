@@ -185,7 +185,7 @@
                        (read-char sniem-yank-message))))
   (pcase action
     ((pred symbolp) (kill-ring-save (region-beginning) (region-end)))
-    (121 (kill-ring-save (line-beginning-position) (line-end-position)))
+    (121 (kill-ring-save (line-beginning-position) (1+ (line-end-position))))
     (112 (kill-ring-save sniem-last-point (point)))))
 
 (defun sniem-join ()
