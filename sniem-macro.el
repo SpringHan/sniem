@@ -42,8 +42,8 @@
     `(defun ,name (,@arg non-point-set)
        ,docstring
        ,inter
-       (unless non-point-set
-         (setq-local sniem-last-point (1- (point))))
+       (unless (or sniem-last-point-locked non-point-set)
+         (setq-local sniem-last-point (point)))
        ,@body)))
 
 (provide 'sniem-macro)

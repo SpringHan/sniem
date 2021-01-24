@@ -37,6 +37,7 @@
 (require 'sniem-var)
 (require 'sniem-macro)
 (require 'sniem-operation)
+(require 'sniem-object-catch)
 
 
 (define-minor-mode sniem-mode
@@ -70,12 +71,18 @@
 (defun sniem-normal-mode-init ()
   "Normal mode init."
   (sniem-insert-mode -1)
-  (sniem-motion-mode -1))
+  (sniem-motion-mode -1)
+  (when current-input-method
+    (toggle-input-method)
+    (setq sniem-input-method-closed t)))
 
 (defun sniem-insert-mode-init ()
   "Insert mode init."
   (sniem-normal-mode -1)
-  (sniem-motion-mode -1))
+  (sniem-motion-mode -1)
+  (when sniem-input-method-closed
+    (toggle-input-method)
+    (setq-local sniem-input-method-closed nil)))
 
 (defun sniem-motion-mode-init ()
   "Motion mode init."
@@ -84,12 +91,13 @@
 
 (defun sniem--enable ()
   "Unable sniem."
-  (unless sniem-space-command
-    (setq sniem-space-command (key-binding (kbd "SPC"))))
-  (if (apply #'derived-mode-p sniem-normal-mode-alist)
-      (sniem-change-mode 'normal)
-    (sniem-change-mode 'motion))
-  (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap))
+  (unless (apply #'derived-mode-p sniem-close-mode-alist)
+    (unless sniem-space-command
+      (setq sniem-space-command (key-binding (kbd "SPC"))))
+    (if (apply #'derived-mode-p sniem-normal-mode-alist)
+        (sniem-change-mode 'normal)
+      (sniem-change-mode 'motion))
+    (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)))
 
 (defun sniem--disable ()
   "Disable sniem."
@@ -135,23 +143,17 @@
         (call-interactively tmp)
       (message "[Evil]: '%s' is not defined." key))))
 
+(defun sniem-move-last-point ()
+  "Move the last point to current point."
+  (interactive)
+  (setq-local sniem-last-point (point)))
+
 ;;; Functional functions
 
 (defun sniem-initialize ()
   "Initialize sniem."
   (unless (minibufferp)
     (sniem-mode t)))
-
-;; (defun sniem-update-cursor (&optional disable)
-;;   "Update sniem fake cursor."
-;;   (if disable
-;;       (delete-overlay sniem-cursor-overlay)
-;;     (when sniem-cursor-overlay
-;;       (delete-overlay sniem-cursor-overlay))
-;;     (if (sniem-not-use-fake-cursor-p)
-;;       (setq-local cursor-type nil)
-;;       (setq sniem-cursor-overlay (make-overlay (1- (point)) (point) (current-buffer) t t))
-;;       (overlay-put sniem-cursor-overlay 'face 'sniem-cursor-color))))
 
 (defun sniem--ele-exists-p (ele list)
   "Check if ELE is belong to the LIST."
@@ -227,7 +229,8 @@ LAYOUT can be qwerty, colemak or dvorak."
               "l" 'sniem-forward-char
               "L" 'sniem-5-forward-char
               "n" 'kill-current-buffer
-              "N" 'kill-buffer-and-window))
+              "N" 'kill-buffer-and-window)
+             (setq sniem-keyboard-layout 'qwerty))
     ('colemak (sniem-normal-set-key
               "j" 'sniem-join
               "l" 'undo
@@ -242,9 +245,59 @@ LAYOUT can be qwerty, colemak or dvorak."
               "i" 'sniem-forward-char
               "I" 'sniem-5-forward-char
               "k" 'kill-current-buffer
-              "K" 'kill-buffer-and-window))
+              "K" 'kill-buffer-and-window)
+              (setq sniem-keyboard-layout 'colemak))
     ('dvorak (message "[Sniem]: The dvorak layout will be added later."))
     (_ (message "[Sniem]: The %s layout is not supplied." layout))))
+
+(defun sniem-digit-argument (arg)
+  "The digit argument function."
+  (interactive (list (sniem-digit-argument-get)))
+  (prefix-command-preserve-state)
+  (setq prefix-arg arg)
+  (universal-argument--mode))
+
+(defun sniem-digit-argument-get (&optional msg)
+  "A function which make you can use the middle of the keyboard instead of the num keyboard."
+  (interactive)
+  (let ((number "")
+        (arg ""))
+    (while (not (string= number "over"))
+      (setq number (sniem-digit-argument-read-char))
+      (unless (string= number "over")
+        (if (string= number "delete")
+            (setq arg (substring arg 0 -1))
+          (setq arg (concat arg number))))
+      (message "%s%s" (if msg
+                          msg
+                        "C-u ")
+               arg))
+    (string-to-number arg)))
+
+(defun sniem-digit-argument-read-char ()
+  "Read char for `sniem-digit-argument'."
+  (pcase sniem-keyboard-layout
+    ('colemak
+     (pcase (read-char)
+       (97 "1") (114 "2") (115 "3") (116 "4") (100 "5")
+       (104 "6") (110 "7") (101 "8") (105 "9") (111 "0")
+       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))))
+    ('qwerty
+     (pcase (read-char)
+       (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
+       (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
+       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))))
+    ('dvorak (user-error "[Sniem]: The dvorak keyboard layout's functions has not been defined."))))
+
+(defun sniem-lock/unlock-last-point ()
+  "Lock or unlock `sniem-last-point'."
+  (interactive)
+  (setq-local sniem-last-point-locked (if sniem-last-point-locked
+                                          nil
+                                        t))
+  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
+                                         "locked"
+                                       "unlocked")))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

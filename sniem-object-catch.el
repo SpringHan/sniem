@@ -44,17 +44,17 @@
   "The global symbol alist."
   :group 'sniem-object-catch)
 
-(defcustom sniem-object-catch-catch-key "RET"
+(defcustom sniem-object-catch-key "RET"
   "The key for catch."
   :type 'string
   :group 'sniem-object-catch)
 
-(defcustom sniem-object-catch-catch-parent-key "M-RET"
+(defcustom sniem-object-catch-parent-key "M-RET"
   "The key for catch."
   :type 'string
   :group 'sniem-object-catch)
 
-(defcustom sniem-object-catch-catch-char-key "C-<return>"
+(defcustom sniem-object-catch-char-key "C-<return>"
   "The key for catch."
   :type 'string
   :group 'sniem-object-catch)
@@ -67,7 +67,7 @@
 (defvar global-sniem-object-catch-status nil
   "The status for `global-sniem-object-catch-mode'")
 
-(defun sniem-object-catch-catch (&optional char parent)
+(sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)
   (when
@@ -111,19 +111,19 @@
           (goto-char prefix-point)
           (push-mark second-point t t)))
     (backward-char)
-    (sniem-object-catch-catch char t)))
+    (sniem-object-catch char t)))
 
-(defun sniem-object-catch-catch-by-char (char)
+(defun sniem-object-catch-by-char (char)
   "Catch region by CHAR."
   (interactive (list (char-to-string (read-char))))
   (if (sniem-object-catch--get-second-char char)
-      (sniem-object-catch-catch char)
+      (sniem-object-catch char)
     (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist." char)))
 
-(defun sniem-object-catch-catch-parent ()
+(defun sniem-object-catch-parent ()
   "Catch region for its parent."
   (interactive)
-  (sniem-object-catch-catch nil t))
+  (sniem-object-catch nil t))
 
 (defun sniem-object-catch-format-point (prefix second-char)
   "Format point with the PREFIX."

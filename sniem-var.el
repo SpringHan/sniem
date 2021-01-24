@@ -47,8 +47,18 @@
   :type 'number
   :group 'sniem)
 
+(defcustom sniem-last-point-locked nil
+  "If the `sniem-last-point' is locked."
+  :type 'boolean
+  :group 'sniem)
+
 (defcustom sniem-current-mode nil
   "Current mode for sniem."
+  :type 'symbol
+  :group 'sniem)
+
+(defcustom sniem-keyboard-layout nil
+  "User's keyboard layout."
   :type 'symbol
   :group 'sniem)
 
@@ -96,19 +106,19 @@
     (define-key map "B" 'sniem-end-of-line)
     (define-key map "m" 'sniem-mark)
     (define-key map "." 'sniem-repeat)
-    (define-key map "/" 'sniem-search)
+    (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
-    (define-key map "t" 'sniem-next-text)
-    (define-key map "T" 'sniem-prev-text)
+    (define-key map "t" 'sniem-beg-of-word)
+    (define-key map "T" 'sniem-end-of-word)
     (define-key map "f" 'sniem-find-forward)
     (define-key map "F" 'sniem-find-backward)
-    (define-key map "p" 'sniem-paste)
+    (define-key map "p" 'yank)
     (define-key map "g" 'sniem-first-line)
     (define-key map "G" 'sniem-goto-line)
     (define-key map "y" 'sniem-yank)
-    (define-key map "v" 'scroll-down-command)
-    (define-key map "V" 'scroll-up-command)
+    (define-key map "v" 'sniem-scroll-up-command)
+    (define-key map "V" 'sniem-scroll-down-command)
     (define-key map "q" 'sniem-macro)
     (define-key map "Q" 'save-buffers-kill-terminal)
     (define-key map ";" 'keyboard-quit)
@@ -116,8 +126,25 @@
     (define-key map "\"" 'sniem-beg-of-mark)
     (define-key map "<" 'sniem-goto-prev)
     (define-key map ">" 'sniem-goto-next)
+    (define-key map "`" 'sniem-up/down-case)
+    (define-key map "1" 'digit-argument)
+    (define-key map "2" 'digit-argument)
+    (define-key map "3" 'digit-argument)
+    (define-key map "4" 'digit-argument)
+    (define-key map "5" 'digit-argument)
+    (define-key map "6" 'digit-argument)
+    (define-key map "7" 'digit-argument)
+    (define-key map "8" 'digit-argument)
+    (define-key map "9" 'digit-argument)
+    (define-key map "0" 'digit-argument)
+    (define-key map "-" 'sniem-move-last-point)
+    (define-key map "=" 'sniem-goto-last-point)
     (define-key map (kbd "SPC") 'sniem-digit-argument)
     (define-key map (kbd "RET") 'sniem-object-catch)
+    (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)
+    (define-key map (kbd "M-<return>") 'sniem-object-catch-parent)
+    (define-key map (kbd "DEL") 'sniem-backward-char)
+    (define-key map (kbd "TAB") 'sniem-lock/unlock-last-point)
     map)
   "Normal mode keymap."
   :type 'keymap
@@ -125,7 +152,7 @@
 
 (defcustom sniem-insert-state-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-<return>") 'sniem-quit-insert)
+    (define-key map (kbd "<C-tab>") 'sniem-quit-insert)
     map)
   "Insert mode keymap."
   :type 'keymap
@@ -144,6 +171,37 @@
     vterm-mode json-mode wdired-mode deft-mode pass-view-mode
     telega-chat-mode restclient-mode help-mode deadgrep-edit-mode mix-mode)
   "The alist of major modes that make sniem open normal mode.")
+
+(defvar sniem-input-method-closed nil
+  "If the input method was closed when user changed to normal state.")
+
+(defvar sniem-close-mode-alist nil
+  "The modes alist for close sniem.")
+
+(defvar sniem-center-message "[z] for center, [t] for top, [b] for buttom:"
+  "The message for `sniem-center'.")
+
+(defvar sniem-mark-message "[m] for normal, [p] for From last point, [l] for line:"
+  "The message for `sniem-mark'.")
+
+(defvar sniem-delete-message "[d] for line, [p] for From last point, [D] for Clear line contents:"
+  "The message for `sniem-delete'.")
+
+(defvar sniem-change-message "[c] for line, [p] for From last point:"
+  "The message for `sniem-delete'.")
+
+(defvar sniem-yank-message "[y] for line, [p] for From last point:"
+  "The message for `sniem-yank'.")
+
+;;; Awesome tray support
+(when (featurep 'awesome-tray)
+  (defun awesome-tray-sniem-state ()
+    "The function to show the current sniem state."
+    (pcase (sniem-current-mode)
+      ('normal "[N]")
+      ('insert "[I]")
+      ('motion "[M]")))
+  (add-to-list 'awesome-tray-module-alist '("sniem-state" . (awesome-tray-sniem-state awesome-tray-module-evil-face))))
 
 (provide 'sniem-var)
 
