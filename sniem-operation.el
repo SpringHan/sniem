@@ -164,9 +164,8 @@
                        (read-char sniem-change-message))))
   (pcase action
     ((pred symbolp) (sniem-delete t))
-    (99 (sniem-delete 68))
+    (99 (sniem-delete 68) (indent-according-to-mode))
     (112 (sniem-delete 112)))
-  (indent-according-to-mode)
   (sniem-insert))
 
 (defun sniem-change-in-region ()
