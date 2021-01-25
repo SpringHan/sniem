@@ -60,49 +60,52 @@
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)
-  (when
-      (catch 'stop
-        (let (prefix-point second-char second-point tmp)
-          (save-mark-and-excursion
-            (when (region-active-p)
-              (backward-char))
-            ;; Get the `prefix-point'
-            (if char
-                (setq prefix-point
-                      (catch 'point-stop
-                        (while t
-                          (if (string=
-                               char
-                               (setq tmp
-                                     (buffer-substring-no-properties (point) (1+ (point)))))
-                              (throw 'point-stop (point))
-                            (if (bobp)
-                                (throw 'point-stop nil)
-                              (backward-char))))))
-              (setq prefix-point
-                    (catch 'point-stop
-                      (while t
-                        (if (sniem-object-catch--get-second-char
-                             (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
-                            (progn
-                              (setq char tmp)
-                              (throw 'point-stop (point)))
-                          (if (bobp)
-                              (throw 'point-stop nil)
-                            (backward-char)))))))
+  (when (sniem-object-catch--get char parent)
+    (backward-char)))
 
-            (if (not char)
-                (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
-              (setq second-char (sniem-object-catch--get-second-char char)
-                    second-point (sniem-object-catch-format-point char second-char))
-              (if (and parent (> (cdr sniem-object-catch-last-points) second-point))
-                  (throw 'stop t)
-                (setq-local sniem-object-catch-last-points (cons prefix-point second-point)))))
-          (goto-char second-point)
-          (push-mark prefix-point t t)
-          (setq-local sniem-object-catch-action `(,char . ,parent))))
-    (backward-char)
-    (sniem-object-catch char t)))
+(defun sniem-object-catch--get (char parent)
+  "Get the object."
+  (let (prefix-point second-char second-point tmp go-on)
+    (save-mark-and-excursion
+      (when (region-active-p)
+        (backward-char))
+      ;; Get the `prefix-point'
+      (if char
+          (setq prefix-point
+                (catch 'point-stop
+                  (while t
+                    (if (string=
+                         char
+                         (setq tmp
+                               (buffer-substring-no-properties (point) (1+ (point)))))
+                        (throw 'point-stop (point))
+                      (if (bobp)
+                          (throw 'point-stop nil)
+                        (backward-char))))))
+        (setq prefix-point
+              (catch 'point-stop
+                (while t
+                  (if (sniem-object-catch--get-second-char
+                       (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
+                      (progn
+                        (setq char tmp)
+                        (throw 'point-stop (point)))
+                    (if (bobp)
+                        (throw 'point-stop nil)
+                      (backward-char)))))))
+
+      (if (not char)
+          (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
+        (setq second-char (sniem-object-catch--get-second-char char)
+              second-point (sniem-object-catch-format-point char second-char))
+        (if (and parent sniem-object-catch-last-points
+                 (> (cdr sniem-object-catch-last-points) second-point))
+            (setq go-on t)
+          (setq-local sniem-object-catch-last-points (cons prefix-point second-point)))))
+    (goto-char prefix-point)
+    (push-mark second-point t t)
+    (setq-local sniem-object-catch-action `(,char . ,parent))
+    go-on))
 
 (defun sniem-object-catch-by-char (char)
   "Catch region by CHAR."
@@ -173,6 +176,10 @@
      (add-hook (intern (concat (symbol-name ,mode-name) "-hook"))
                `(lambda () (setq-local sniem-object-catch-global-symbol-alist
                                        ,sym-alist)))))
+
+(add-hook 'deactivate-mark-hook #'(lambda ()
+                                    (when sniem-object-catch-last-points
+                                      (setq-local sniem-object-catch-last-points nil))))
 
 ;;; Init
 (add-hook 'emacs-lisp-mode-hook
