@@ -32,7 +32,7 @@
 
 (defgroup sniem-object-catch nil
   "The group of `sniem-object-catch'."
-  :group 'evil)
+  :group 'sniem)
 
 (defcustom sniem-object-catch-global-symbol-alist
   '(("\"" . "\"")
@@ -44,23 +44,13 @@
   "The global symbol alist."
   :group 'sniem-object-catch)
 
-(defcustom sniem-object-catch-key "RET"
-  "The key for catch."
-  :type 'string
-  :group 'sniem-object-catch)
-
-(defcustom sniem-object-catch-parent-key "M-RET"
-  "The key for catch."
-  :type 'string
-  :group 'sniem-object-catch)
-
-(defcustom sniem-object-catch-char-key "C-<return>"
-  "The key for catch."
-  :type 'string
-  :group 'sniem-object-catch)
-
 (defcustom sniem-object-catch-last-points nil
   "The last point cons."
+  :type 'cons
+  :group 'sniem-object-catch)
+
+(defcustom sniem-object-catch-action nil
+  "The action info for the last catch."
   :type 'cons
   :group 'sniem-object-catch)
 
@@ -108,8 +98,9 @@
               (if (and parent (> (cdr sniem-object-catch-last-points) second-point))
                   (throw 'stop t)
                 (setq-local sniem-object-catch-last-points (cons prefix-point second-point)))))
-          (goto-char prefix-point)
-          (push-mark second-point t t)))
+          (goto-char second-point)
+          (push-mark prefix-point t t)
+          (setq-local sniem-object-catch-action `(,char . ,parent))))
     (backward-char)
     (sniem-object-catch char t)))
 
@@ -124,6 +115,19 @@
   "Catch region for its parent."
   (interactive)
   (sniem-object-catch nil t))
+
+(defun sniem-object-catch-parent-by-char (char)
+  "Catch region for its parent by CHAR."
+  (interactive (list (char-to-string (read-char))))
+  (if (sniem-object-catch--get-second-char char)
+      (sniem-object-catch char t)
+    (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist.")))
+
+(defun sniem-object-catch-repeat ()
+  "Repeat the last catch."
+  (interactive)
+  (when sniem-object-catch-action
+    (sniem-object-catch (car sniem-object-catch-action) (cdr sniem-object-catch-action))))
 
 (defun sniem-object-catch-format-point (prefix second-char)
   "Format point with the PREFIX."
@@ -175,6 +179,13 @@
           #'(lambda () (setq-local sniem-object-catch-global-symbol-alist
                                    (delete '("'" . "'")
                                            sniem-object-catch-global-symbol-alist))))
+
+(sniem-normal-set-key
+ "(" '(lambda () (interactive) (sniem-object-catch-by-char "("))
+ "[" '(lambda () (interactive) (sniem-object-catch-by-char "["))
+ "{" '(lambda () (interactive) (sniem-object-catch-by-char "{"))
+ "<C-M-return>" 'sniem-object-catch-parent-by-char
+ "TAB" 'sniem-object-catch-repeat)
 
 (provide 'sniem-object-catch)
 

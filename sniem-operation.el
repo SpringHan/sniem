@@ -35,7 +35,8 @@
   (interactive)
   (unless (eq (sniem-current-mode) 'insert)
     (when (region-active-p)
-      (goto-char (region-beginning)))
+      (goto-char (region-beginning))
+      (deactivate-mark))
     (sniem-change-mode 'insert)))
 
 (defun sniem-insert-line ()
@@ -47,9 +48,11 @@
 (defun sniem-append ()
   "Append at the next point or the end of mark region."
   (interactive)
-  (when (region-active-p)
-    (goto-char (region-beginning)))
-  (forward-char)
+  (if (region-active-p)
+      (progn
+        (goto-char (region-end))
+        (deactivate-mark))
+    (forward-char))
   (sniem-insert))
 
 (defun sniem-append-line ()
@@ -140,7 +143,7 @@
                        (read-char sniem-delete-message))))
   (pcase action
     ((pred symbolp) (sniem-delete-region (region-beginning) (region-end)))
-    (100 (if (eolp)
+    (100 (if (= (line-beginning-position) (line-end-position))
              (sniem-delete-char)
            (sniem-delete-region (line-beginning-position) (line-end-position))
            (sniem-delete-char)))
@@ -303,24 +306,36 @@
   (interactive "P")
   (scroll-down-command n))
 
-(sniem-define-motion sniem-find-forward (char)
+(sniem-define-motion sniem-find-forward (&optional times)
   "Find CHAR forward."
-  (interactive "c")
-  (sniem-find char 'forward))
+  (interactive "P")
+  (let ((char (read-char)))
+    (if times
+        (dotimes (_ times)
+          (sniem-find char 'forward))
+      (sniem-find char 'forward))))
 
-(sniem-define-motion sniem-find-backward (char)
-  (interactive "c")
-  (sniem-find char 'backward))
+(sniem-define-motion sniem-find-backward (&optional times)
+  "Find CHAR backward."
+  (interactive "P")
+  (let ((char (read-char)))
+    (if times
+        (dotimes (_ times)
+          (sniem-find char 'backward))
+      (sniem-find char 'backward))))
 
 (defun sniem-find (char direct)
   "Find char."
-  (let ((way (pcase direct
+  (let ((current-point (point))
+        (way (pcase direct
                ('forward 'sniem-forward-char)
                ('backward 'sniem-backward-char)
                (_ (user-error "[Sniem]: The direction for finding is error!")))))
     (funcall way nil t)
     (while (not (or (eolp) (bolp) (eq (following-char) char)))
-      (funcall way nil t))))
+      (funcall way nil t))
+    (when (/= char (following-char))
+      (goto-char current-point))))
 
 (sniem-define-motion sniem-next-word ()
   "Move to next word."
