@@ -82,6 +82,7 @@
     (define-key map "m" 'sniem-keypad)
     (define-key map "b" 'sniem-keypad)
     (define-key map "v" 'sniem-keypad)
+    (define-key map "c" 'sniem-keypad)
     (define-key map "d" 'sniem-digit-argument)
     (define-key map (kbd "SPC") 'sniem-execute-space-command)
     map)

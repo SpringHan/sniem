@@ -78,7 +78,12 @@
 (defun sniem-open-line-previous ()
   "Open new line."
   (interactive)
-  (sniem--open-line t)
+  (if (bobp)
+      (progn
+        (beginning-of-line)
+        (insert "\n")
+        (beginning-of-buffer))
+    (sniem--open-line t))
   (indent-according-to-mode)
   (sniem-insert))
 
@@ -99,7 +104,9 @@
      (push-mark (point) t t)
      (forward-line))
     (112
-     (push-mark sniem-last-point t t))
+     (push-mark sniem-last-point t t)
+     (when sniem-last-point-locked
+       (sniem-lock/unlock-last-point)))
     (109 (push-mark (point) t t))))
 
 (defun sniem-up/down-case ()
@@ -151,7 +158,9 @@
            (sniem-delete-char))
          (beginning-of-line))
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
-    (112 (sniem-delete-region sniem-last-point (point)))))
+    (112 (sniem-delete-region sniem-last-point (point))
+         (when sniem-last-point-locked
+           (sniem-lock/unlock-last-point)))))
 
 (defun sniem-delete-in-region ()
   "Delete in region."
@@ -197,22 +206,30 @@
   (pcase action
     ((pred symbolp) (kill-ring-save (region-beginning) (region-end)))
     (121 (kill-ring-save (line-beginning-position) (1+ (line-end-position))))
-    (112 (kill-ring-save sniem-last-point (point)))))
+    (112 (kill-ring-save sniem-last-point (point))
+         (when sniem-last-point-locked
+           (sniem-lock/unlock-last-point)))))
 
 (defun sniem-join ()
   "Change LINE to one line."
   (interactive)
-  (let ((lines (if (region-active-p)
-                   (count-lines (region-beginning) (region-end))
-                 (count-lines sniem-last-point (point))))
-        (beg (if (region-active-p)
-                 (region-beginning)
-               (if (> sniem-last-point (point))
-                   (point)
-                 sniem-last-point))))
-    (goto-char beg)
-    (dotimes (_ lines)
-      (join-line 1))))
+  (let ((last-point (point)))
+    (if (bolp)
+        (when (and (not (= (line-beginning-position) (line-end-position)))
+                   (progn (forward-line -1)
+                          (not (= (line-beginning-position) (line-end-position)))))
+          (progn
+            (forward-line)
+            (user-error "[Sniem]: The current position doesn't need join.")))
+      (backward-char)
+      (unless (or (= 10 (following-char))
+                  (= 32 (following-char)))
+        (user-error "[Sniem]: The current position doesn't need join.")))
+    (while (or (= 10 (following-char))
+               (= 32 (following-char)))
+      (backward-char))
+    (forward-char)
+    (push-mark last-point t t)))
 
 (defun sniem-macro (action)
   "Macro action."
