@@ -146,7 +146,8 @@
     (100 (if (= (line-beginning-position) (line-end-position))
              (sniem-delete-char)
            (sniem-delete-region (line-beginning-position) (line-end-position))
-           (sniem-delete-char)))
+           (sniem-delete-char))
+         (beginning-of-line))
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point)))))
 
@@ -313,7 +314,9 @@
     (if times
         (dotimes (_ times)
           (sniem-find char 'forward))
-      (sniem-find char 'forward))))
+      (sniem-find char 'forward))
+    (when (region-active-p)
+      (sniem-forward-char nil t))))
 
 (sniem-define-motion sniem-find-backward (&optional times)
   "Find CHAR backward."

@@ -47,6 +47,11 @@
   :type 'number
   :group 'sniem)
 
+(defcustom sniem-last-point-overlay nil
+  "The overlay for last point."
+  :type 'overlay
+  :group 'sniem)
+
 (defcustom sniem-last-point-locked nil
   "If the `sniem-last-point' is locked."
   :type 'boolean
@@ -136,9 +141,9 @@
     (define-key map "8" 'digit-argument)
     (define-key map "9" 'digit-argument)
     (define-key map "0" 'digit-argument)
-    (define-key map "-" 'sniem-move-last-point)
-    (define-key map "=" 'sniem-goto-last-point)
-    (define-key map "." 'sniem-lock/unlock-last-point)
+    (define-key map "-" 'kill-current-buffer)
+    (define-key map "_" 'kill-buffer-and-window)
+    (define-key map "." 'sniem-move-last-point)
     (define-key map (kbd "SPC") 'sniem-digit-argument)
     (define-key map (kbd "RET") 'sniem-object-catch)
     (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)

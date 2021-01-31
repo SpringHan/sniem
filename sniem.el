@@ -37,7 +37,6 @@
 (require 'sniem-var)
 (require 'sniem-macro)
 (require 'sniem-operation)
-(require 'sniem-object-catch)
 
 
 (define-minor-mode sniem-mode
@@ -143,7 +142,7 @@
     (setq key (substring key 0 -1))
     (if (commandp (setq tmp (key-binding (read-kbd-macro key))))
         (call-interactively tmp)
-      (message "[Evil]: '%s' is not defined." key))))
+      (user-error "[Sniem]: '%s' is not defined." key))))
 
 (defun sniem-move-last-point ()
   "Move the last point to current point."
@@ -168,7 +167,7 @@
 (defun sniem-change-mode (mode)
   "Change edition mode."
   (if (eq sniem-current-mode mode)
-      (message "[Sniem]: The current mode is %S!You need't change it." mode)
+      (user-error "[Sniem]: The current mode is %S!You need't change it." mode)
     (pcase mode
       ('normal (sniem-normal-mode t))
       ('insert (sniem-insert-mode t))
@@ -231,8 +230,8 @@ LAYOUT can be qwerty, colemak or dvorak."
               "H" 'sniem-5-backward-char
               "l" 'sniem-forward-char
               "L" 'sniem-5-forward-char
-              "n" 'kill-current-buffer
-              "N" 'kill-buffer-and-window)
+              "n" 'sniem-lock/unlock-last-point
+              "N" 'sniem-goto-last-point)
              (setq sniem-keyboard-layout 'qwerty))
     ('colemak (sniem-normal-set-key
               "j" 'sniem-join
@@ -247,11 +246,11 @@ LAYOUT can be qwerty, colemak or dvorak."
               "N" 'sniem-5-backward-char
               "i" 'sniem-forward-char
               "I" 'sniem-5-forward-char
-              "k" 'kill-current-buffer
-              "K" 'kill-buffer-and-window)
+              "k" 'sniem-lock/unlock-last-point
+              "K" 'sniem-goto-last-point)
               (setq sniem-keyboard-layout 'colemak))
-    ('dvorak (message "[Sniem]: The dvorak layout will be added later."))
-    (_ (message "[Sniem]: The %s layout is not supplied." layout))))
+    ('dvorak (user-error "[Sniem]: The dvorak layout will be added later."))
+    (_ (user-error "[Sniem]: The %s layout is not supplied." layout))))
 
 (defun sniem-digit-argument (arg)
   "The digit argument function."
@@ -292,18 +291,34 @@ LAYOUT can be qwerty, colemak or dvorak."
        (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))))
     ('dvorak (user-error "[Sniem]: The dvorak keyboard layout's functions has not been defined."))))
 
-(defun sniem-lock/unlock-last-point ()
+(defun sniem-lock/unlock-last-point (&optional lock)
   "Lock or unlock `sniem-last-point'."
   (interactive)
-  (setq-local sniem-last-point-locked (if sniem-last-point-locked
+  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
                                           nil
                                         t))
+  (sniem-show-last-point (not sniem-last-point-locked))
   (message "[Sniem]: Last point %s." (if sniem-last-point-locked
                                          "locked"
                                        "unlocked")))
 
+(defun sniem-show-last-point (&optional hide)
+  "Show the last point."
+  (let ((cursor-color
+         `((t (:foreground ,(frame-parameter nil 'background-color))
+              :background ,(frame-parameter nil 'cursor-color)))))
+    (if (or sniem-last-point-overlay hide)
+        (progn
+          (delete-overlay sniem-last-point-overlay)
+          (setq-local sniem-last-point-overlay nil))
+      (setq-local sniem-last-point-overlay
+                  (make-overlay sniem-last-point (1+ sniem-last-point) (current-buffer) t t))
+      (overlay-put sniem-last-point-overlay 'face cursor-color))))
+
 ;;; Initialize
 (sniem-set-leader-key ",")
+
+(require 'sniem-object-catch)
 
 (provide 'sniem)
 
