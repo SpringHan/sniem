@@ -42,23 +42,25 @@
 (defun sniem-insert-line ()
   "Insert at the beginning of line."
   (interactive)
-  (back-to-indentation)
+  (if (region-active-p)
+      (goto-char (1+ (region-beginning)))
+    (back-to-indentation))
   (sniem-insert))
 
 (defun sniem-append ()
   "Append at the next point or the end of mark region."
   (interactive)
   (if (region-active-p)
-      (progn
-        (goto-char (region-end))
-        (deactivate-mark))
+      (goto-char (region-end))
     (forward-char))
   (sniem-insert))
 
 (defun sniem-append-line ()
   "Append at the end of line."
   (interactive)
-  (end-of-line)
+  (if (region-active-p)
+      (goto-char (1- (region-end)))
+    (end-of-line))
   (sniem-insert))
 
 (defun sniem--open-line (&optional above)
@@ -156,7 +158,9 @@
                (delete-char -1))
            (sniem-delete-region (line-beginning-position) (line-end-position))
            (sniem-delete-char))
-         (beginning-of-line))
+         (if (eobp)
+             (beginning-of-line)
+           (forward-line)))
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
@@ -359,39 +363,17 @@
     (when (/= char (following-char))
       (goto-char current-point))))
 
-(sniem-define-motion sniem-next-word ()
+(sniem-define-motion sniem-next-word (&optional times)
   "Move to next word."
-  (sniem-word 'forward))
+  (interactive "P")
+  (forward-word times)
+  (sniem-motion-hint #'forward-word))
 
-(sniem-define-motion sniem-prev-word ()
+(sniem-define-motion sniem-prev-word (&optional times)
   "Move to previous word."
-  (sniem-word 'backward))
-
-(defun sniem-word (direct)
-  "Move to word with DIRECT."
-  (let ((way (pcase direct
-               ('forward 'sniem-forward-char)
-               ('backward 'sniem-backward-char)))
-        (limit (pcase direct
-                 ('forward 'eolp)
-                 ('backward 'bolp)))
-        (current-word (thing-at-point 'word t))
-        (current-word-points (bounds-of-thing-at-point 'word)))
-    (if (null current-word)
-        (while (and (not (funcall limit))
-                    (null current-word))
-          (funcall way nil t)
-          (setq current-word (thing-at-point 'word t)
-                current-word-points (bounds-of-thing-at-point 'word)))
-      (goto-char (pcase direct
-                   ('forward (cdr current-word-points))
-                   ('backward (car current-word-points))))
-      (while (not (or (eolp)
-                      (bolp)
-                      (and (not (null (thing-at-point 'word)))
-                           (not (string= current-word (thing-at-point 'word))) )))
-        (funcall way nil t))
-      (goto-char (car (bounds-of-thing-at-point 'word))))))
+  (interactive "P")
+  (backward-word times)
+  (sniem-motion-hint #'backward-word))
 
 (sniem-define-motion sniem-beg-of-mark ()
   "Goto the beginning of mark."
@@ -407,18 +389,6 @@
       (goto-char (region-end))
       (push-mark beg-point t t))))
 
-(sniem-define-motion sniem-beg-of-word ()
-  "Goto the beginning of word."
-  (let ((word-points (bounds-of-thing-at-point 'word)))
-    (when word-points
-      (goto-char (car word-points)))))
-
-(sniem-define-motion sniem-end-of-word ()
-  "Goto the end of word."
-  (let ((word-points (bounds-of-thing-at-point 'word)))
-    (when word-points
-      (goto-char (cdr word-points)))))
-
 (sniem-define-motion sniem-goto-prev ()
   "Goto prev lines with `sniem-digit-argument-get'."
   (sniem-prev-line (sniem-digit-argument-get "Move up: ") t))
@@ -427,13 +397,15 @@
   "Goto next lines with `sniem-digit-argument-get'."
   (sniem-next-line (sniem-digit-argument-get "Move down: ") t))
 
-(defun sniem-goto-last-point (&optional no-set-point)
+(defun sniem-goto-last-point (&optional non-point-set)
   "Goto `sniem-last-point'."
   (interactive)
   (let ((current-point (point)))
-    (goto-char sniem-last-point)
-    (unless (or sniem-last-point-locked no-set-point)
-      (setq-local sniem-last-point current-point))))
+    (unless (or sniem-last-point-locked sniem-last-goto-point non-point-set)
+      (setq-local sniem-last-point current-point))
+    (goto-char (if sniem-last-goto-point
+                   sniem-last-goto-point
+                 sniem-last-point))))
 
 (provide 'sniem-operation)
 

@@ -47,8 +47,18 @@
   :type 'number
   :group 'sniem)
 
+(defcustom sniem-last-goto-point nil
+  "The last goto point."
+  :type 'number
+  :group 'sniem)
+
 (defcustom sniem-last-point-overlay nil
   "The overlay for last point."
+  :type 'overlay
+  :group 'sniem)
+
+(defcustom sniem-last-goto-point-overlay nil
+  "The overlay for last goto point."
   :type 'overlay
   :group 'sniem)
 
@@ -65,6 +75,11 @@
 (defcustom sniem-keyboard-layout nil
   "User's keyboard layout."
   :type 'symbol
+  :group 'sniem)
+
+(defcustom sniem-motion-hint-sit-time 1
+  "The time for motion hint sit."
+  :type 'number
   :group 'sniem)
 
 (defvar sniem-normal-mode-cursor t
@@ -114,8 +129,8 @@
     (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
-    (define-key map "t" 'sniem-end-of-word)
-    (define-key map "T" 'sniem-beg-of-word)
+    (define-key map "t" 'sniem-move-with-hint-num)
+    ;; (define-key map "T" 'sniem-beg-of-word)
     (define-key map "f" 'sniem-find-forward)
     (define-key map "F" 'sniem-find-backward)
     (define-key map "p" 'yank)
@@ -144,8 +159,9 @@
     (define-key map "0" 'digit-argument)
     (define-key map "-" 'kill-current-buffer)
     (define-key map "_" 'kill-buffer-and-window)
+    (define-key map "=" 'sniem-object-catch-direction-reverse)
     (define-key map "." 'sniem-move-last-point)
-    (define-key map (kbd "SPC") 'sniem-digit-argument)
+    (define-key map (kbd "SPC") 'sniem-digit-argument-or-fn)
     (define-key map (kbd "RET") 'sniem-object-catch)
     (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)
     (define-key map (kbd "M-<return>") 'sniem-object-catch-parent)
@@ -169,6 +185,11 @@
     map)
   "Motion mode keymap."
   :type 'keymap
+  :group 'sniem)
+
+(defcustom sniem-motion-hint-motion nil
+  "The last hint motion."
+  :type 'symbol
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist
@@ -203,6 +224,11 @@
 
 (defvar sniem-macro-message "[q] for record, [e] for Eval last kbd macro, [n] for Name for it:"
   "The message for `sniem-macro'.")
+
+(defface sniem-motion-hint-face
+  `((t (:inherit region :foreground ,(frame-parameter nil 'background-color))))
+  "The face for motion hint."
+  :group 'sniem)
 
 ;;; Awesome tray support
 (when (featurep 'awesome-tray)

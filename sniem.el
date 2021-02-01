@@ -252,29 +252,47 @@ LAYOUT can be qwerty, colemak or dvorak."
     ('dvorak (user-error "[Sniem]: The dvorak layout will be added later."))
     (_ (user-error "[Sniem]: The %s layout is not supplied." layout))))
 
-(defun sniem-digit-argument (arg)
+(defun sniem-digit-argument-or-fn (arg)
   "The digit argument function."
   (interactive (list (sniem-digit-argument-get)))
-  (prefix-command-preserve-state)
-  (setq prefix-arg arg)
-  (universal-argument--mode))
+  (if (listp arg)
+      (eval arg)
+    (prefix-command-preserve-state)
+    (setq prefix-arg arg)
+    (universal-argument--mode)))
 
 (defun sniem-digit-argument-get (&optional msg)
   "A function which make you can use the middle of the keyboard instead of the num keyboard."
   (interactive)
   (let ((number "")
-        (arg ""))
+        (arg "")
+        fn)
     (while (not (string= number "over"))
       (setq number (sniem-digit-argument-read-char))
       (unless (string= number "over")
-        (if (string= number "delete")
-            (setq arg (substring arg 0 -1))
-          (setq arg (concat arg number))))
+        (cond ((string= number "delete")
+               (setq arg (substring arg 0 -1)))
+              ((setq fn (sniem-digit-argument-fn-get number))
+               (setq number "over"))
+              (t (setq arg (concat arg number)))))
       (message "%s%s" (if msg
                           msg
                         "C-u ")
                arg))
-    (string-to-number arg)))
+    (setq arg (if (string-empty-p arg)
+                  nil
+                (string-to-number arg)))
+    (if fn
+        (if arg
+            `(funcall-interactively ',fn ,arg)
+          `(call-interactively ',fn))
+      arg)))
+
+(defun sniem-digit-argument-fn-get (string)
+  "Read the fn for `sniem-digit-argument-or-fn'."
+  (pcase string
+    ("." 'sniem-lock/unlock-last-goto-point)
+    (" " 'sniem-move-with-hint-num)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
@@ -283,12 +301,14 @@ LAYOUT can be qwerty, colemak or dvorak."
      (pcase (read-char)
        (97 "1") (114 "2") (115 "3") (116 "4") (100 "5")
        (104 "6") (110 "7") (101 "8") (105 "9") (111 "0")
-       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))))
+       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (x (char-to-string x))))
     ('qwerty
      (pcase (read-char)
        (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
-       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))))
+       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (x (char-to-string x))))
     ('dvorak (user-error "[Sniem]: The dvorak keyboard layout's functions has not been defined."))))
 
 (defun sniem-lock/unlock-last-point (&optional lock)
@@ -302,6 +322,16 @@ LAYOUT can be qwerty, colemak or dvorak."
                                          "locked"
                                        "unlocked")))
 
+(defun sniem-lock/unlock-last-goto-point (&optional lock)
+  "Lock/unlock the `sniem-last-goto-point'."
+  (interactive)
+  (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
+                                        (point)
+                                      nil))
+  (message "[Sniem]: Goto point was %s." (if sniem-last-goto-point
+                                             "set"
+                                           "unset")))
+
 (defun sniem-show-last-point (&optional hide)
   "Show the last point."
   (let ((cursor-color
@@ -314,6 +344,31 @@ LAYOUT can be qwerty, colemak or dvorak."
       (setq-local sniem-last-point-overlay
                   (make-overlay sniem-last-point (1+ sniem-last-point) (current-buffer) t t))
       (overlay-put sniem-last-point-overlay 'face cursor-color))))
+
+(defun sniem-motion-hint (motion)
+  "Hint after MOTION."
+  (let (overlays overlay)
+    (save-mark-and-excursion
+      (dotimes (i 10)
+        (call-interactively motion)
+        (setq overlay (make-overlay (point) (1+ (point))))
+        (overlay-put overlay 'display (format "%d%s" (1+ i)
+                                              (pcase (following-char)
+                                                ((pred (= 10)) "\n")
+                                                ((pred (= 9)) "\t")
+                                                (_ ""))))
+        (overlay-put overlay 'face 'sniem-motion-hint-face)
+        (push overlay overlays)))
+    (sit-for sniem-motion-hint-sit-time)
+    (mapc #'delete-overlay overlays)
+    (setq-local sniem-motion-hint-motion motion)))
+
+(defun sniem-move-with-hint-num (num)
+  "Move with NUM to eval the last `sniem-motion-hint-motion'."
+  (interactive "P")
+  (dotimes (_ num)
+    (funcall-interactively sniem-motion-hint-motion))
+  (sniem-motion-hint sniem-motion-hint-motion))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

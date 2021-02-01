@@ -54,6 +54,11 @@
   :type 'cons
   :group 'sniem-object-catch)
 
+(defcustom sniem-object-catch-forward-p nil
+  "The direction for catch."
+  :type 'symbol
+  :group 'sniem-object-catch)
+
 (defvar global-sniem-object-catch-status nil
   "The status for `global-sniem-object-catch-mode'")
 
@@ -65,10 +70,13 @@
 
 (defun sniem-object-catch--get (char parent)
   "Get the object."
-  (let (prefix-point second-char second-point tmp go-on)
+  (let ((move (if sniem-object-catch-forward-p
+                  'forward-char
+                'backward-char))
+        prefix-point second-char second-point tmp go-on)
     (save-mark-and-excursion
       (when (region-active-p)
-        (backward-char))
+        (funcall move))
       ;; Get the `prefix-point'
       (if char
           (setq prefix-point
@@ -81,7 +89,7 @@
                         (throw 'point-stop (point))
                       (if (bobp)
                           (throw 'point-stop nil)
-                        (backward-char))))))
+                        (funcall move))))))
         (setq prefix-point
               (catch 'point-stop
                 (while t
@@ -92,7 +100,7 @@
                         (throw 'point-stop (point)))
                     (if (bobp)
                         (throw 'point-stop nil)
-                      (backward-char)))))))
+                      (funcall move)))))))
 
       (if (not char)
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
@@ -131,6 +139,18 @@
   (interactive)
   (when sniem-object-catch-action
     (sniem-object-catch (car sniem-object-catch-action) (cdr sniem-object-catch-action))))
+
+(defun sniem-object-catch-direction-reverse (&optional forward)
+  "Reverse the catch direction."
+  (interactive)
+  (setq-local sniem-object-catch-forward-p
+              (if (or forward (null sniem-object-catch-forward-p))
+                  t
+                nil))
+  (message "[Sniem]: The object-catch-direction now is %s."
+           (if sniem-object-catch-forward-p
+               "forward"
+             "backward")))
 
 (defun sniem-object-catch-format-point (prefix second-char)
   "Format point with the PREFIX."
