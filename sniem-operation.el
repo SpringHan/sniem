@@ -330,25 +330,35 @@
   (interactive "P")
   (scroll-down-command n))
 
-(sniem-define-motion sniem-find-forward (&optional times)
+(sniem-define-motion sniem-find-forward (&optional times c no-hint)
   "Find CHAR forward."
   (interactive "P")
-  (let ((char (read-char)))
+  (let ((char (if c
+                  c
+                (read-char))))
     (if times
         (dotimes (_ times)
           (sniem-find char 'forward))
       (sniem-find char 'forward))
     (when (region-active-p)
-      (sniem-forward-char nil t))))
+      (sniem-forward-char nil t))
+    (unless no-hint
+      (sniem-motion-hint `(lambda () (interactive)
+                            (sniem-find-forward nil ,char t t))))))
 
-(sniem-define-motion sniem-find-backward (&optional times)
+(sniem-define-motion sniem-find-backward (&optional times c no-hint)
   "Find CHAR backward."
   (interactive "P")
-  (let ((char (read-char)))
+  (let ((char (if c
+                  c
+                (read-char))))
     (if times
         (dotimes (_ times)
           (sniem-find char 'backward))
-      (sniem-find char 'backward))))
+      (sniem-find char 'backward))
+    (unless no-hint
+      (sniem-motion-hint `(lambda () (interactive)
+                            (sniem-find-backward nil ,char t t))))))
 
 (defun sniem-find (char direct)
   "Find char."

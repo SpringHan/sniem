@@ -292,7 +292,8 @@ LAYOUT can be qwerty, colemak or dvorak."
   "Read the fn for `sniem-digit-argument-or-fn'."
   (pcase string
     ("." 'sniem-lock/unlock-last-goto-point)
-    (" " 'sniem-move-with-hint-num)))
+    (" " 'sniem-move-with-hint-num)
+    ("/" 'sniem-object-catch-direction-reverse)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
@@ -347,18 +348,22 @@ LAYOUT can be qwerty, colemak or dvorak."
 
 (defun sniem-motion-hint (motion)
   "Hint after MOTION."
-  (let (overlays overlay)
+  (let (overlays overlay point)
     (save-mark-and-excursion
-      (dotimes (i 10)
-        (call-interactively motion)
-        (setq overlay (make-overlay (point) (1+ (point))))
-        (overlay-put overlay 'display (format "%d%s" (1+ i)
-                                              (pcase (following-char)
-                                                ((pred (= 10)) "\n")
-                                                ((pred (= 9)) "\t")
-                                                (_ ""))))
-        (overlay-put overlay 'face 'sniem-motion-hint-face)
-        (push overlay overlays)))
+      (catch 'stop
+        (dotimes (i 10)
+          (call-interactively motion)
+          (if (and point (= (point) point))
+              (throw 'stop nil)
+            (setq overlay (make-overlay (point) (1+ (point))))
+            (overlay-put overlay 'display (format "%d%s" (1+ i)
+                                                  (pcase (following-char)
+                                                    ((pred (= 10)) "\n")
+                                                    ((pred (= 9)) "\t")
+                                                    (_ ""))))
+            (overlay-put overlay 'face 'sniem-motion-hint-face)
+            (setq point (point))
+            (push overlay overlays)))))
     (sit-for sniem-motion-hint-sit-time)
     (mapc #'delete-overlay overlays)
     (setq-local sniem-motion-hint-motion motion)))
@@ -369,6 +374,12 @@ LAYOUT can be qwerty, colemak or dvorak."
   (dotimes (_ num)
     (funcall-interactively sniem-motion-hint-motion))
   (sniem-motion-hint sniem-motion-hint-motion))
+
+(defun sniem-set-quit-insert-key (key)
+  "Set the `sniem-quit-insert' KEY."
+  (define-key sniem-insert-state-keymap (kbd sniem-insert-quit-key) 'nil)
+  (define-key sniem-insert-state-keymap (kbd key) 'sniem-quit-insert)
+  (setq sniem-insert-quit-key key))
 
 ;;; Initialize
 (sniem-set-leader-key ",")

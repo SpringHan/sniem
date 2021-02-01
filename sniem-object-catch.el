@@ -65,7 +65,7 @@
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)
-  (when (sniem-object-catch--get char parent)
+  (while (sniem-object-catch--get char parent)
     (backward-char)))
 
 (defun sniem-object-catch--get (char parent)

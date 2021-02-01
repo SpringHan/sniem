@@ -91,6 +91,9 @@
 (defvar sniem-motion-mode-cursor t
   "Cursor type for motion mode.")
 
+(defvar sniem-insert-quit-key "ESC"
+  "The `sniem-quit-insert' key.")
+
 (defcustom sniem-leader-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map "x" 'sniem-keypad)
@@ -129,8 +132,7 @@
     (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
-    (define-key map "t" 'sniem-move-with-hint-num)
-    ;; (define-key map "T" 'sniem-beg-of-word)
+    (define-key map "t" 'sniem-object-catch-direction-reverse)
     (define-key map "f" 'sniem-find-forward)
     (define-key map "F" 'sniem-find-backward)
     (define-key map "p" 'yank)
@@ -159,7 +161,6 @@
     (define-key map "0" 'digit-argument)
     (define-key map "-" 'kill-current-buffer)
     (define-key map "_" 'kill-buffer-and-window)
-    (define-key map "=" 'sniem-object-catch-direction-reverse)
     (define-key map "." 'sniem-move-last-point)
     (define-key map (kbd "SPC") 'sniem-digit-argument-or-fn)
     (define-key map (kbd "RET") 'sniem-object-catch)
@@ -173,7 +174,7 @@
 
 (defcustom sniem-insert-state-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<C-tab>") 'sniem-quit-insert)
+    (define-key map (kbd "ESC") 'sniem-quit-insert)
     map)
   "Insert mode keymap."
   :type 'keymap
@@ -226,7 +227,8 @@
   "The message for `sniem-macro'.")
 
 (defface sniem-motion-hint-face
-  `((t (:inherit region :foreground ,(frame-parameter nil 'background-color))))
+  `((t (:foreground ,(frame-parameter nil 'background-color)
+                    :background ,(frame-parameter nil 'foreground-color))))
   "The face for motion hint."
   :group 'sniem)
 
