@@ -67,11 +67,6 @@
   :type 'boolean
   :group 'sniem)
 
-(defcustom sniem-current-mode nil
-  "Current mode for sniem."
-  :type 'symbol
-  :group 'sniem)
-
 (defcustom sniem-keyboard-layout nil
   "User's keyboard layout."
   :type 'symbol
@@ -80,6 +75,11 @@
 (defcustom sniem-motion-hint-sit-time 1
   "The time for motion hint sit."
   :type 'number
+  :group 'sniem)
+
+(defcustom sniem-kmacro-range nil
+  "The range for kmacro."
+  :type 'cons
   :group 'sniem)
 
 (defvar sniem-normal-mode-cursor t
@@ -132,7 +132,6 @@
     (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
-    (define-key map "t" 'sniem-object-catch-direction-reverse)
     (define-key map "f" 'sniem-find-forward)
     (define-key map "F" 'sniem-find-backward)
     (define-key map "p" 'yank)
@@ -237,7 +236,10 @@
   (defun awesome-tray-sniem-state ()
     "The function to show the current sniem state."
     (pcase (sniem-current-mode)
-      ('normal "[N]")
+      ('normal (format "[N:%s%s%s]"
+                       (if sniem-object-catch-forward-p ">" "<")
+                       (if sniem-last-point-locked ":l" "")
+                       (if sniem-last-goto-point ":L" "")))
       ('insert "[I]")
       ('motion "[M]")))
   (add-to-list 'awesome-tray-module-alist '("sniem-state" . (awesome-tray-sniem-state awesome-tray-module-evil-face))))

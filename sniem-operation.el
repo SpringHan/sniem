@@ -240,9 +240,27 @@
   (interactive (list (unless defining-kbd-macro
                        (read-char sniem-macro-message))))
   (if defining-kbd-macro
-      (end-kbd-macro)
+      (progn
+        (end-kbd-macro)
+        ;; If the `sniem-kmacro-range' is exists, call the macro to the lines
+        (when sniem-kmacro-range
+          (let ((region-beg
+                 (save-mark-and-excursion
+                   (sniem-goto-line (car sniem-kmacro-range) t)
+                   (line-beginning-position)))
+                (region-end
+                 (save-mark-and-excursion
+                   (sniem-goto-line (cdr sniem-kmacro-range) t)
+                   (line-end-position))))
+            (apply-macro-to-region-lines region-beg region-end))))
+    
+    (when (region-active-p)
+      (setq-local sniem-kmacro-range
+                  (cons (1+ (line-number-at-pos (region-beginning)))
+                        (line-number-at-pos (region-end))))
+      (goto-char (region-beginning)))
     (pcase action
-      (113 (start-kbd-macro nil))
+      (113 (call-interactively #'start-kbd-macro))
       (101 (call-last-kbd-macro))
       (110 (call-interactively (name-last-kbd-macro))))))
 
@@ -318,7 +336,7 @@
   (if (null n)
       (with-no-warnings (end-of-buffer))
     (goto-char (point-min))
-    (forward-line n)))
+    (forward-line (1- n))))
 
 (sniem-define-motion sniem-scroll-up-command (&optional n)
   "Scroll up."
@@ -411,11 +429,11 @@
   "Goto `sniem-last-point'."
   (interactive)
   (let ((current-point (point)))
-    (unless (or sniem-last-point-locked sniem-last-goto-point non-point-set)
-      (setq-local sniem-last-point current-point))
     (goto-char (if sniem-last-goto-point
                    sniem-last-goto-point
-                 sniem-last-point))))
+                 sniem-last-point))
+    (unless (or sniem-last-point-locked sniem-last-goto-point non-point-set)
+      (setq-local sniem-last-point current-point))))
 
 (provide 'sniem-operation)
 

@@ -166,7 +166,7 @@
 
 (defun sniem-change-mode (mode)
   "Change edition mode."
-  (if (eq sniem-current-mode mode)
+  (if (eq (sniem-current-mode) mode)
       (user-error "[Sniem]: The current mode is %S!You need't change it." mode)
     (pcase mode
       ('normal (sniem-normal-mode t))
