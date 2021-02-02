@@ -87,7 +87,7 @@
                          (setq tmp
                                (buffer-substring-no-properties (point) (1+ (point)))))
                         (throw 'point-stop (point))
-                      (if (bobp)
+                      (if (or (bobp) (eobp))
                           (throw 'point-stop nil)
                         (funcall move))))))
         (setq prefix-point
@@ -98,7 +98,7 @@
                       (progn
                         (setq char tmp)
                         (throw 'point-stop (point)))
-                    (if (bobp)
+                    (if (or (bobp) (eobp))
                         (throw 'point-stop nil)
                       (funcall move)))))))
 
@@ -265,8 +265,7 @@
  "(" '(lambda () (interactive) (sniem-object-catch-by-char "("))
  "[" '(lambda () (interactive) (sniem-object-catch-by-char "["))
  "{" '(lambda () (interactive) (sniem-object-catch-by-char "{"))
- "<C-M-return>" 'sniem-object-catch-parent-by-char
- "TAB" 'sniem-object-catch-repeat)
+ "<C-M-return>" 'sniem-object-catch-parent-by-char)
 
 (provide 'sniem-object-catch)
 

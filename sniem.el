@@ -294,7 +294,8 @@ LAYOUT can be qwerty, colemak or dvorak."
     ("." 'sniem-lock/unlock-last-goto-point)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
-    ("<" 'back-to-indentation)))
+    ("<" 'back-to-indentation)
+    ("," 'sniem-object-catch-repeat)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
