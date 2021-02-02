@@ -214,6 +214,12 @@
          (when sniem-last-point-locked
            (sniem-lock/unlock-last-point)))))
 
+(defun sniem-yank-in-region ()
+  "Yank in region."
+  (interactive)
+  (when (region-active-p)
+    (kill-ring-save (1+ (region-beginning)) (1- (region-end)))))
+
 (defun sniem-join ()
   "Change LINE to one line."
   (interactive)

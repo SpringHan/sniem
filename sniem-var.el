@@ -138,6 +138,7 @@
     (define-key map "g" 'sniem-first-line)
     (define-key map "G" 'sniem-goto-line)
     (define-key map "y" 'sniem-yank)
+    (define-key map "Y" 'sniem-yank-in-region)
     (define-key map "v" 'sniem-scroll-up-command)
     (define-key map "V" 'sniem-scroll-down-command)
     (define-key map "q" 'sniem-macro)

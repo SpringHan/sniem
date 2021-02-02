@@ -105,7 +105,12 @@
       (if (not char)
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char)
-              second-point (sniem-object-catch-format-point char second-char))
+              second-point (if (string= char second-char)
+                               (sniem-object-catch-format-point2 char prefix-point)
+                             (sniem-object-catch-format-point char second-char)))
+        (when (consp second-point)
+          (setq prefix-point (car second-point)
+                second-point (cdr second-point)))
         (if (and parent sniem-object-catch-last-points
                  (> (cdr sniem-object-catch-last-points) second-point))
             (setq go-on t)
@@ -168,6 +173,50 @@
       (forward-char))
     (point)))
 
+(defun sniem-object-catch-format-point2 (pair prefix-point)
+  "Format point for the pair with same char."
+  (let (prefix-face second-point)
+    (save-mark-and-excursion
+      (goto-char prefix-point)
+      (setq prefix-face (face-at-point))
+      (cond ((progn
+               (backward-char)
+               (eq (face-at-point) prefix-face))
+             (setq second-point (sniem-object-catch-format-point1 pair prefix-point)
+                   prefix-point (sniem-object-catch-format-point1 pair prefix-point t t))
+             (cons prefix-point (1+ second-point)))
+             
+            ((progn
+               (forward-char 2)
+               (eq (face-at-point) prefix-face))
+             (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
+                   second-point (sniem-object-catch-format-point1 pair (point) t))
+             (cons prefix-point (1+ second-point)))))))
+
+(defun sniem-object-catch-format-point1 (pair point &optional search prefix)
+  "Format the point for char."
+  (save-mark-and-excursion
+    (goto-char point)
+    (let ((search-command (if prefix
+                              'search-backward
+                            'search-forward)))
+      (when search
+        (setq point (progn
+                      (funcall search-command pair)
+                      (unless prefix (backward-char))
+                      (point))))
+      (when (prog2 (backward-char) (= (following-char) 92)
+              (forward-char))
+        (setq point (progn
+                      (forward-char)
+                      (point)))
+        (while (prog3
+                 (setq point (funcall search-command pair))
+                 (backward-char)
+                 (= (following-char) 92)
+                 (forward-char)))))
+    point))
+
 (defun sniem-object-catch--get-second-char (prefix)
   "Get the second char by the PREFIX."
   (catch 'second-char
@@ -183,6 +232,11 @@
         (when (string= symbol (car symbol-cons))
           (throw 'exists index))
         (setq index (1+ index))))))
+
+(defmacro prog3 (form1 form2 form3 &rest body)
+  "Eval FORM1, FORM2, FORM3 and body, return the FORM3."
+  (declare (indent 0) (debug t))
+  `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
 
 (defmacro sniem-object-catch-mode-defalist (mode-name &rest alist)
   "Define alist for major mode."

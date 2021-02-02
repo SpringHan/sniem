@@ -293,7 +293,8 @@ LAYOUT can be qwerty, colemak or dvorak."
   (pcase string
     ("." 'sniem-lock/unlock-last-goto-point)
     (" " 'sniem-move-with-hint-num)
-    ("/" 'sniem-object-catch-direction-reverse)))
+    ("/" 'sniem-object-catch-direction-reverse)
+    ("<" 'back-to-indentation)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
