@@ -25,13 +25,14 @@ Sniem includes 3 modes:
 ### Keyboard Layout
 
 You can use `(sniem-set-keyboard-layout)` to set your keyboard layout for `sniem`, then `sniem` will bind the default keys for the keyboard layout.  
-Now, the `QWERTY`, `Colemak` and `Dvorak` layout are supported.
+Now, the `QWERTY`, `Colemak`, `Dvorak` and `Dvorak Programmer` layouts are supported.
 
 e.g.:
 ```emacs-lisp
 (sniem-set-keyboard-layout 'qwerty)
 (sniem-set-keyboard-layout 'colemak)
-(sniem-set-keyboard-layout 'dvorak) ; Dvorak Programmer also use this command.
+(sniem-set-keyboard-layout 'dvorak)
+(sniem-set-keyboard-layout 'dvp) ; For Dvorak Programmer
 ```
 
 ### Functions

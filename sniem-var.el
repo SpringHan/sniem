@@ -205,7 +205,7 @@
     restclient-mode help-mode deadgrep-edit-mode mix-mode authinfo-mode)
   "The alist of major modes that make sniem open normal mode.")
 
-(defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode)
+(defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode inferior-emacs-lisp-mode)
   "The alist of major modes that make sniem open insert mode.")
 
 (defvar sniem-input-method-closed nil

@@ -253,7 +253,7 @@ LAYOUT can be qwerty, colemak or dvorak."
                "t" 'sniem-next-symbol
                "T" 'sniem-prev-symbol)
               (setq sniem-keyboard-layout 'colemak))
-    ('dvorak
+    ((or 'dvp 'dvorak)
      (sniem-normal-set-key
       "j" 'sniem-join
       "u" 'undo
