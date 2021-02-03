@@ -24,7 +24,7 @@ Sniem includes 3 modes:
 ### Keyboard Layout
 
 You can use `(sniem-set-keyboard-layout)` to set your keyboard layout for `sniem`, then `sniem` will bind the default keys for the keyboard layout.  
-Now, the `QWERTY`, `Colemak` and `Dvorak` layout is supported.
+Now, the `QWERTY`, `Colemak` and `Dvorak` layout are supported.
 
 e.g.:
 ```emacs-lisp
