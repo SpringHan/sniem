@@ -6,6 +6,7 @@ Sniem is **S**imple u**ni**ted **e**dition **m**ethod. This edition method inclu
 
 ```emacs-lisp
 (use-package sniem
+  :load-path "/path/to/sniem"
   :init (global-sniem-mode t)
   :config
   (sniem-set-keyboard-layout 'qwerty))

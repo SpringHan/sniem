@@ -264,9 +264,9 @@
                             (progn
                               (when (setq tmp (sniem-paste--include-ln-p c))
                                 (setq c tmp))
-                              (cond ((> (length c) (frame-width))
-                                     (concat (substring c 0 (1- (- (length c) (frame-width)))) "..."))
-                                    (t c)))
+                              (while (> (length c) (frame-width))
+                                (setq c (concat (substring c 0 (print (1- (- (length c) (frame-width))))) "...")))
+                              c)
                             "\n")))
     content))
 
