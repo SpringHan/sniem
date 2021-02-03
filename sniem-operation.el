@@ -153,9 +153,11 @@
   (pcase action
     ((pred symbolp) (sniem-delete-region (region-beginning) (region-end)))
     (100 (if (= (line-beginning-position) (line-end-position))
-             (if (bobp)
-                 (delete-char 1)
-               (delete-char -1))
+             (progn
+               (if (bobp)
+                  (delete-char 1)
+                 (delete-char -1))
+               (forward-line))
            (sniem-delete-region (line-beginning-position) (1+ (line-end-position))))
          (when (eobp)
            (beginning-of-line)))

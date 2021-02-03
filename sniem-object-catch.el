@@ -190,7 +190,8 @@
              
             ((progn
                (forward-char 2)
-               (eq (face-at-point) prefix-face))
+               (or (eq (face-at-point) prefix-face)
+                   (eq (face-at-point) 'show-paren-match))) ;NOTE: This expression in here maybe have bug.
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
                    second-point (sniem-object-catch-format-point1 pair (point) t))))
       (when region-forward-p
