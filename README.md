@@ -6,9 +6,9 @@ Sniem is **S**imple u**ni**ted **e**dition **m**ethod. This edition method inclu
 
 ```emacs-lisp
 (use-package sniem
-    :init (global-sniem-mode t)
-    :config
-    (sniem-set-keyboard-layout 'qwerty))
+  :init (global-sniem-mode t)
+  :config
+  (sniem-set-keyboard-layout 'qwerty))
 ```
 
 ## Introduce
@@ -18,7 +18,7 @@ Sniem is **S**imple u**ni**ted **e**dition **m**ethod. This edition method inclu
 Sniem includes 3 modes:
 
 - `NORMAL`: This mode is the default mode for the editing buffers.
-- `INSERT`: This mode will be used when you executed `sniem-insert` in `NORMAL` mode. It's used to edit. In this mode, there's only one binding for `sniem`, that is `<C-TAB>` which will make you exit `INSERT` mode back to `NORMAL` mode.
+- `INSERT`: This mode will be used when you executed `sniem-insert` in `NORMAL` mode. It's used to edit. In this mode, there's only one binding for `sniem`, that is `<ESC>` which will make you exit `INSERT` mode back to `NORMAL` mode.
 - `MOTION`: This mode is used in special modes, there's only has one binding for `sniem`, that is `<SPC>` which can let you use leader keys.
 
 ### Keyboard Layout
@@ -29,6 +29,12 @@ e.g.:
 ```emacs-lisp
 (sniem-set-keyboard-layout 'colemak)
 ```
+
+### Functions
+
+- `(sniem-leader-set-key)` - Set the keys for leader keymap.
+- `(sniem-normal-set-key)` - To set keys for normal mode keymap.
+- `(sniem-set-quit-insert-key)` - To set the key for `(sniem-quit-insert)` in `INSERT` mode.
 
 The dvorak layout will be added later.
 

@@ -196,7 +196,7 @@
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode
-    restclient-mode help-mode deadgrep-edit-mode mix-mode)
+    restclient-mode help-mode deadgrep-edit-mode mix-mode authinfo-mode)
   "The alist of major modes that make sniem open normal mode.")
 
 (defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode)

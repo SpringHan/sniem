@@ -263,7 +263,8 @@
     (when (region-active-p)
       (setq-local sniem-kmacro-range
                   (cons (1+ (line-number-at-pos (region-beginning)))
-                        (line-number-at-pos (region-end))))
+                        (1- (line-number-at-pos (region-end)))))
+      (print sniem-kmacro-range)
       (goto-char (region-beginning)))
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
