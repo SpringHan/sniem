@@ -72,6 +72,11 @@
   :type 'symbol
   :group 'sniem)
 
+(defcustom sniem-motion-hint-overlays nil
+  "The list of all the motion hint overlays."
+  :type 'list
+  :group 'sniem)
+
 (defcustom sniem-motion-hint-sit-time 1
   "The time for motion hint sit."
   :type 'number
@@ -134,7 +139,8 @@
     (define-key map "W" 'sniem-prev-word)
     (define-key map "f" 'sniem-find-forward)
     (define-key map "F" 'sniem-find-backward)
-    (define-key map "p" 'yank)
+    (define-key map "p" 'sniem-paste)
+    (define-key map "P" 'sniem-paste-in-region)
     (define-key map "g" 'sniem-first-line)
     (define-key map "G" 'sniem-goto-line)
     (define-key map "y" 'sniem-yank)

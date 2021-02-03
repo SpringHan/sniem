@@ -156,11 +156,9 @@
              (if (bobp)
                  (delete-char 1)
                (delete-char -1))
-           (sniem-delete-region (line-beginning-position) (line-end-position))
-           (sniem-delete-char))
-         (if (eobp)
-             (beginning-of-line)
-           (forward-line)))
+           (sniem-delete-region (line-beginning-position) (1+ (line-end-position))))
+         (when (eobp)
+           (beginning-of-line)))
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
@@ -219,6 +217,75 @@
   (interactive)
   (when (region-active-p)
     (kill-ring-save (1+ (region-beginning)) (1- (region-end)))))
+
+(defun sniem-paste (&optional n)
+  "Paste the N content in `kill-ring'."
+  (interactive "P")
+  (let ((i 0)
+        (regionp (when (region-active-p)
+                   (cons (region-beginning) (region-end)))))
+    (unless n
+      (when
+          (catch 'n
+            (while (= 0
+                      (string-to-number
+                       (char-to-string
+                        (setq n (read-char (format "%s:%d%s"
+                                                   (sniem-paste--output-contents i)
+                                                   (1+ (/ i 9))
+                                                   (propertize "[n]: next page, [p]: prev page or 1, [Number]: insert content"
+                                                               'face 'font-lock-comment-face)))))))
+              (pcase n
+                (110 (setq i (+ i 9)))
+                (112 (if (>= i 9)
+                         (setq i (- i 9))
+                       (throw 'n t))))))
+        (setq n 49)))
+    (setq n (string-to-number (char-to-string n)))
+    (when regionp
+      (goto-char (cdr regionp))
+      (push-mark (car regionp) t t)
+      (sniem-delete t))
+    (insert (nth (if regionp
+                     (+ n i)
+                   (1- (+ n i)))
+                 kill-ring))))
+
+(defun sniem-paste--output-contents (n)
+  "Output contents for `sniem-paste'."
+  (let (content c tmp)
+    (dotimes (i 9)
+      (setq c (format "%d: %s"
+                      (1+ i)
+                      (nth (+ i n) kill-ring))
+            content (concat content
+                            (progn
+                              (when (setq tmp (sniem-paste--include-ln-p c))
+                                (setq c tmp))
+                              (cond ((> (length c) (frame-width))
+                                     (concat (substring c 0 (1- (- (length c) (frame-width)))) "..."))
+                                    (t c)))
+                            "\n")))
+    content))
+
+(defun sniem-paste--include-ln-p (string)
+  "Check if there has \n in STRING."
+  (let ((string-list (string-to-list string))
+        tmp)
+    (when (memq 10 string-list)
+      (setq tmp (delete 10 string-list)))
+    (when tmp
+      (eval `(string ,@tmp)))))
+
+(defun sniem-paste-in-region ()
+  "Paste the `kill-ring' content in region."
+  (interactive)
+  (when (region-active-p)
+    (when (= (region-beginning) (point))
+      (sniem-end-of-mark))
+    (push-mark (1+ (region-beginning)) t t)
+    (goto-char (1- (region-end)))
+    (sniem-paste)))
 
 (defun sniem-join ()
   "Change LINE to one line."

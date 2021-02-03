@@ -350,7 +350,10 @@ LAYOUT can be qwerty, colemak or dvorak."
 
 (defun sniem-motion-hint (motion)
   "Hint after MOTION."
-  (let (overlays overlay point)
+  (let (overlay point)
+    (when sniem-motion-hint-overlays
+      (mapc #'delete-overlay sniem-motion-hint-overlays)
+      (setq sniem-motion-hint-overlays nil))
     (save-mark-and-excursion
       (catch 'stop
         (dotimes (i 10)
@@ -365,9 +368,10 @@ LAYOUT can be qwerty, colemak or dvorak."
                                                     (_ ""))))
             (overlay-put overlay 'face 'sniem-motion-hint-face)
             (setq point (point))
-            (push overlay overlays)))))
+            (push overlay sniem-motion-hint-overlays)))))
     (sit-for sniem-motion-hint-sit-time)
-    (mapc #'delete-overlay overlays)
+    (mapc #'delete-overlay sniem-motion-hint-overlays)
+    (setq sniem-motion-hint-overlays nil)
     (setq-local sniem-motion-hint-motion motion)))
 
 (defun sniem-move-with-hint-num (num)
