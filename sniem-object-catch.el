@@ -175,7 +175,10 @@
 
 (defun sniem-object-catch-format-point2 (pair prefix-point)
   "Format point for the pair with same char."
-  (let (prefix-face second-point)
+  (let ((region-forward-p (when (and (region-active-p) sniem-object-catch-forward-p)
+                            (prog1 (cons (region-beginning) (region-end))
+                              (deactivate-mark))))
+        prefix-face second-point)
     (save-mark-and-excursion
       (goto-char prefix-point)
       (setq prefix-face (face-at-point))
@@ -183,15 +186,17 @@
                (backward-char)
                (eq (face-at-point) prefix-face))
              (setq second-point (sniem-object-catch-format-point1 pair prefix-point)
-                   prefix-point (sniem-object-catch-format-point1 pair prefix-point t t))
-             (cons prefix-point (1+ second-point)))
+                   prefix-point (sniem-object-catch-format-point1 pair prefix-point t t)))
              
             ((progn
                (forward-char 2)
                (eq (face-at-point) prefix-face))
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
-                   second-point (sniem-object-catch-format-point1 pair (point) t))
-             (cons prefix-point (1+ second-point)))))))
+                   second-point (sniem-object-catch-format-point1 pair (point) t))))
+      (when region-forward-p
+        (goto-char (car region-forward-p))
+        (push-mark (cdr region-forward-p)))
+      (cons prefix-point (1+ second-point)))))
 
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
   "Format the point for char."
