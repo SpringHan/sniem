@@ -351,53 +351,53 @@
   "End of line."
   (end-of-line))
 
-(sniem-define-motion sniem-forward-char (&optional times)
+(sniem-define-motion sniem-forward-char (&optional n)
   "Forward char."
   (interactive "P")
-  (setq times (or times 1))
+  (setq n (or n 1))
   (catch 'end
-    (while (/= times 0)
+    (while (/= n 0)
       (if (eolp)
           (throw 'end t)
         (forward-char)
-        (setq times (1- times))))))
+        (setq n (1- n))))))
 
 (sniem-define-motion sniem-5-forward-char ()
   "Eval `sniem-forward-char' 5 times."
   (sniem-forward-char 5 t))
 
-(sniem-define-motion sniem-backward-char (&optional times)
+(sniem-define-motion sniem-backward-char (&optional n)
   "Backward char."
   (interactive "P")
-  (setq times (or times 1))
+  (setq n (or n 1))
   (catch 'beg
-    (while (/= times 0)
+    (while (/= n 0)
       (if (bolp)
           (throw 'beg t)
         (backward-char)
-        (setq times (1- times))))))
+        (setq n (1- n))))))
 
 (sniem-define-motion sniem-5-backward-char ()
   "Eval `sniem-backward-char' 5 times."
   (sniem-backward-char 5 t))
 
-(sniem-define-motion sniem-prev-line (&optional times)
+(sniem-define-motion sniem-prev-line (&optional n)
   "Previous line."
   (interactive "P")
-  (setq times (or times 1))
+  (setq n (or n 1))
   (unless (bobp)
-    (previous-line times)))
+    (previous-line n)))
 
 (sniem-define-motion sniem-5-prev-line ()
   "Eval `sniem-prev-line' 5 times."
   (sniem-prev-line 5 t))
 
-(sniem-define-motion sniem-next-line (&optional times)
+(sniem-define-motion sniem-next-line (&optional n)
   "Next line."
   (interactive "P")
-  (setq times (or times 1))
+  (setq n (or n 1))
   (unless (eobp)
-    (next-line times)))
+    (next-line n)))
 
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."
@@ -425,14 +425,14 @@
   (interactive "P")
   (scroll-down-command n))
 
-(sniem-define-motion sniem-find-forward (&optional times c no-hint)
+(sniem-define-motion sniem-find-forward (&optional n c no-hint)
   "Find CHAR forward."
   (interactive "P")
   (let ((char (if c
                   c
                 (read-char))))
-    (if times
-        (dotimes (_ times)
+    (if n
+        (don (_ n)
           (sniem-find char 'forward))
       (sniem-find char 'forward))
     (when (region-active-p)
@@ -441,14 +441,14 @@
       (sniem-motion-hint `(lambda () (interactive)
                             (sniem-find-forward nil ,char t t))))))
 
-(sniem-define-motion sniem-find-backward (&optional times c no-hint)
+(sniem-define-motion sniem-find-backward (&optional n c no-hint)
   "Find CHAR backward."
   (interactive "P")
   (let ((char (if c
                   c
                 (read-char))))
-    (if times
-        (dotimes (_ times)
+    (if n
+        (don (_ n)
           (sniem-find char 'backward))
       (sniem-find char 'backward))
     (unless no-hint
@@ -468,17 +468,35 @@
     (when (/= char (following-char))
       (goto-char current-point))))
 
-(sniem-define-motion sniem-next-word (&optional times)
+(sniem-define-motion sniem-next-word (&optional n)
   "Move to next word."
   (interactive "P")
-  (forward-word times)
+  (forward-word n)
   (sniem-motion-hint #'forward-word))
 
-(sniem-define-motion sniem-prev-word (&optional times)
+(sniem-define-motion sniem-prev-word (&optional n)
   "Move to previous word."
   (interactive "P")
-  (backward-word times)
+  (backward-word n)
   (sniem-motion-hint #'backward-word))
+
+(sniem-define-motion sniem-next-symbol (&optional n)
+  "Move to next symbol."
+  (interactive "P")
+  (unless n
+    (setq n 1))
+  (forward-symbol n)
+  (sniem-motion-hint `(lambda () (interactive)
+                        (forward-symbol ,n))))
+
+(sniem-define-motion sniem-prev-symbol (&optional n)
+  "Move to previous symbol."
+  (interactive "P")
+  (unless n
+    (setq n 1))
+  (forward-symbol (- 0 n))
+  (sniem-motion-hint `(lambda () (interactive)
+                        (forward-symbol (- 0 ,n)))))
 
 (sniem-define-motion sniem-beg-of-mark ()
   "Goto the beginning of mark."

@@ -231,7 +231,9 @@ LAYOUT can be qwerty, colemak or dvorak."
               "l" 'sniem-forward-char
               "L" 'sniem-5-forward-char
               "n" 'sniem-lock/unlock-last-point
-              "N" 'sniem-goto-last-point)
+              "N" 'sniem-goto-last-point
+              "t" 'sniem-next-symbol
+              "T" 'sniem-prev-symbol)
              (setq sniem-keyboard-layout 'qwerty))
     ('colemak (sniem-normal-set-key
                "j" 'sniem-join
@@ -247,7 +249,9 @@ LAYOUT can be qwerty, colemak or dvorak."
                "i" 'sniem-forward-char
                "I" 'sniem-5-forward-char
                "k" 'sniem-lock/unlock-last-point
-               "K" 'sniem-goto-last-point)
+               "K" 'sniem-goto-last-point
+               "t" 'sniem-next-symbol
+               "T" 'sniem-prev-symbol)
               (setq sniem-keyboard-layout 'colemak))
     ('dvorak
      (sniem-normal-set-key
@@ -264,7 +268,9 @@ LAYOUT can be qwerty, colemak or dvorak."
       "t" 'sniem-forward-char
       "T" 'sniem-5-forward-char
       "k" 'sniem-lock/unlock-last-point
-      "K" 'sniem-goto-last-point)
+      "K" 'sniem-goto-last-point
+      "l" 'sniem-next-symbol
+      "L" 'sniem-prev-symbol)
      (setq sniem-keyboard-layout (if (eq layout 'dvp)
                                      'dvp
                                    'dvorak)))
