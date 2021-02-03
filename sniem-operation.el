@@ -334,7 +334,8 @@
                   (cons (1+ (line-number-at-pos (region-beginning)))
                         (1- (line-number-at-pos (region-end)))))
       (print sniem-kmacro-range)
-      (goto-char (region-beginning)))
+      (goto-char (region-beginning))
+      (deactivate-mark))
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
       (101 (call-last-kbd-macro))

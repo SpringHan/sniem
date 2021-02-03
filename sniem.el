@@ -130,18 +130,18 @@
     (message key)
     (catch 'stop
       (while (setq tmp (read-char))
-       (if (= tmp 127)
-           (setq key (substring key 0 -2))
-         (when (= tmp 59)
-           (keyboard-quit))
-         (setq key (concat key
-                           (cond ((= tmp 44) "C-")
-                                 ((= tmp 46) "M-")
-                                 ((= tmp 47) "C-M-")
-                                 (t (concat (char-to-string tmp) " "))))))
-       (message key)
-       (when (commandp (setq tmp (key-binding (read-kbd-macro (substring key 0 -1)))))
-         (throw 'stop nil))))
+        (if (= tmp 127)
+            (setq key (substring key 0 -2))
+          (when (= tmp 59)
+            (keyboard-quit))
+          (setq key (concat key
+                            (cond ((= tmp 44) "C-")
+                                  ((= tmp 46) "M-")
+                                  ((= tmp 47) "C-M-")
+                                  (t (concat (char-to-string tmp) " "))))))
+        (message key)
+        (when (commandp (setq tmp (key-binding (read-kbd-macro (substring key 0 -1)))))
+          (throw 'stop nil))))
     (call-interactively tmp)))
 
 (defun sniem-move-last-point ()
@@ -234,22 +234,40 @@ LAYOUT can be qwerty, colemak or dvorak."
               "N" 'sniem-goto-last-point)
              (setq sniem-keyboard-layout 'qwerty))
     ('colemak (sniem-normal-set-key
-              "j" 'sniem-join
-              "l" 'undo
-              "u" 'sniem-prev-line
-              "U" 'sniem-5-prev-line
-              "e" 'sniem-next-line
-              "E" 'sniem-5-next-line
-              "h" 'sniem-insert
-              "H" 'sniem-insert-line
-              "n" 'sniem-backward-char
-              "N" 'sniem-5-backward-char
-              "i" 'sniem-forward-char
-              "I" 'sniem-5-forward-char
-              "k" 'sniem-lock/unlock-last-point
-              "K" 'sniem-goto-last-point)
+               "j" 'sniem-join
+               "l" 'undo
+               "u" 'sniem-prev-line
+               "U" 'sniem-5-prev-line
+               "e" 'sniem-next-line
+               "E" 'sniem-5-next-line
+               "h" 'sniem-insert
+               "H" 'sniem-insert-line
+               "n" 'sniem-backward-char
+               "N" 'sniem-5-backward-char
+               "i" 'sniem-forward-char
+               "I" 'sniem-5-forward-char
+               "k" 'sniem-lock/unlock-last-point
+               "K" 'sniem-goto-last-point)
               (setq sniem-keyboard-layout 'colemak))
-    ('dvorak (user-error "[Sniem]: The dvorak layout will be added later."))
+    ('dvorak
+     (sniem-normal-set-key
+      "j" 'sniem-join
+      "u" 'undo
+      "e" 'sniem-prev-line
+      "E" 'sniem-5-prev-line
+      "n" 'sniem-next-line
+      "N" 'sniem-5-next-line
+      "i" 'sniem-insert
+      "I" 'sniem-insert-line
+      "h" 'sniem-backward-char
+      "H" 'sniem-5-backward-char
+      "t" 'sniem-forward-char
+      "T" 'sniem-5-forward-char
+      "k" 'sniem-lock/unlock-last-point
+      "K" 'sniem-goto-last-point)
+     (setq sniem-keyboard-layout (if (eq layout 'dvp)
+                                     'dvp
+                                   'dvorak)))
     (_ (user-error "[Sniem]: The %s layout is not supplied." layout))))
 
 (defun sniem-digit-argument-or-fn (arg)
@@ -312,7 +330,12 @@ LAYOUT can be qwerty, colemak or dvorak."
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
        (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
        (x (char-to-string x))))
-    ('dvorak (user-error "[Sniem]: The dvorak keyboard layout's functions has not been defined."))))
+    ('dvorak
+     (pcase (read-char)
+       (97 "1") (111 "2") (101 "3") (117 "4") (105 "5")
+       (100 "6") (104 "7") (116 "8") (110 "9") (115 "0")
+       (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (x (char-to-string x))))))
 
 (defun sniem-lock/unlock-last-point (&optional lock)
   "Lock or unlock `sniem-last-point'."
