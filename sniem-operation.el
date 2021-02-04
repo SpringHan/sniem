@@ -432,7 +432,7 @@
                   c
                 (read-char))))
     (if n
-        (don (_ n)
+        (dotimes (_ n)
           (sniem-find char 'forward))
       (sniem-find char 'forward))
     (when (region-active-p)
@@ -448,7 +448,7 @@
                   c
                 (read-char))))
     (if n
-        (don (_ n)
+        (dotimes (_ n)
           (sniem-find char 'backward))
       (sniem-find char 'backward))
     (unless no-hint
