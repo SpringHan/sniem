@@ -127,6 +127,21 @@
       (sniem-object-catch char)
     (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist." char)))
 
+(defun sniem-object-catch-round ()
+  "Catch region by `('."
+  (interactive)
+  (sniem-object-catch-by-char "("))
+
+(defun sniem-object-catch-square ()
+  "Catch region by `['."
+  (interactive)
+  (sniem-object-catch-by-char "["))
+
+(defun sniem-object-catch-curly ()
+  "Catch region by `{'."
+  (interactive)
+  (sniem-object-catch-by-char "{"))
+
 (defun sniem-object-catch-parent ()
   "Catch region for its parent."
   (interactive)
@@ -268,9 +283,9 @@
                                            sniem-object-catch-global-symbol-alist))))
 
 (sniem-normal-set-key
- "(" '(lambda () (interactive) (sniem-object-catch-by-char "("))
- "[" '(lambda () (interactive) (sniem-object-catch-by-char "["))
- "{" '(lambda () (interactive) (sniem-object-catch-by-char "{"))
+ "(" 'sniem-object-catch-round
+ "[" 'sniem-object-catch-square
+ "{" 'sniem-object-catch-curly
  "<C-M-return>" 'sniem-object-catch-parent-by-char)
 
 (provide 'sniem-object-catch)

@@ -2,6 +2,10 @@
 
 Sniem is **S**imple u**ni**ted **e**dition **m**ethod. This edition method included some good ideas from `evil` and `meow`.  
 
+## Screenshot
+
+![](./screenshot.png)
+
 ## Installation
 
 ```emacs-lisp

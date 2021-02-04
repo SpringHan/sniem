@@ -420,6 +420,7 @@ LAYOUT can be qwerty, colemak or dvorak."
 (sniem-set-leader-key ",")
 
 (require 'sniem-object-catch)
+(require 'sniem-cheatsheet)
 
 (provide 'sniem)
 
