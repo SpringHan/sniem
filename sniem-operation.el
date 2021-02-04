@@ -104,12 +104,18 @@
     (108
      (beginning-of-line)
      (push-mark (point) t t)
-     (forward-line))
+     (end-of-line)
+     (setq-local sniem-mark-line t))
     (112
      (push-mark sniem-last-point t t)
      (when sniem-last-point-locked
        (sniem-lock/unlock-last-point)))
     (109 (push-mark (point) t t))))
+
+;;; Hook for mark
+(add-hook 'deactivate-mark-hook #'(lambda ()
+                                    (when sniem-mark-line
+                                      (setq-local sniem-mark-line nil))))
 
 (defun sniem-up/down-case ()
   "Up or down case."
@@ -326,16 +332,19 @@
                 (region-end
                  (save-mark-and-excursion
                    (sniem-goto-line (cdr sniem-kmacro-range) t)
+                   (when (= (line-beginning-position) (line-end-position))
+                     (forward-line))
                    (line-end-position))))
             (apply-macro-to-region-lines region-beg region-end))))
     
-    (when (region-active-p)
-      (setq-local sniem-kmacro-range
-                  (cons (1+ (line-number-at-pos (region-beginning)))
-                        (1- (line-number-at-pos (region-end)))))
-      (print sniem-kmacro-range)
-      (goto-char (region-beginning))
-      (deactivate-mark))
+    (when (and (= action 113) (region-active-p))
+      (unless (= (line-number-at-pos (region-beginning))
+                 (line-number-at-pos (region-end)))
+        (setq-local sniem-kmacro-range
+                    (cons (1+ (line-number-at-pos (region-beginning)))
+                          (line-number-at-pos (region-end))))
+        (deactivate-mark)
+        (goto-char (region-beginning))))
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
       (101 (call-last-kbd-macro))
@@ -386,7 +395,9 @@
   (interactive "P")
   (setq n (or n 1))
   (unless (bobp)
-    (previous-line n)))
+    (previous-line n))
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-5-prev-line ()
   "Eval `sniem-prev-line' 5 times."
@@ -397,7 +408,9 @@
   (interactive "P")
   (setq n (or n 1))
   (unless (eobp)
-    (next-line n)))
+    (next-line n))
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."
@@ -405,7 +418,9 @@
 
 (sniem-define-motion sniem-first-line ()
   "Goto beginning of buffer."
-  (goto-char (point-min)))
+  (goto-char (point-min))
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-goto-line (&optional n)
   "Goto line with N."
@@ -413,17 +428,23 @@
   (if (null n)
       (with-no-warnings (end-of-buffer))
     (goto-char (point-min))
-    (forward-line (1- n))))
+    (forward-line (1- n)))
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-scroll-up-command (&optional n)
   "Scroll up."
   (interactive "P")
-  (scroll-up-command n))
+  (scroll-up-command n)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-scroll-down-command (&optional n)
   "Scroll down."
   (interactive "P")
-  (scroll-down-command n))
+  (scroll-down-command n)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-find-forward (&optional n c no-hint)
   "Find CHAR forward."
@@ -468,17 +489,41 @@
     (when (/= char (following-char))
       (goto-char current-point))))
 
-(sniem-define-motion sniem-next-word (&optional n)
-  "Move to next word."
+(sniem-define-motion sniem-next-word (&optional n no-hint word)
+  "Move to next word. If the region is active, goto the next word which is same as it."
   (interactive "P")
-  (forward-word n)
-  (sniem-motion-hint #'forward-word))
+  (if (region-active-p)
+      (let ((point (point))
+            (word (if word
+                      word
+                    (buffer-substring-no-properties (region-beginning)
+                                                    (region-end)))))
+        (deactivate-mark)
+        (ignore-errors (search-forward word))
+        (push-mark (- (point) (length word)) t t))
+    (forward-word n))
+  (unless no-hint
+    (sniem-motion-hint `(lambda () (interactive)
+                          (sniem-next-word ,n t ,word t)))))
 
-(sniem-define-motion sniem-prev-word (&optional n)
-  "Move to previous word."
+(sniem-define-motion sniem-prev-word (&optional n no-hint word)
+  "Move to prev word. If the region is active, goto the prev word which is same as it."
   (interactive "P")
-  (backward-word n)
-  (sniem-motion-hint #'backward-word))
+  (if (region-active-p)
+      (let ((point (point))
+            (word (if word
+                      word
+                    (buffer-substring-no-properties (region-beginning)
+                                                    (region-end)))))
+        (backward-word)                 ;Goto the first char of the word
+        (deactivate-mark)
+        (search-backward word)
+        (push-mark (point) t t)
+        (goto-char (+ (point) (length word))))
+    (backward-word n))
+  (unless no-hint
+    (sniem-motion-hint `(lambda () (interactive)
+                          (sniem-prev-word ,n t ,word t)))))
 
 (sniem-define-motion sniem-next-symbol (&optional n)
   "Move to next symbol."
@@ -514,11 +559,15 @@
 
 (sniem-define-motion sniem-goto-prev ()
   "Goto prev lines with `sniem-digit-argument-get'."
-  (sniem-prev-line (sniem-digit-argument-get "Move up: ") t))
+  (sniem-prev-line (sniem-digit-argument-get "Move up: ") t)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-goto-next ()
   "Goto next lines with `sniem-digit-argument-get'."
-  (sniem-next-line (sniem-digit-argument-get "Move down: ") t))
+  (sniem-next-line (sniem-digit-argument-get "Move down: ") t)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (defun sniem-goto-last-point (&optional non-point-set)
   "Goto `sniem-last-point'."

@@ -38,8 +38,13 @@ e.g.:
 (sniem-set-keyboard-layout 'dvorak)
 (sniem-set-keyboard-layout 'dvp) ; For Dvorak Programmer
 ```
+### Cheatsheet
+
+You can use `(sniem-cheatsheet)` or `?` key for default to switch the cheatsheet buffer. It'll provide you a cheatsheet with your bindings.
 
 ### Functions
+
+#### Settings
 
 - `(sniem-leader-set-key)` - Set the keys for leader keymap.
 - `(sniem-normal-set-key)` - To set keys for normal mode keymap.

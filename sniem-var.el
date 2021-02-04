@@ -87,6 +87,11 @@
   :type 'cons
   :group 'sniem)
 
+(defcustom sniem-mark-line nil
+  "If in the mark line status."
+  :type 'boolean
+  :group 'sniem)
+
 (defvar sniem-normal-mode-cursor t
   "Cursor type for normal mode.")
 
@@ -205,7 +210,7 @@
     restclient-mode help-mode deadgrep-edit-mode mix-mode authinfo-mode)
   "The alist of major modes that make sniem open normal mode.")
 
-(defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode inferior-emacs-lisp-mode)
+(defvar sniem-insert-mode-alist '(shell-mode eshell-mode vterm-mode inferior-emacs-lisp-mode erc-mode)
   "The alist of major modes that make sniem open insert mode.")
 
 (defvar sniem-input-method-closed nil
