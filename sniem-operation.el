@@ -51,7 +51,9 @@
   "Append at the next point or the end of mark region."
   (interactive)
   (if (region-active-p)
-      (goto-char (region-end))
+      (progn
+        (goto-char (region-end))
+        (deactivate-mark))
     (forward-char))
   (sniem-insert))
 
@@ -59,7 +61,9 @@
   "Append at the end of line."
   (interactive)
   (if (region-active-p)
-      (goto-char (1- (region-end)))
+      (progn
+        (goto-char (1- (region-end)))
+        (deactivate-mark))
     (end-of-line))
   (sniem-insert))
 
