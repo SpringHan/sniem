@@ -337,14 +337,19 @@
                    (line-end-position))))
             (apply-macro-to-region-lines region-beg region-end))))
     
-    (when (and (= action 113) (region-active-p))
-      (unless (= (line-number-at-pos (region-beginning))
+    (when (region-active-p)
+      (if (= action 113)
+          (if (= (line-number-at-pos (region-beginning))
                  (line-number-at-pos (region-end)))
-        (setq-local sniem-kmacro-range
-                    (cons (1+ (line-number-at-pos (region-beginning)))
-                          (line-number-at-pos (region-end))))
-        (deactivate-mark)
-        (goto-char (region-beginning))))
+              (setq-local sniem-kmacro-mark-content
+                          (buffer-substring-no-properties (region-beginning) (region-end)))
+            (setq-local sniem-kmacro-range
+                        (cons (1+ (line-number-at-pos (region-beginning)))
+                              (line-number-at-pos (region-end))))
+            (deactivate-mark)
+            (goto-char (region-beginning)))
+        (setq-local sniem-kmacro-mark-content
+                    (buffer-substring-no-properties (region-beginning) (region-end)))))
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
       (101 (call-last-kbd-macro))
@@ -492,12 +497,14 @@
 (sniem-define-motion sniem-next-word (&optional n no-hint word)
   "Move to next word. If the region is active, goto the next word which is same as it."
   (interactive "P")
-  (if (region-active-p)
+  (if (or (region-active-p) word sniem-kmacro-mark-content)
       (let ((point (point))
-            (word (if word
-                      word
-                    (buffer-substring-no-properties (region-beginning)
-                                                    (region-end)))))
+            (word (cond (word word)
+                        (sniem-kmacro-mark-content
+                         (prog1 sniem-kmacro-mark-content
+                           (setq-local sniem-kmacro-mark-content nil)))
+                        (t (buffer-substring-no-properties (region-beginning)
+                                                           (region-end))))))
         (deactivate-mark)
         (ignore-errors (search-forward word))
         (push-mark (- (point) (length word)) t t))
@@ -509,12 +516,14 @@
 (sniem-define-motion sniem-prev-word (&optional n no-hint word)
   "Move to prev word. If the region is active, goto the prev word which is same as it."
   (interactive "P")
-  (if (region-active-p)
+  (if (or (region-active-p) word sniem-kmacro-mark-content)
       (let ((point (point))
-            (word (if word
-                      word
-                    (buffer-substring-no-properties (region-beginning)
-                                                    (region-end)))))
+            (word (cond (word word)
+                        (sniem-kmacro-mark-content
+                         (prog1 sniem-kmacro-mark-content
+                           (setq-local sniem-kmacro-mark-content nil)))
+                        (t (buffer-substring-no-properties (region-beginning)
+                                                           (region-end))))))
         (backward-word)                 ;Goto the first char of the word
         (deactivate-mark)
         (search-backward word)

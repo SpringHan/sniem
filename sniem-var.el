@@ -87,6 +87,11 @@
   :type 'cons
   :group 'sniem)
 
+(defcustom sniem-kmacro-mark-content nil
+  "The content which was marked by kmacro."
+  :type 'string
+  :group 'sniem)
+
 (defcustom sniem-mark-line nil
   "If in the mark line status."
   :type 'boolean
@@ -173,6 +178,7 @@
     (define-key map "-" 'kill-current-buffer)
     (define-key map "_" 'kill-buffer-and-window)
     (define-key map "." 'sniem-move-last-point)
+    (define-key map "?" 'sniem-cheatsheet)
     (define-key map (kbd "SPC") 'sniem-digit-argument-or-fn)
     (define-key map (kbd "RET") 'sniem-object-catch)
     (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)
