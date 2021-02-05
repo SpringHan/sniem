@@ -65,8 +65,13 @@
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)
-  (while (sniem-object-catch--get char parent)
-    (backward-char)))
+  (let ((point (point)))
+    (while (not (eq 'no (ignore-errors (sniem-object-catch--get char parent))))
+      (if (bobp)
+          (progn
+            (goto-char point)
+            (keyboard-quit))
+        (backward-char)))))
 
 (defun sniem-object-catch--get (char parent)
   "Get the object."
@@ -118,6 +123,7 @@
     (goto-char prefix-point)
     (push-mark second-point t t)
     (setq-local sniem-object-catch-action `(,char . ,parent))
+    (setq go-on 'no)
     go-on))
 
 (defun sniem-object-catch-by-char (char)

@@ -359,6 +359,11 @@
       (101 (call-last-kbd-macro))
       (110 (call-interactively (name-last-kbd-macro))))))
 
+(advice-add 'keyboard-quit :before
+            (lambda ()
+              (when sniem-kmacro-mark-content
+                (setq-local sniem-kmacro-mark-content nil))))
+
 ;;; Motions
 
 (sniem-define-motion sniem-beginning-of-line ()
