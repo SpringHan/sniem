@@ -166,8 +166,7 @@
 
 (defun sniem-change-mode (mode)
   "Change edition mode."
-  (if (eq (sniem-current-mode) mode)
-      (user-error "[Sniem]: The current mode is %S!You need't change it." mode)
+  (unless (eq (sniem-current-mode) mode)
     (pcase mode
       ('normal (sniem-normal-mode t))
       ('insert (sniem-insert-mode t))
@@ -422,6 +421,10 @@ LAYOUT can be qwerty, colemak or dvorak."
 
 (require 'sniem-object-catch)
 (require 'sniem-cheatsheet)
+
+;;; Third-Party Settings
+(advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
+(advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)
 
 (provide 'sniem)
 
