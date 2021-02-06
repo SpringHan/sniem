@@ -248,7 +248,7 @@
                         (setq n (read-char (format "%s:%d%s"
                                                    (sniem-paste--output-contents i)
                                                    (1+ (/ i 9))
-                                                   (propertize "[n]: next page, [p]: prev page or 1, [Number]: insert content"
+                                                   (propertize "[n]: next page, [p]: prev page or 1, [1-9]: insert content, [q]: cancel"
                                                                'face 'font-lock-comment-face)))))))
               (pcase n
                 (110 (setq i (+ i 9)))

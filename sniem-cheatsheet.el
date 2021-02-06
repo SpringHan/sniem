@@ -30,9 +30,6 @@
 
 ;;; Code:
 
-(require 's)
-(require 'dash)
-
 (defconst sniem-cheatsheet-layout-qwerty
   "                                                      Cheatsheet For Qwerty
 

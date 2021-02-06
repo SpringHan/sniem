@@ -30,6 +30,9 @@
 
 ;;; Code:
 
+(require 's)
+(require 'dash)
+
 (defgroup sniem nil
   "The group for sniem."
   :group 'applications)
