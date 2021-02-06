@@ -123,7 +123,8 @@
     (goto-char prefix-point)
     (push-mark second-point t t)
     (setq-local sniem-object-catch-action `(,char . ,parent))
-    (setq go-on 'no)
+    (unless go-on
+      (setq go-on 'no))
     go-on))
 
 (defun sniem-object-catch-by-char (char)
