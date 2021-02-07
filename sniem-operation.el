@@ -342,7 +342,8 @@
                    (when (= (line-beginning-position) (line-end-position))
                      (forward-line))
                    (line-end-position))))
-            (apply-macro-to-region-lines region-beg region-end))))
+            (apply-macro-to-region-lines region-beg region-end)
+            (setq-local sniem-kmacro-range nil))))
     
     (when (region-active-p)
       (if (= action 113)

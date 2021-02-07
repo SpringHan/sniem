@@ -138,7 +138,8 @@
           (when (= tmp 59)
             (keyboard-quit))
           (setq key (concat key
-                            (cond ((= tmp 44) "C-")
+                            (cond ((= tmp 32) (concat (char-to-string (read-char)) " "))
+                                  ((= tmp 44) "C-")
                                   ((= tmp 46) "M-")
                                   ((= tmp 47) "C-M-")
                                   (t (concat (char-to-string tmp) " "))))))
