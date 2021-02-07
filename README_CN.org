@@ -1,0 +1,98 @@
+* Sniem
+** 什么是 sniem
+   Sniem 全称 Simple United Edition Method，是一款新的编辑模式
+** 特性
+   - ~last-point~
+     ~last-point~ 是 sniem 中贯穿所有动作和几乎所有操作的概念，如其名，当执行任意动作时，一般情况下执行前的那个位置会被设置为 ~last-point~
+     
+   - ~leader-key~
+     Sniem 自带 leader key，leader map 的按键可通过 ~(sniem-leader-set-key)~ 来设置。也可通过 ~(sniem-set-leader-key)~ 来设置 leader 的按键。
+     #+begin_src emacs-lisp
+       (sniem-leader-set-key
+        "d" 'sniem-digit-argument-or-fn
+        "D" 'dired)
+       (sniem-set-leader-key ",")
+     #+end_src
+
+   - Modes
+     Sniem 有以下几个模式
+     - ~NORMAL~
+       一般情况下的模式，此模式下绑定了许多按键，可通过 ~(sniem-cheatsheet)~ 或者 ~?~ 键来查看绑定的按键
+       
+     - ~INSERT~
+       此模式下 ~<ESC>~ (可通过 ~(sniem-set-quit-insert-key)~ 设置) 按键会被绑定为 ~(sniem-quit-insert)~ 以退出此模式 ，其它按键都是 ~global-map~ 里的按键
+       
+     - ~MOTION~
+       与 ~INSERT~ 模式相同，除了 ~<SPC>~ 键被绑定为 leader，其它按键都是原本的按键。(原来的空格键被绑定为了 ~<SPC> <SPC>~)
+
+   - Keyboard layout
+     Sniem 针对目前主流的四种键盘布局提供了支持，可通过 ~(sniem-set-keyboard-layout)~ 来设置
+     #+begin_src emacs-lisp
+       (sniem-set-keyboard-layout 'qwerty)
+       (sniem-set-keyboard-layout 'colemak)
+       (sniem-set-keyboard-layout 'dvorak)
+       (sniem-set-keyboard-layout 'dvp)        ;For Dvorak Programmer
+     #+end_src
+     在设置了键盘布局之后，Sniem 会根据键盘布局来设置 ~NORMAL~ 模式下的默认按键，并生成当前布局的 cheatsheet
+
+   - Keypad
+     Sniem 提供 Keypad 支持，进入 Keypad 之后: ~,~ 为 ~C-~， ~.~ 为 ~M-~， ~/~ 为 ~C-M-~ ；按下空格再按上面这几个键，则是它们本身。
+
+   - middle-keyboard-digit-argument-or-function
+     此功能默认绑定在 ~<SPC>~ 键上。执行后，可通过键盘中间的键来分别代替数字键和减号，回车即录入完毕；也可按下以下键来进行特殊操作:
+     | Key | function                           |
+     | ,   | 重复 object-catch                  |
+     | .   | 设置 last-goto-point 到当前位置 |
+     | SPC | 执行 motion-hint                   |
+     | //  | 反转 object-catch 方向             |
+     | <   | 前往当前行第一个非空字符           |
+** 一些特殊操作
+   - 移动
+     - ~(sniem-goto-prev)~ & ~(sniem-goto-next)~
+       使用 ~middle-keyboard~ 来获取前进或后退的行数，并执行
+       
+     - ~(sniem-next-word)~ & ~(sniem-prev-word)~
+       一般情况下，跳转到下一个词。如果有内容被选中，则跳转到下一个与选中内容相同的位置
+
+     - ~(sniem-goto-last-point)~
+       一般情况下，跳转到 ~last-point~ 的位置。如果设置了 ~last-goto-line~ ，则跳转到 ~last-goto-line~ 的位置
+
+   - 编辑操作
+     - operation-about-last-point
+       Sniem 中几乎所有编辑操作都与 ~last-point~ 有关 (除了 ~(sniem-paste)~)
+       - 上述的编辑操作只需按下 ~p~ 即可进行与 ~last-point~ 有关的操作
+       - ~(sniem-lock/unlock-last-point)~
+         将 ~last-point~ 锁定并显示其位置，此时任何移动都不会改变其值。
+
+     - operation-in-region
+       所有以 ~-in-region~ 为结尾的操作，都是在 region 中对其开头的后一个位置到结尾的前一个位置进行编辑
+
+     - ~object-catch~
+       Sniem 提供了一个智能获取 object 的功能， ~object-catch~ 。此源于本人用 ~evil~ 的时候写的一个插件: ~evil-wildfire~ 。
+       - ~<RET>~
+         按下此键即可选取离光标最近的 pair
+
+       - ~<M-RET>~
+         按下此键会选取当前选中的 pair 的父级 pair
+
+       - ~<C-RET>~
+         按下此键后，输入所需 pair ，然后即可选取离光标最近的 pair
+
+       - ~<C-M-RET>~
+         按下此键后，输入所需 pair ，然后会选取当前所选的父级 pair
+
+       - ~(~ & ~[~ & ~{~
+         可用于快速选取指定 pair
+
+     - ~(sniem-paste)~
+       Sniem 的粘贴有些许不同，默认按下 ~p~ 键后进入粘贴面板，随后可用 ~n~ & ~p~ 进行翻页，如果在第一页按下 ~p~ ，则粘贴第一个结果。
+       可用数字键对内容进行选择
+
+     - ~(sniem-macro)~
+       Sniem 为键盘宏提供了一些不错的功能。
+       - 基本功能
+         ~q~ 录制， ~e~ 执行， ~n~ 为最后一个宏命名
+
+       - 进阶功能
+         - 在选中多行的情况下录制，在录制完之后会对所选的每一行执行一遍
+         - 在选中同行的内容后录制，在录制完之后会记录下内容，此时执行 ~(sniem-next-word)~ 或者 ~(sniem-prev-word)~ 即跳转到此内容，按下 ~C-g~ 可取消内容锁定

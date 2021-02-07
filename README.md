@@ -1,5 +1,7 @@
 # Sniem
 
+[中文文档](./README_CN.org)
+
 Sniem is **S**imple u**ni**ted **e**dition **m**ethod. This edition method included some good ideas from `evil` and `meow`.  
 
 ## Screenshot
