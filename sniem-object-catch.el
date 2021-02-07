@@ -272,13 +272,13 @@
   (declare (indent 1))
   `(let ((sym-alist sniem-object-catch-global-symbol-alist)
          tmp)
-     (dolist (list ,alist)
+     (dolist (list ',alist)
        (if (setq tmp (sniem-object-catch--symbol-exists-p (car list)))
            (setf (cdr (nth tmp sym-alist)) (cdr list))
          (add-to-list 'sym-alist list)))
-     (add-hook (intern (concat (symbol-name ,mode-name) "-hook"))
+     (add-hook (intern (concat (symbol-name ',mode-name) "-hook"))
                `(lambda () (setq-local sniem-object-catch-global-symbol-alist
-                                       ,sym-alist)))))
+                                       ',sym-alist)))))
 
 (add-hook 'deactivate-mark-hook #'(lambda ()
                                     (when sniem-object-catch-last-points
