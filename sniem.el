@@ -1,11 +1,11 @@
-;;; sniem.el --- Simple united edition method -*- lexical-binding: t -*-
+;;; sniem.el --- Simple united editing method -*- lexical-binding: t -*-
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
 ;; Package-Requires: ((emacs))
 ;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: Edition Method
+;; Keywords: Editing Method
 
 
 ;; This file is not part of GNU Emacs
@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; Simple united edition method.
+;; Simple united editing method.
 
 ;;; Code:
 
@@ -43,7 +43,7 @@
 
 
 (define-minor-mode sniem-mode
-  "Simple united edition method mode."
+  "Simple united editing method mode."
   nil nil sniem-mode-keymap
   (if sniem-mode
       (sniem--enable)
@@ -169,7 +169,7 @@
         (throw 'exists t)))))
 
 (defun sniem-change-mode (mode)
-  "Change edition mode."
+  "Change editing mode."
   (unless (eq (sniem-current-mode) mode)
     (pcase mode
       ('normal (sniem-normal-mode t))

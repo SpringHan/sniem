@@ -1,6 +1,6 @@
 * Sniem
 ** 什么是 sniem
-   Sniem 全称 Simple United Edition Method，是一款新的编辑模式
+   Sniem 全称 Simple United Editing Method，是一款新的编辑模式
 ** 特性
    - ~last-point~
      ~last-point~ 是 sniem 中贯穿所有动作和几乎所有操作的概念，如其名，当执行任意动作时，一般情况下执行前的那个位置会被设置为 ~last-point~
