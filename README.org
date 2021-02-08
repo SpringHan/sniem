@@ -129,3 +129,23 @@
          - When you record after selecting some lines, the kmacro will be executed to all the lines you selected after recording.
          - If you record after selecting content in the same line, the content will be recorded. Then you can execute ~(sniem-next-word)~ or ~(sniem-prev-word)~ to goto the next or previous content same as it. Execute ~(keyboard-quit)~ can cancel the content record.
 
+** Custom
+   - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
+
+     Theses variables are the help message for their operations. If you don't want them, you can execute this function:
+     #+begin_src emacs-lisp
+       (setq sniem-center-message nil
+             sniem-mark-message nil
+             sniem-delete-message nil
+             sniem-change-message nil
+             sniem-yank-message nil
+             sniem-macro-message nil)
+     #+end_src
+
+   - ~sniem-xxx-mode-cursor~
+
+     The ~xxx~ can be: ~normal~, ~insert~, ~motion~.
+
+   - ~sniem-motion-hint-sit-time~
+
+     This is the sit time for motion hint. Default is ~1~.

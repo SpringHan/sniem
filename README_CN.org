@@ -132,3 +132,23 @@
 
          - 在选中多行的情况下录制，在录制完之后会对所选的每一行执行一遍
          - 在选中同行的内容后录制，在录制完之后会记录下内容，此时执行 ~(sniem-next-word)~ 或者 ~(sniem-prev-word)~ 即跳转到此内容，按下 ~C-g~ 可取消内容锁定
+** 自定义
+   - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
+
+     这些变量是其操作的帮助信息。如果你不想要它们，可以执行一下语句:
+     #+begin_src emacs-lisp
+       (setq sniem-center-message nil
+             sniem-mark-message nil
+             sniem-delete-message nil
+             sniem-change-message nil
+             sniem-yank-message nil
+             sniem-macro-message nil)
+     #+end_src
+
+   - ~sniem-xxx-mode-cursor~
+
+     ~xxx~ 可以是: ~normal~, ~insert~, ~motion~
+
+   - ~sniem-motion-hint-sit-time~
+
+     这是动作提示的显示时间，默认为 ~1~
