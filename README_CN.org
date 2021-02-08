@@ -1,4 +1,16 @@
 * Sniem
+  [[file:README.org][English Doc]]
+** 截图
+   [[file:screenshot.png]]
+** 安装
+   #+begin_src emacs-lisp
+     (use-package
+       sniem
+       :load-path "path/to/sniem"
+       :init (global-sniem-mode t)
+       :config
+       (sniem-set-keyboard-layout 'qwerty))
+   #+end_src
 ** 什么是 sniem
    Sniem 全称 Simple United Editing Method，是一款新的编辑模式
 ** 特性
@@ -40,29 +52,29 @@
 
    - middle-keyboard-digit-argument-or-function
      此功能默认绑定在 ~<SPC>~ 键上。执行后，可通过键盘中间的键来分别代替数字键和减号，回车即录入完毕；也可按下以下键来进行特殊操作:
-     | Key | function                           |
-     | ,   | 重复 object-catch                  |
+     | Key | function                        |
+     | ,   | 重复 object-catch               |
      | .   | 设置 last-goto-point 到当前位置 |
-     | SPC | 执行 motion-hint                   |
-     | //  | 反转 object-catch 方向             |
-     | <   | 前往当前行第一个非空字符           |
+     | SPC | 执行 motion-hint                |
+     | /   | 反转 object-catch 方向          |
+     | <   | 前往当前行第一个非空字符        |
 ** 一些特殊操作
    - 移动
      - ~(sniem-goto-prev)~ & ~(sniem-goto-next)~
        使用 ~middle-keyboard~ 来获取前进或后退的行数，并执行
        
      - ~(sniem-next-word)~ & ~(sniem-prev-word)~
-       一般情况下，跳转到下一个词。如果有内容被选中，则跳转到下一个与选中内容相同的位置
+       一般情况下，跳转到下一个词或者上一个词。如果有内容被选中，则跳转到下一个或上一个与选中内容相同的位置
 
      - ~(sniem-goto-last-point)~
-       一般情况下，跳转到 ~last-point~ 的位置。如果设置了 ~last-goto-line~ ，则跳转到 ~last-goto-line~ 的位置
+       一般情况下，跳转到 ~last-point~ 的位置。如果设置了 ~last-goto-point~ ，则跳转到 ~last-goto-point~ 的位置
 
    - 编辑操作
      - operation-about-last-point
        Sniem 中几乎所有编辑操作都与 ~last-point~ 有关 (除了 ~(sniem-paste)~)
        - 上述的编辑操作只需按下 ~p~ 即可进行与 ~last-point~ 有关的操作
        - ~(sniem-lock/unlock-last-point)~
-         将 ~last-point~ 锁定并显示其位置，此时任何移动都不会改变其值。
+         将 ~last-point~ 锁定或者解除锁定，此时任何移动都不会改变其值。如果被锁定了，会在当前 buffer 显示出来。
 
      - operation-in-region
        所有以 ~-in-region~ 为结尾的操作，都是在 region 中对其开头的后一个位置到结尾的前一个位置进行编辑

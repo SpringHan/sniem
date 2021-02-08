@@ -269,7 +269,7 @@
             " means the operation will edit the regions' content. You can mark a content, "
             "then use operations with [mark] sign to edit them.\n"
             (propertize "LP" 'face 'font-lock-constant-face)
-            " means the last-point, all of the sniem operations will use it.")
+            " means the last-point, all of the sniem motions and most of the operations will use it.")
     (text-mode)
     (toggle-truncate-lines t)
     (display-line-numbers-mode -1)
