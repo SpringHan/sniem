@@ -15,9 +15,11 @@
    Sniem means Simple United Editing Method，it's a new editing method for Emacs.
 ** Features
    - ~last-point~
+
      ~last-point~ is a thing that through all motions and most of operations. Like its name, when execute any motions, the last position will be set to ~last-point~.
      
    - ~leader-key~
+
      Sniem has leader key，the key of leader map can be set by ~(sniem-leader-set-key)~. And you can use ~(sniem-set-leader-key)~ to set the key of leader.
      #+begin_src emacs-lisp
        (sniem-leader-set-key
@@ -27,6 +29,7 @@
      #+end_src
 
    - Modes
+
      Sniem has 3 modes.
      - ~NORMAL~: This mode is the default mode for the editing buffers.
 
@@ -35,6 +38,7 @@
      - ~MOTION~: This mode is used in special modes, there's only has one binding for `sniem`, that is `<SPC>` which can let you use leader keys.
 
      - Keyboard layout
+
        Sniem provides supports for the mainly 4 layouts，you can use ~(sniem-set-keyboard-layout)~ to set.
        #+begin_src emacs-lisp
          (sniem-set-keyboard-layout 'qwerty)
@@ -45,10 +49,12 @@
        After you set the keyboard layout, Sniem will set the default keys in ~NORMAL~ mode accroding to your layout, then create the cheatsheet.
 
      - Keypad
-       Sniem provides the Keypad function, After you execute the Keypad, When you press: ~,~ is ~C-~, ~.~ is ~M-~, ~/~ is ~C-M-~. After you press ~<SPC>~, it will reture the next key itself which you press.
+
+       Sniem provides the Keypad function, After you execute the Keypad, When you press: ~,~ is ~C-~ , ~.~ is ~M-~ , ~/~ is ~C-M-~ . After you press ~<SPC>~, it will reture the next key itself which you press.
 
      - middle-keyboard-digit-argument-or-function
-       This function is defaultly bound on ~<SPC>~. After you execute it, the middle keys of the keyboard can be instead of numbers and ~-~, the record will be over after you pressed ~SPC~. You can also use the keys in the table to do the special operations:
+
+       This function is defaultly bound on ~<SPC>~. After you execute it, the middle keys of the keyboard can be instead of numbers and ~-~, the record will be over after you pressed ~<SPC>~. You can also use the keys in the table to do the special operations:
        | Key | function                                        |
        | ,   | repeat object-catch                             |
        | .   | set the last-goto-point to the current position |
@@ -57,52 +63,69 @@
        | <   | Goto the first non-nil char in current line     |
 ** Some special operations
    - Motions
+
      - ~(sniem-goto-prev)~ & ~(sniem-goto-next)~
+
        Use ~middle-keyboard~ to get the lines to forward or backward, then execute it.
        
      - ~(sniem-next-word)~ & ~(sniem-prev-word)~
+
        Normally, goto the next or previous word. If there is a content selected, goto the next or previous content same as it.
 
      - ~(sniem-goto-last-point)~
+
        Normally, goto the ~last-point~. If the ~last-goto-point~, goto the ~last-goto-point~.
 
    - Editing operations
+
      - operation-about-last-point
+
        Most of the editing operations is related to ~last-point~ (Without ~(sniem-paste)~).
        - You can press ~p~ after the operations to execute it with ~last-point~.
        - ~(sniem-lock/unlock-last-point)~
          Lock or unlock the ~last-point~. When it is locked, it will display in the buffer.
 
      - operation-in-region
+
        All of the operations which are end with ~-in-region~ will edit the area from the forward point of the start of region to the backward point of the end of the region.
 
      - ~object-catch~
+
        Sniem provides functions to get the object smartly: ~object-catch~.
        - ~<RET>~
+
          Get the closest pair to cursor.
 
        - ~<M-RET>~
+
          Get the parent pair of the selected pair.
 
        - ~<C-RET>~
+
          Input the char of the pair, then get the closest to cursor.
 
        - ~<C-M-RET>~
+
          Input the char of the pair, then get the parent of the selected pair.
 
        - ~(~ & ~[~ & ~{~
+
          Quickly get the pair.
 
      - ~(sniem-paste)~
+
        Defaultly, press ~p~ to enter the interface of the ~sniem-paste~. Then you can use ~n~ & ~p~ to flip. You can paste the first content when you press ~p~ in the first page.
        ~[1-9]~ to select the content.
 
      - ~(sniem-macro)~
+
        Sniem provides some great kmacro functions.
        - Basic
+
          ~q~ for record, ~e~ for execution, ~n~ to name the last kmacro.
 
        - Advance
+
          - When you record after selecting some lines, the kmacro will be executed to all the lines you selected after recording.
          - If you record after selecting content in the same line, the content will be recorded. Then you can execute ~(sniem-next-word)~ or ~(sniem-prev-word)~ to goto the next or previous content same as it. Execute ~(keyboard-quit)~ can cancel the content record.
 
