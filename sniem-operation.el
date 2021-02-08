@@ -371,6 +371,24 @@
               (when sniem-kmacro-mark-content
                 (setq-local sniem-kmacro-mark-content nil))))
 
+(defun sniem-change-pair (prefix)
+  "Change the region's pair."
+  (interactive "c")
+  (let ((second (sniem-object-catch--get-second-char (char-to-string prefix)))
+        (prefix-point (region-beginning))
+        (second-point (region-end))
+        (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning))))
+        (second-char (buffer-substring-no-properties (region-end) (1+ (region-end)))))
+    (if (null second)
+        (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'")
+      (save-mark-and-excursion
+        (goto-char prefix-point)
+        (delete-char 1)
+        (insert prefix)
+        (goto-char second-point)
+        (delete-char -1)
+        (insert second)))))
+
 ;;; Motions
 
 (sniem-define-motion sniem-beginning-of-line ()

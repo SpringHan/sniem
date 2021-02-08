@@ -322,7 +322,8 @@ LAYOUT can be qwerty, colemak or dvorak."
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
     ("<" 'back-to-indentation)
-    ("," 'sniem-object-catch-repeat)))
+    ("," 'sniem-object-catch-repeat)
+    ("c" 'sniem-change-pair)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
