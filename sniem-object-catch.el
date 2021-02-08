@@ -114,6 +114,8 @@
                         (throw 'point-stop nil)
                       (funcall move)))))))
 
+      (when (and (string= char "'") (sniem-object-catch-lisp-mode-p))
+        (setq go-on t))
       (when (nth 3 (syntax-ppss prefix-point))
         (setq-local sniem-object-catch-prefix-string-p t))
       (if (not char)
@@ -263,7 +265,7 @@
   (catch 'second-char
     (dolist (char-cons sniem-object-catch-global-symbol-alist)
       (when (string= prefix (car char-cons))
-        (throw 'second-char (cdr char-cons))))))
+        (throw 'second-char (cdr-safe char-cons))))))
 
 (defun sniem-object-catch--symbol-exists-p (symbol)
   "Check if the SYMBOL is exists."
@@ -273,6 +275,10 @@
         (when (string= symbol (car symbol-cons))
           (throw 'exists index))
         (setq index (1+ index))))))
+
+(defun sniem-object-catch-lisp-mode-p ()
+  "Check if the current major mode belongs to lisp mode."
+  (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
 (defmacro prog3 (form1 form2 form3 &rest body)
   "Eval FORM1, FORM2, FORM3 and body, return the FORM3."
@@ -301,12 +307,6 @@
 (add-hook 'deactivate-mark-hook #'(lambda ()
                                     (when sniem-object-catch-last-points
                                       (setq-local sniem-object-catch-last-points nil))))
-
-;;; Init
-(add-hook 'emacs-lisp-mode-hook
-          #'(lambda () (setq-local sniem-object-catch-global-symbol-alist
-                                   (delete '("'" . "'")
-                                           sniem-object-catch-global-symbol-alist))))
 
 (sniem-normal-set-key
  "(" 'sniem-object-catch-round
