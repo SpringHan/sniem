@@ -153,3 +153,14 @@
    - ~sniem-motion-hint-sit-time~
 
      这是动作提示的显示时间，默认为 ~1~
+
+   - 模式提示
+     
+     如果你使用 [[https://github.com/manateelazycat/awesome-tray][awesome-tray]], sniem 将自动把 ~(sniem-state)~ 添加到指定列表，供你使用。
+     或者，你可以根据你的 modeline 来设置模式提醒。
+
+     如果你使用的是默认的 modeline, 你可以尝试以下方案:
+     #+begin_src emacs-lisp
+       (setq-default mode-line-format (append '((:eval (sniem-state))) mode-line-format))
+       (force-mode-line-update)
+     #+end_src

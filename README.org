@@ -150,3 +150,14 @@
    - ~sniem-motion-hint-sit-time~
 
      This is the sit time for motion hint. Default is ~1~.
+
+   - State Hint
+     
+     If you use [[https://github.com/manateelazycat/awesome-tray][awesome-tray]], sniem will automaticly set ~(sniem-state)~ to the alist, so you can use it.
+     Otherwise, you can set the state hint accroding to your modeline.
+
+     If you use the default modeline, you can try this:
+     #+begin_src emacs-lisp
+       (setq-default mode-line-format (append '((:eval (sniem-state))) mode-line-format))
+       (force-mode-line-update)
+     #+end_src

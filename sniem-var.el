@@ -249,18 +249,19 @@
   "The face for motion hint."
   :group 'sniem)
 
-;;; Awesome tray support
+;;; State info print support
+(defun sniem-state ()
+  "The function to show the current sniem state."
+  (pcase (sniem-current-mode)
+    ('normal (format "[N:%s%s%s]"
+                     (if sniem-object-catch-forward-p ">" "<")
+                     (if sniem-last-point-locked ":l" "")
+                     (if sniem-last-goto-point ":L" "")))
+    ('insert "[I]")
+    ('motion "[M]")))
+
 (when (featurep 'awesome-tray)
-  (defun awesome-tray-sniem-state ()
-    "The function to show the current sniem state."
-    (pcase (sniem-current-mode)
-      ('normal (format "[N:%s%s%s]"
-                       (if sniem-object-catch-forward-p ">" "<")
-                       (if sniem-last-point-locked ":l" "")
-                       (if sniem-last-goto-point ":L" "")))
-      ('insert "[I]")
-      ('motion "[M]")))
-  (add-to-list 'awesome-tray-module-alist '("sniem-state" . (awesome-tray-sniem-state awesome-tray-module-evil-face))))
+  (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
 
 (provide 'sniem-var)
 
