@@ -33,9 +33,9 @@
      Sniem has 3 modes.
      - ~NORMAL~: This mode is the default mode for the editing buffers.
 
-     - ~INSERT~: This mode will be used when you executed `sniem-insert` in `NORMAL` mode. It's used to edit. In this mode, there's only one binding for `sniem`, that is `<ESC>` which will make you exit `INSERT` mode back to `NORMAL` mode.
+     - ~INSERT~: This mode will be used when you executed ~sniem-insert~ in ~NORMAL~ mode. It's used to edit. In this mode, there's only one binding for ~sniem~, that is ~<ESC>~ which will make you exit ~INSERT~ mode back to ~NORMAL~ mode.
 
-     - ~MOTION~: This mode is used in special modes, there's only has one binding for `sniem`, that is `<SPC>` which can let you use leader keys.
+     - ~MOTION~: This mode is used in special modes, there's only has one binding for ~sniem~, that is ~<SPC>~ which can let you use leader keys.
 
      - Keyboard layout
 
