@@ -56,7 +56,7 @@
 
    - Keypad
 
-     Sniem 提供 Keypad 支持，进入 Keypad 之后: ~,~ 为 ~C-~ ， ~.~ 为 ~M-~， ~/~ 为 ~C-M-~ ；按下空格再按上面这几个键，则是它们本身。
+     Sniem 提供 Keypad 支持，进入 Keypad 之后: , 为 ~C-~ ， . 为 ~M-~ ， / 为 ~C-M-~ ；按下空格再按上面这几个键，则是它们本身。
 
    - middle-keyboard-digit-argument-or-function
 

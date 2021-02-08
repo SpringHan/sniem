@@ -50,7 +50,7 @@
 
      - Keypad
 
-       Sniem provides the Keypad function, After you execute the Keypad, When you press: ~,~ is ~C-~ , ~.~ is ~M-~ , ~/~ is ~C-M-~ . After you press ~<SPC>~, it will reture the next key itself which you press.
+       Sniem provides the Keypad function, After you execute the Keypad, When you press: , is ~C-~ , . is ~M-~ , / is ~C-M-~ . After you press ~<SPC>~, it will reture the next key itself which you press.
 
      - middle-keyboard-digit-argument-or-function
 
