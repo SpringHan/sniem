@@ -59,6 +59,11 @@
   :type 'symbol
   :group 'sniem-object-catch)
 
+(defcustom sniem-object-catch-prefix-string-p nil
+  "If the prefix is string."
+  :type 'boolean
+  :group 'sniem-object-catch)
+
 (defvar global-sniem-object-catch-status nil
   "The status for `global-sniem-object-catch-mode'")
 
@@ -71,7 +76,9 @@
           (progn
             (goto-char point)
             (keyboard-quit))
-        (backward-char)))))
+        (backward-char)))
+    (when sniem-object-catch-prefix-string-p
+      (setq-local sniem-object-catch-prefix-string-p nil))))
 
 (defun sniem-object-catch--get (char parent)
   "Get the object."
@@ -107,6 +114,8 @@
                         (throw 'point-stop nil)
                       (funcall move)))))))
 
+      (when (nth 3 (syntax-ppss prefix-point))
+        (setq-local sniem-object-catch-prefix-string-p t))
       (if (not char)
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char)
@@ -187,9 +196,12 @@
     (while (/= times 0)
       (setq tmp (buffer-substring-no-properties (point) (1+ (point))))
       (cond ((and (string= tmp prefix) (not (string= prefix second-char))
-                  (not (nth 3 (syntax-ppss))))
+                  (not (nth 3 (syntax-ppss)))
+                  (not (sniem-object-catch-backslash-p)))
              (setq times (1+ times)))
-            ((and (string= tmp second-char) (> times 0))
+            ((and (string= tmp second-char) (> times 0)
+                  (not (sniem-object-catch-backslash-p))
+                  (eq sniem-object-catch-prefix-string-p (nth 3 (syntax-ppss))))
              (setq times (1- times)))
             ((and (string= tmp second-char) (= times -1))
              (setq times 0)))
@@ -266,6 +278,12 @@
   "Eval FORM1, FORM2, FORM3 and body, return the FORM3."
   (declare (indent 0) (debug t))
   `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
+
+(defun sniem-object-catch-backslash-p ()
+  "Check if the char before current point is \\."
+  (save-mark-and-excursion
+    (backward-char)
+    (= 92 (following-char))))
 
 (defmacro sniem-object-catch-mode-defalist (mode-name &rest alist)
   "Define alist for major mode."
