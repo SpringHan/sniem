@@ -64,7 +64,7 @@
        | SPC | execute function in motion-hint                 |
        | /   | reverse the direction of object-catch           |
        | <   | Goto the first non-nil char in current line     |
-       | c   | Add or change the pair of region    |
+       | c   | Add or change the pair of region                |
 ** Some special operations
    - Motions
 
