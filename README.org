@@ -2,6 +2,9 @@
   [[file:README_CN.org][中文文档]]
 ** Screenshot
    [[file:screenshot.png]]
+** Dependences
+   - ~s~
+   - ~dash~
 ** Installation
    #+begin_src emacs-lisp
      (use-package
@@ -61,7 +64,7 @@
        | SPC | execute function in motion-hint                 |
        | /   | reverse the direction of object-catch           |
        | <   | Goto the first non-nil char in current line     |
-       | c   | Change the pair of region                       |
+       | c   | Add or change the pair of region    |
 ** Some special operations
    - Motions
 

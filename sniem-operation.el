@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs))
+;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: Editing Method
 
@@ -371,8 +371,8 @@
               (when sniem-kmacro-mark-content
                 (setq-local sniem-kmacro-mark-content nil))))
 
-(defun sniem-change-pair (prefix)
-  "Change the region's pair."
+(defun sniem-pair (prefix)
+  "Modify the region's pair."
   (interactive "c")
   (let ((second (sniem-object-catch--get-second-char (char-to-string prefix)))
         (prefix-point (region-beginning))
@@ -383,11 +383,32 @@
         (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'")
       (save-mark-and-excursion
         (goto-char prefix-point)
-        (delete-char 1)
+        (when (sniem-pair--pair-p prefix-char)
+          (delete-char 1))
         (insert prefix)
         (goto-char second-point)
-        (delete-char -1)
+        (if (sniem-pair--pair-p prefix-char)
+            (delete-char -1)
+          (forward-char))
         (insert second)))))
+
+(defun sniem-pair--pair-p (char-string)
+  "Check if the CHAR belongs to pair."
+  (let ((alpha-list '("a" "A" "b" "B" "c" "C" "d" "D" "e" "E" "f" "F" "g" "G"
+                      "h" "H" "i" "I" "j" "J" "k" "K" "l" "L" "m" "M" "n" "N"
+                      "o" "O" "p" "P" "q" "Q" "r" "R" "s" "S" "t" "T" "u" "U"
+                      "v" "V" "w" "W" "x" "X" "y" "Y" "z" "Z" "0" "1" "2" "3"
+                      "4" "5" "6" "7" "8" "9"))
+        result)
+    ;; Write like this because `memq' and others can not work well.
+    (not (progn
+           (catch 'equalp
+             (mapc #'(lambda (a)
+                       (when (string= a char-string)
+                         (setq result t)
+                         (throw 'equalp t)))
+                   alpha-list))
+           result))))
 
 ;;; Motions
 

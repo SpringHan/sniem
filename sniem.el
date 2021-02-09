@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs))
+;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: Editing Method
 
@@ -323,7 +323,7 @@ LAYOUT can be qwerty, colemak or dvorak."
     ("/" 'sniem-object-catch-direction-reverse)
     ("<" 'back-to-indentation)
     ("," 'sniem-object-catch-repeat)
-    ("c" 'sniem-change-pair)))
+    ("c" 'sniem-pair)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
