@@ -287,9 +287,7 @@
 
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
-  (save-mark-and-excursion
-    (backward-char)
-    (= 92 (following-char))))
+  (= 92 (char-before)))
 
 (defmacro sniem-object-catch-mode-defalist (mode-name &rest alist)
   "Define alist for major mode."
