@@ -94,10 +94,11 @@
           (setq prefix-point
                 (catch 'point-stop
                   (while t
-                    (if (string=
-                         char
-                         (setq tmp
-                               (buffer-substring-no-properties (point) (1+ (point)))))
+                    (if (and (string=
+                              char
+                              (setq tmp
+                                    (buffer-substring-no-properties (point) (1+ (point)))))
+                             (sniem-object-catch-not-lisp-quote-p))
                         (throw 'point-stop (point))
                       (if (or (bobp) (eobp))
                           (throw 'point-stop nil)
@@ -105,17 +106,15 @@
         (setq prefix-point
               (catch 'point-stop
                 (while t
-                  (if (sniem-object-catch--get-second-char
-                       (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
+                  (if (and (sniem-object-catch--get-second-char
+                            (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
+                           (sniem-object-catch-not-lisp-quote-p))
                       (progn
                         (setq char tmp)
                         (throw 'point-stop (point)))
                     (if (or (bobp) (eobp))
                         (throw 'point-stop nil)
                       (funcall move)))))))
-
-      (when (and (string= char "'") (sniem-object-catch-lisp-mode-p))
-        (setq go-on t))
       (when (nth 3 (syntax-ppss prefix-point))
         (setq-local sniem-object-catch-prefix-string-p t))
       (if (not char)
@@ -275,6 +274,10 @@
         (when (string= symbol (car symbol-cons))
           (throw 'exists index))
         (setq index (1+ index))))))
+
+(defun sniem-object-catch-not-lisp-quote-p ()
+  "Check if the current major mode belongs to lisp mode and the current char is quote."
+  (not (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))))
 
 (defun sniem-object-catch-lisp-mode-p ()
   "Check if the current major mode belongs to lisp mode."
