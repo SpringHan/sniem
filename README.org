@@ -63,8 +63,10 @@
        | .   | set the last-goto-point to the current position |
        | SPC | execute function in motion-hint                 |
        | /   | reverse the direction of object-catch           |
-       | <   | Goto the first non-nil char in current line     |
-       | c   | Add or change the pair of region                |
+       | p   | Add or change the pair of region                |
+       | <   | Jump to prev comment mark                       |
+       | >   | Jump to next comment mark                       |
+       | m   | Insert new comment mark                         |
 ** Some special operations
    - Motions
 

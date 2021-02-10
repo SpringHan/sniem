@@ -69,8 +69,10 @@
      | .   | 设置 last-goto-point 到当前位置 |
      | SPC | 执行 motion-hint                |
      | /   | 反转 object-catch 方向          |
-     | <   | 前往当前行第一个非空字符        |
-     | c   | 添加或更改当前选中内容的 pair   |
+     | p   | 添加或更改当前选中内容的 pair   |
+     | <   | 跳转到下一个 comment mark       |
+     | >   | 跳转到上一个 comment mark       |
+     | m   | 插入新的 comment mark           |
 ** 一些特殊操作
 
    - 移动

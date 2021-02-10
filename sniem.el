@@ -321,9 +321,11 @@ LAYOUT can be qwerty, colemak or dvorak."
     ("." 'sniem-lock/unlock-last-goto-point)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
-    ("<" 'back-to-indentation)
     ("," 'sniem-object-catch-repeat)
-    ("c" 'sniem-pair)))
+    ("p" 'sniem-pair)
+    ("m" 'sniem-mark-jump-insert-with-name)
+    ("<" 'sniem-mark-jump-prev)
+    (">" 'sniem-mark-jump-next)))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
@@ -426,6 +428,7 @@ LAYOUT can be qwerty, colemak or dvorak."
 
 (require 'sniem-object-catch)
 (require 'sniem-cheatsheet)
+(require 'sniem-mark-jump)
 
 ;;; Third-Party Settings
 (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
