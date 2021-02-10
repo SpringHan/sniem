@@ -398,17 +398,19 @@
                       "h" "H" "i" "I" "j" "J" "k" "K" "l" "L" "m" "M" "n" "N"
                       "o" "O" "p" "P" "q" "Q" "r" "R" "s" "S" "t" "T" "u" "U"
                       "v" "V" "w" "W" "x" "X" "y" "Y" "z" "Z" "0" "1" "2" "3"
-                      "4" "5" "6" "7" "8" "9"))
-        result)
+                      "4" "5" "6" "7" "8" "9")))
     ;; Write like this because `memq' and others can not work well.
-    (not (progn
-           (catch 'equalp
-             (mapc #'(lambda (a)
-                       (when (string= a char-string)
-                         (setq result t)
-                         (throw 'equalp t)))
-                   alpha-list))
-           result))))
+    (not (sniem--mems char-string alpha-list))))
+
+(defun sniem--mems (ele list)
+  "Like memq, but use `string-equal'."
+  (let (result)
+    (catch 'stop
+      (dolist (item list)
+        (when (string-equal item ele)
+          (setq result t)
+          (throw 'stop nil))))
+    result))
 
 ;;; Motions
 
