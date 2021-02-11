@@ -121,6 +121,8 @@
   "Get the author's name."
   (if sniem-mark-jump-author-name
       sniem-mark-jump-author-name
+    (unless sniem-mark-jump-author-name-enable
+      (setq-local sniem-mark-jump-author-name-enable t))
     (read-string "Enter your name: ")))
 
 (defun sniem-mark-jump-reset-regexp ()

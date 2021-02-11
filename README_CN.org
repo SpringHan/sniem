@@ -138,6 +138,11 @@
 
          - 在选中多行的情况下录制，在录制完之后会对所选的每一行执行一遍
          - 在选中同行的内容后录制，在录制完之后会记录下内容，此时执行 ~(sniem-next-word)~ 或者 ~(sniem-prev-word)~ 即跳转到此内容，按下 ~C-g~ 可取消内容锁定
+           
+     - sniem-mark-jump
+
+       sniem-mark-jump 提供了两个 motions，即 ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~ 。
+       一般情况下，执行它们会跳转到上一个或者下一个 comment mark。但如果你使用了 ~digit-argument~ ，它们将跳转到上一个或下一个指定类型的 comment mark，此类型是以你所使用的 ~digit-argument~ 为索引向类型列表里获取到的结果。
 ** 自定义
    - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
 
@@ -169,3 +174,13 @@
        (setq-default mode-line-format (append '((:eval (sniem-state))) mode-line-format))
        (force-mode-line-update)
      #+end_src
+
+   - sniem-mark-jump
+
+     - ~sniem-mark-jump-author-name~
+
+       这是 comment mark 中的人名。
+
+     - ~sniem-mark-jump-author-name-enable~
+
+       这是当前人名的启用状态。

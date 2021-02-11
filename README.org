@@ -135,6 +135,10 @@
          - When you record after selecting some lines, the kmacro will be executed to all the lines you selected after recording.
          - If you record after selecting content in the same line, the content will be recorded. Then you can execute ~(sniem-next-word)~ or ~(sniem-prev-word)~ to goto the next or previous content same as it. Execute ~(keyboard-quit)~ can cancel the content record.
 
+     - sniem-mark-jump
+
+       sniem-mark-jump provides two motions. They are ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~.
+       Normally, execute them can goto the next or previous comment mark. But if you use them with ~digit-argument~, they'll find the next or previous comment mark with type which is the number you input of the mark type alist.
 ** Custom
    - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
 
@@ -166,3 +170,13 @@
        (setq-default mode-line-format (append '((:eval (sniem-state))) mode-line-format))
        (force-mode-line-update)
      #+end_src
+
+   - sniem-mark-jump
+
+     - ~sniem-mark-jump-author-name~
+
+       This is the author name for the comment mark.
+
+     - ~sniem-mark-jump-author-name-enable~
+
+       This variable is the status of the author name's enablement.
