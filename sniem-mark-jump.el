@@ -108,14 +108,35 @@
         (point (point))
         (case-fold-search nil)
         (tmp t))
+    (when (sniem-mark-jump--comment-face-p)
+      (sniem-mark-jump--escape-comment (when next t)))
     (catch 'stop
       (while tmp
         (if type
-            (setq tmp (funcall search-command (concat "\\(.*\\)" type "\\(?:.*\\)") nil t))
+            (setq tmp (funcall search-command (concat "\\(?:.*\\)" type "\\(?:.*\\)") nil t))
           (setq tmp (funcall search-command sniem-mark-jump-regexp nil t)))
-        (when (eq (face-at-point) 'font-lock-comment-face)
+        (when (sniem-mark-jump--comment-face-p)
           (throw 'stop t)))
-      (message "[Sniem]: The mark can not be found."))))
+      (message "[Sniem]: The mark can not be found.")
+      (goto-char point))
+    (goto-char (comment-beginning))))
+
+(defun sniem-mark-jump--escape-comment (forward)
+  "Escape current comment."
+  (let ((motion (if forward
+                    'forward-char
+                  'backward-char)))
+    (while (sniem-mark-jump--comment-face-p)
+      (funcall motion))))
+
+(defun sniem-mark-jump--comment-face-p ()
+  "Check if the content at point has the comment face."
+  (let ((face-list (car-safe (gnus-faces-at (point)))))
+    (when face-list
+      (or (and (symbolp face-list)
+               (or (eq face-list 'font-lock-comment-face)
+                   (eq face-list 'font-lock-comment-delimiter-face)))
+          (and (listp face-list) (memq 'font-lock-comment-face face-list))))))
 
 (defun sniem-mark-jump--get-author-name ()
   "Get the author's name."
@@ -128,7 +149,7 @@
 (defun sniem-mark-jump-reset-regexp ()
   "Reset the regexp."
   (setq sniem-mark-jump-regexp
-        (concat "\\(.*\\)\\("
+        (concat "\\(?:.*\\)\\("
                 (mapconcat #'sniem--self sniem-mark-jump-items "\\|")
                 "\\)\\(?:.*\\)")))
 
