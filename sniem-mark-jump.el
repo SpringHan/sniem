@@ -113,13 +113,13 @@
     (catch 'stop
       (while tmp
         (if type
-            (setq tmp (funcall search-command (concat "\\(?:.*\\)" type "\\(?:.*\\)") nil t))
-          (setq tmp (funcall search-command sniem-mark-jump-regexp nil t)))
-        (when (sniem-mark-jump--comment-face-p)
+            (setq tmp (funcall search-command (concat "\\(" comment-start "*\\)" "\\(?:.*\\)" type "\\(?:.*\\)") nil t))
+          (setq tmp (funcall search-command (concat "\\(" comment-start "*\\)" sniem-mark-jump-regexp) nil t)))
+        (when (and tmp (numberp tmp))
+          (goto-char (comment-beginning))
           (throw 'stop t)))
       (message "[Sniem]: The mark can not be found.")
-      (goto-char point))
-    (goto-char (comment-beginning))))
+      (goto-char point))))
 
 (defun sniem-mark-jump--escape-comment (forward)
   "Escape current comment."
@@ -131,7 +131,7 @@
 
 (defun sniem-mark-jump--comment-face-p ()
   "Check if the content at point has the comment face."
-  (let ((face-list (car-safe (gnus-faces-at (point)))))
+  (let ((face-list (get-text-property (point) 'face)))
     (when face-list
       (or (and (symbolp face-list)
                (or (eq face-list 'font-lock-comment-face)
