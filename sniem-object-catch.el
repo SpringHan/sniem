@@ -115,7 +115,8 @@
                     (if (or (bobp) (eobp))
                         (throw 'point-stop nil)
                       (funcall move)))))))
-      (when (nth 3 (syntax-ppss prefix-point))
+      (when (and (nth 3 (syntax-ppss prefix-point))
+                 (/= (following-char) 34))
         (setq-local sniem-object-catch-prefix-string-p t))
       (if (not char)
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
@@ -127,7 +128,8 @@
           (setq prefix-point (car second-point)
                 second-point (cdr second-point)))
         (if (and parent sniem-object-catch-last-points
-                 (> (cdr sniem-object-catch-last-points) second-point))
+                 (> (cdr sniem-object-catch-last-points) second-point)
+                 (< prefix-point (car sniem-object-catch-last-points)))
             (setq go-on t)
           (setq-local sniem-object-catch-last-points (cons prefix-point second-point)))))
     (goto-char prefix-point)
@@ -227,7 +229,7 @@
             ((progn
                (forward-char 2)
                (or (eq (face-at-point) prefix-face)
-                   (eq (face-at-point) 'show-paren-match))) ;NOTE: This expression in here maybe have bug.
+                   (eq (face-at-point) 'show-paren-match))) ; NOTE: This expression in here maybe have bug.
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
                    second-point (sniem-object-catch-format-point1 pair (point) t))))
       (when region-forward-p
@@ -307,7 +309,9 @@
 
 (add-hook 'deactivate-mark-hook #'(lambda ()
                                     (when sniem-object-catch-last-points
-                                      (setq-local sniem-object-catch-last-points nil))))
+                                      (setq-local sniem-object-catch-last-points nil))
+                                    (when sniem-object-catch-prefix-string-p
+                                      (setq-local sniem-object-catch-prefix-string-p nil))))
 
 (sniem-normal-set-key
  "(" 'sniem-object-catch-round
