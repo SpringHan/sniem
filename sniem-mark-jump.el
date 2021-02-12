@@ -58,7 +58,7 @@
   (unless (eq (face-at-point) 'font-lock-comment-face)
     (if (and (eolp)
              (not (looking-back "^[\s\t]*" (line-beginning-position) t)))
-        (insert (if (memq (char-before) '(?\t ?\s))
+        (insert (if (not (memq (char-before) '(?\t ?\s)))
                     " "
                   "")
                 comment-start)
@@ -66,12 +66,17 @@
         (sniem-open-line-previous))
       (insert (if (sniem-object-catch-lisp-mode-p)
                   (concat comment-start comment-start)
-                comment-start)
-              " ")))
-  (insert type
+                comment-start))))
+  (insert (if (string= " " (substring comment-start -1))
+              ""
+            " ")
+          type
           (if (or name sniem-mark-jump-author-name-enable)
               (format "(%s): " (sniem-mark-jump--get-author-name))
             ": "))
+  (when comment-end
+    (save-mark-and-excursion
+      (insert comment-end)))
   (sniem-change-mode 'insert))
 
 (defun sniem-mark-jump-insert-with-name (&optional name)
