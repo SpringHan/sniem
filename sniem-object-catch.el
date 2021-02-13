@@ -98,7 +98,7 @@
                               char
                               (setq tmp
                                     (buffer-substring-no-properties (point) (1+ (point)))))
-                             (sniem-object-catch-not-lisp-quote-p))
+                             (sniem-object-catch-prefix-normal-p))
                         (throw 'point-stop (point))
                       (if (or (bobp) (eobp))
                           (throw 'point-stop nil)
@@ -108,7 +108,7 @@
                 (while t
                   (if (and (sniem-object-catch--get-second-char
                             (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
-                           (sniem-object-catch-not-lisp-quote-p))
+                           (sniem-object-catch-prefix-normal-p))
                       (progn
                         (setq char tmp)
                         (throw 'point-stop (point)))
@@ -277,9 +277,11 @@
           (throw 'exists index))
         (setq index (1+ index))))))
 
-(defun sniem-object-catch-not-lisp-quote-p ()
-  "Check if the current major mode belongs to lisp mode and the current char is quote."
-  (not (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))))
+(defun sniem-object-catch-prefix-normal-p ()
+  "Check if the current major mode belongs to lisp mode, the current char is not quote and
+the char before prefix is not backslash."
+  (not (or (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))
+           (sniem-object-catch-backslash-p))))
 
 (defun sniem-object-catch-lisp-mode-p ()
   "Check if the current major mode belongs to lisp mode."
