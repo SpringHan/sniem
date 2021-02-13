@@ -169,7 +169,7 @@
         (throw 'exists t)))))
 
 (defun sniem-change-mode (mode)
-  "Change editing mode."
+  "Change editing MODE."
   (unless (eq (sniem-current-mode) mode)
     (pcase mode
       ('normal (sniem-normal-mode t))
@@ -192,13 +192,14 @@
         (t nil)))
 
 (defun sniem-set-leader-key (key)
-  "Set the leader key for normal mode."
+  "Set the leader KEY for normal mode."
   (define-key sniem-normal-state-keymap (kbd key) sniem-leader-keymap))
 
 (defun sniem-leader-set-key (&rest keys)
   "Bind key to leader keymap.
 
-\(fn KEY FUNC...)"
+\(fn KEY FUNC...)
+Optional argument KEYS are the keys you want to add."
   (let (key func)
     (while keys
       (setq key (pop keys)
@@ -208,7 +209,8 @@
 (defun sniem-normal-set-key (&rest keys)
   "Bind key to normal mode keymap.
 
-\(fn KEY FUNC...)"
+\(fn KEY FUNC...)
+Optional argument KEYS are the keys you want to add."
   (let (key func)
     (while keys
       (setq key (pop keys)
@@ -277,10 +279,11 @@ LAYOUT can be qwerty, colemak or dvorak."
      (setq sniem-keyboard-layout (if (eq layout 'dvp)
                                      'dvp
                                    'dvorak)))
-    (_ (user-error "[Sniem]: The %s layout is not supplied." layout))))
+    (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
 
 (defun sniem-digit-argument-or-fn (arg)
-  "The digit argument function."
+  "The digit argument function.
+Argument ARG is the `digit-argument' result."
   (interactive (list (sniem-digit-argument-get)))
   (if (listp arg)
       (eval arg)
@@ -289,7 +292,9 @@ LAYOUT can be qwerty, colemak or dvorak."
     (universal-argument--mode)))
 
 (defun sniem-digit-argument-get (&optional msg)
-  "A function which make you can use the middle of the keyboard instead of the num keyboard."
+  "A function which make you can use the middle of the keyboard.
+Instead of the num keyboard.
+Optional argument MSG is the message which will be outputed."
   (interactive)
   (let ((number "")
         (arg "")
@@ -316,7 +321,8 @@ LAYOUT can be qwerty, colemak or dvorak."
       arg)))
 
 (defun sniem-digit-argument-fn-get (string)
-  "Read the fn for `sniem-digit-argument-or-fn'."
+  "Read the fn for `sniem-digit-argument-or-fn'.
+Argument STRING is the string get from the input."
   (pcase string
     ("." 'sniem-lock/unlock-last-goto-point)
     (" " 'sniem-move-with-hint-num)
@@ -350,7 +356,7 @@ LAYOUT can be qwerty, colemak or dvorak."
        (x (char-to-string x))))))
 
 (defun sniem-lock/unlock-last-point (&optional lock)
-  "Lock or unlock `sniem-last-point'."
+  "LOCK or unlock `sniem-last-point'."
   (interactive)
   (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
                                           nil
@@ -361,7 +367,7 @@ LAYOUT can be qwerty, colemak or dvorak."
                                        "unlocked")))
 
 (defun sniem-lock/unlock-last-goto-point (&optional lock)
-  "Lock/unlock the `sniem-last-goto-point'."
+  "LOCK/unlock the `sniem-last-goto-point'."
   (interactive)
   (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
                                         (point)
@@ -371,7 +377,8 @@ LAYOUT can be qwerty, colemak or dvorak."
                                            "unset")))
 
 (defun sniem-show-last-point (&optional hide)
-  "Show the last point."
+  "Show the last point.
+Optional argument HIDE is t, the last point will be show."
   (let ((cursor-color
          `((t (:foreground ,(frame-parameter nil 'background-color))
               :background ,(frame-parameter nil 'cursor-color)))))

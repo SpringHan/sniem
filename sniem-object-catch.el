@@ -65,7 +65,7 @@
   :group 'sniem-object-catch)
 
 (defvar global-sniem-object-catch-status nil
-  "The status for `global-sniem-object-catch-mode'")
+  "The status for `global-sniem-object-catch-mode'.")
 
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
@@ -81,7 +81,9 @@
       (setq-local sniem-object-catch-prefix-string-p nil))))
 
 (defun sniem-object-catch--get (char parent)
-  "Get the object."
+  "Get the object.
+Argument CHAR is the prefix of pair.
+Argument PARENT means get the parent pair of the content selected."
   (let ((move (if sniem-object-catch-forward-p
                   'forward-char
                 'backward-char))
@@ -180,7 +182,8 @@
     (sniem-object-catch (car sniem-object-catch-action) (cdr sniem-object-catch-action))))
 
 (defun sniem-object-catch-direction-reverse (&optional forward)
-  "Reverse the catch direction."
+  "Reverse the catch direction.
+Optional argument FORWARD means change the direction to forward."
   (interactive)
   (setq-local sniem-object-catch-forward-p
               (if (or forward (null sniem-object-catch-forward-p))
@@ -192,7 +195,8 @@
              "backward")))
 
 (defun sniem-object-catch-format-point (prefix second-char)
-  "Format point with the PREFIX."
+  "Format point with the PREFIX.
+Argument SECOND-CHAR is the end char of the pair."
   (let ((times 1)
         tmp)
     (forward-char)
@@ -212,7 +216,8 @@
     (point)))
 
 (defun sniem-object-catch-format-point2 (pair prefix-point)
-  "Format point for the pair with same char."
+  "Format point for the PAIR with same char.
+Argument PREFIX-POINT is the prefix point."
   (let ((region-forward-p (when (and (region-active-p) sniem-object-catch-forward-p)
                             (prog1 (cons (region-beginning) (region-end))
                               (deactivate-mark))))
@@ -238,7 +243,8 @@
       (cons prefix-point (1+ second-point)))))
 
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
-  "Format the point for char."
+  "Format the POINT for char.
+Argument PAIR is the pair."
   (save-mark-and-excursion
     (goto-char point)
     (let ((search-command (if prefix
@@ -278,17 +284,17 @@
         (setq index (1+ index))))))
 
 (defun sniem-object-catch-prefix-normal-p ()
-  "Check if the current major mode belongs to lisp mode, the current char is not quote and
-the char before prefix is not backslash."
+  "Check if the current major mode belongs to Lisp mode.
+The current char is not quote and the char before prefix is not backslash."
   (not (or (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))
            (sniem-object-catch-backslash-p))))
 
 (defun sniem-object-catch-lisp-mode-p ()
-  "Check if the current major mode belongs to lisp mode."
+  "Check if the current major mode belongs to Lisp mode."
   (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
 (defmacro prog3 (form1 form2 form3 &rest body)
-  "Eval FORM1, FORM2, FORM3 and body, return the FORM3."
+  "Eval FORM1, FORM2, FORM3 and BODY, return the FORM3."
   (declare (indent 0) (debug t))
   `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
 
@@ -297,7 +303,8 @@ the char before prefix is not backslash."
   (= 92 (char-before)))
 
 (defmacro sniem-object-catch-mode-defalist (mode-name &rest alist)
-  "Define alist for major mode."
+  "Define ALIST for major mode.
+Argument MODE-NAME if the mode name."
   (declare (indent 1))
   `(let ((sym-alist sniem-object-catch-global-symbol-alist)
          tmp)

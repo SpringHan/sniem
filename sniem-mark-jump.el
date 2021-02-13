@@ -52,7 +52,8 @@
   :group 'sniem)
 
 (defun sniem-mark-jump-insert (type &optional name)
-  "Insert the mark with TYPE."
+  "Insert the mark with TYPE.
+Optional argument NAME means enable the name."
   (interactive (list (completing-read "Enter the type: "
                                       sniem-mark-jump-items)))
   (unless (eq (face-at-point) 'font-lock-comment-face)
@@ -80,7 +81,7 @@
   (sniem-change-mode 'insert))
 
 (defun sniem-mark-jump-insert-with-name (&optional name)
-  "`sniem-mark-jump-insert' with name."
+  "`sniem-mark-jump-insert' with NAME."
   (interactive "P")
   (if name
       (funcall #'sniem-mark-jump-insert
@@ -106,7 +107,8 @@
   (nth (1- num) sniem-mark-jump-items))
 
 (defun sniem-mark-jump--jump (next &optional type)
-  "Jump to next/previous item."
+  "Jump to NEXT/previous item.
+Optional argument TYPE is the type of comment mark."
   (let ((search-command (if next
                             're-search-forward
                           're-search-backward))
@@ -127,7 +129,8 @@
       (goto-char point))))
 
 (defun sniem-mark-jump--escape-comment (forward)
-  "Escape current comment."
+  "Escape current comment.
+Argument FORWARD means search forward."
   (let ((motion (if forward
                     'forward-char
                   'backward-char)))
@@ -159,7 +162,7 @@
                 "\\)\\(?:.*\\)")))
 
 (defun sniem--self (arg)
-  "Return arg itself."
+  "Return ARG itself."
   arg)
 
 (sniem-mark-jump-reset-regexp)
@@ -168,7 +171,7 @@
 (defun sniem-mark-jump-set-items (way item)
   "Set `sniem-mark-jump-items'.
 The WAY includes:
-:add - Add a new item.
+:add - Add a new ITEM.
 :delete - Delete a item."
   (pcase way
     (:add (unless (sniem--mems item sniem-mark-jump-items)

@@ -68,7 +68,8 @@
   (sniem-insert))
 
 (defun sniem--open-line (&optional above)
-  "Open new line for other function."
+  "Open new line for other function.
+Optional argument ABOVE is t, it will open line above."
   (when above
     (sniem-prev-line nil t))
   (sniem-end-of-line t)
@@ -94,7 +95,7 @@
   (sniem-insert))
 
 (defun sniem-center (action)
-  "Center action for sniem."
+  "Center ACTION for sniem."
   (interactive (list (read-char sniem-center-message)))
   (pcase action
     (122 (recenter nil t))
@@ -102,7 +103,7 @@
     (98 (recenter-top-bottom -1))))
 
 (defun sniem-mark (type)
-  "Mark the object with action type."
+  "Mark the object with action TYPE."
   (interactive (list (read-char sniem-mark-message)))
   (pcase type
     (108
@@ -132,7 +133,7 @@
     (insert-char char)))
 
 (defun sniem-replace-char (char)
-  "Replace the char under cursor."
+  "Replace the CHAR under cursor."
   (interactive "c")
   (delete-forward-char 1)
   (insert-char char)
@@ -156,7 +157,7 @@
     (delete-char 1)))
 
 (defun sniem-delete (action)
-  "Delete action."
+  "Delete ACTION."
   (interactive (list (if (region-active-p)
                          t
                        (read-char sniem-delete-message))))
@@ -190,12 +191,15 @@
     (sniem-delete t)))
 
 (defun sniem-delete-region (start end)
-  "Like `delete-region', but it will eval `kill-ring-save' to copy the region."
+  "Like `delete-region', but it will eval `kill-ring-save' to copy the region.
+Argument START is the start point of the region.
+Argument END is the end point of the region."
   (kill-ring-save start end)
   (delete-region start end))
 
 (defun sniem-change (action)
-  "Change contents."
+  "Change contents.
+Argument ACTION is the action of change."
   (interactive (list (if (region-active-p)
                          t
                        (read-char sniem-change-message))))
@@ -216,7 +220,7 @@
     (sniem-change t)))
 
 (defun sniem-yank (action)
-  "Yank action."
+  "Yank ACTION."
   (interactive (list (if (region-active-p)
                          t
                        (read-char sniem-yank-message))))
@@ -271,7 +275,8 @@
                  kill-ring))))
 
 (defun sniem-paste--output-contents (n)
-  "Output contents for `sniem-paste'."
+  "Output contents for `sniem-paste'.
+Argument N is the page of the contents."
   (let (content c tmp)
     (dotimes (i 9)
       (setq c (format "%d: %s"
@@ -319,7 +324,7 @@
       (backward-char)
       (unless (or (= 10 (following-char))
                   (= 32 (following-char)))
-        (user-error "[Sniem]: The current position doesn't need join.")))
+        (user-error "[Sniem]: The current position doesn't need join!")))
     (while (or (= 10 (following-char))
                (= 32 (following-char)))
       (backward-char))
@@ -327,7 +332,7 @@
     (push-mark last-point t t)))
 
 (defun sniem-macro (action)
-  "Macro action."
+  "Macro ACTION."
   (interactive (list (unless defining-kbd-macro
                        (read-char sniem-macro-message))))
   (if defining-kbd-macro
@@ -372,7 +377,8 @@
                 (setq-local sniem-kmacro-mark-content nil))))
 
 (defun sniem-pair (prefix)
-  "Modify the region's pair."
+  "Modify the region's pair.
+Argument PREFIX is the prefix of the pair."
   (interactive "c")
   (let ((second (sniem-object-catch--get-second-char (char-to-string prefix)))
         (prefix-point (region-beginning))
@@ -380,7 +386,7 @@
         (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning))))
         (second-char (buffer-substring-no-properties (region-end) (1+ (region-end)))))
     (if (null second)
-        (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'")
+        (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
       (save-mark-and-excursion
         (goto-char prefix-point)
         (when (sniem-pair--pair-p prefix-char)
@@ -393,7 +399,8 @@
         (insert second)))))
 
 (defun sniem-pair--pair-p (char-string)
-  "Check if the CHAR belongs to pair."
+  "Check if the CHAR belongs to pair.
+Argument CHAR-STRING is the string to compair."
   (let ((alpha-list '("a" "A" "b" "B" "c" "C" "d" "D" "e" "E" "f" "F" "g" "G"
                       "h" "H" "i" "I" "j" "J" "k" "K" "l" "L" "m" "M" "n" "N"
                       "o" "O" "p" "P" "q" "Q" "r" "R" "s" "S" "t" "T" "u" "U"
@@ -403,7 +410,9 @@
     (not (sniem--mems char-string alpha-list))))
 
 (defun sniem--mems (ele list)
-  "Like memq, but use `string-equal'."
+  "Like memq, but use `string-equal'.
+Argument ELE is the element to check.
+Argument LIST is the list to check."
   (let (result)
     (catch 'stop
       (dolist (item list)
@@ -539,7 +548,8 @@
                             (sniem-find-backward nil ,char t t))))))
 
 (defun sniem-find (char direct)
-  "Find char."
+  "Find CHAR.
+Argument DIRECT is the direction for find."
   (let ((current-point (point))
         (way (pcase direct
                ('forward 'sniem-forward-char)
@@ -636,7 +646,8 @@
     (end-of-line)))
 
 (defun sniem-goto-last-point (&optional non-point-set)
-  "Goto `sniem-last-point'."
+  "Goto `sniem-last-point'.
+Optional argument NON-POINT-SET means not change the last-point."
   (interactive)
   (let ((current-point (point)))
     (goto-char (if sniem-last-goto-point

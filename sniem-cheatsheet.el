@@ -259,7 +259,8 @@
           (sniem-show-cheatsheet)))))
 
 (defun sniem-show-cheatsheet (cs)
-  "Show the cheatsheet."
+  "Show the cheatsheet.
+Argument CS is the cheatsheet of current keyboard."
   (with-current-buffer (get-buffer-create "*Sniem Cheatsheet*")
     (setq-local buffer-read-only nil)
     (erase-buffer)
@@ -279,7 +280,8 @@
   (ignore (beginning-of-buffer)))
 
 (defun sniem-cheatsheet--replace (cs)
-  "Replace the keys in the cheatsheet."
+  "Replace the keys in the cheatsheet.
+Argument CS is the cheatsheet of current keyboard."
   (-reduce-from
    (lambda (cs key)
      (let* ((ckey (kbd key))
@@ -300,7 +302,9 @@
    cs sniem-cheatsheet-keys))
 
 (defun sniem-cheatsheet--command (cmd key)
-  "Replace the command to short."
+  "Replace the command to short.
+Argument CMD is the command.
+Argument KEY is the key of command."
   (let ((scmd (or (alist-get cmd sniem-cheatsheet-short-commands)
                   (s-replace "sniem-" "" (symbol-name cmd))))
         (sp-cmd-space (when (sniem-cheatsheet--special-key-p cmd key)
@@ -317,7 +321,7 @@
         (s-truncate (or sp-cmd-space 9) scmd)))))
 
 (defun sniem-cheatsheet--special-key-p (cmd key)
-  "Check if the key for CMD is included in `sniem-cheatsheet-special-key-space'."
+  "Check if the KEY for CMD is included in `sniem-cheatsheet-special-key-space'."
   (catch 'p
     (mapc `(lambda (k)
              (when (and (equal ,key k) (eq (key-binding k) ',cmd))
