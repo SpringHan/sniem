@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'sniem-macro)
+
 (defgroup sniem-object-catch nil
   "The group of `sniem-object-catch'."
   :group 'sniem)

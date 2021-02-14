@@ -30,8 +30,7 @@
 
 ;;; Code:
 
-(require 'sniem)
-(require 'sniem-operation)
+(require 'sniem-common)
 
 (defcustom sniem-mark-jump-items
   '("TODO" "BUG" "NOTE")

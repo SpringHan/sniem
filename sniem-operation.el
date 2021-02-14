@@ -30,8 +30,8 @@
 
 ;;; Code:
 
-(require 'sniem)
 (require 'sniem-macro)
+(require 'sniem-common)
 
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
@@ -411,18 +411,6 @@ Argument CHAR-STRING is the string to compair."
                       "4" "5" "6" "7" "8" "9")))
     ;; Write like this because `memq' and others can not work well.
     (not (sniem--mems char-string alpha-list))))
-
-(defun sniem--mems (ele list)
-  "Like memq, but use `string-equal'.
-Argument ELE is the element to check.
-Argument LIST is the list to check."
-  (let (result)
-    (catch 'stop
-      (dolist (item list)
-        (when (string-equal item ele)
-          (setq result t)
-          (throw 'stop nil))))
-    result))
 
 ;;; Motions
 

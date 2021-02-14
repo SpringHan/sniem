@@ -441,6 +441,19 @@ Optional argument HIDE is t, the last point will be show."
 (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
 (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)
 
+;;; State info print support
+(defun sniem-state ()
+  "The function to show the current sniem state."
+  (pcase (sniem-current-mode)
+    ('normal (format "[N:%s%s%s]"
+                     (if sniem-object-catch-forward-p ">" "<")
+                     (if sniem-last-point-locked ":l" "")
+                     (if sniem-last-goto-point ":L" "")))
+    ('insert "[I]")
+    ('motion "[M]")))
+(when (featurep 'awesome-tray)
+  (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
+
 (provide 'sniem)
 
 ;;; sniem.el ends here
