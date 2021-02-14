@@ -3,9 +3,9 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: Editing Method
+;; Keywords: convenience, united-editing-method
 
 
 ;; This file is not part of GNU Emacs
@@ -117,7 +117,7 @@ Optional argument ABOVE is t, it will open line above."
     (112
      (push-mark sniem-last-point t t)
      (when sniem-last-point-locked
-       (sniem-lock/unlock-last-point)))
+       (sniem-lock-unlock-last-point)))
     (109 (push-mark (point) t t))))
 
 ;;; Hook for mark
@@ -181,7 +181,7 @@ Optional argument ABOVE is t, it will open line above."
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
-           (sniem-lock/unlock-last-point)))))
+           (sniem-lock-unlock-last-point)))))
 
 (defun sniem-delete-in-region ()
   "Delete in region."
@@ -235,7 +235,7 @@ Argument ACTION is the action of change."
                            (1+ (line-end-position)))))
     (112 (kill-ring-save sniem-last-point (point))
          (when sniem-last-point-locked
-           (sniem-lock/unlock-last-point)))))
+           (sniem-lock-unlock-last-point)))))
 
 (defun sniem-yank-in-region ()
   "Yank in region."

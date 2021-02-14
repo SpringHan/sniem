@@ -92,7 +92,7 @@
 
        Sniem 中几乎所有编辑操作都与 ~last-point~ 有关 (除了 ~(sniem-paste)~)
        - 上述的编辑操作只需按下 ~p~ 即可进行与 ~last-point~ 有关的操作
-       - ~(sniem-lock/unlock-last-point)~
+       - ~(sniem-lock-unlock-last-point)~
          将 ~last-point~ 锁定或者解除锁定，此时任何移动都不会改变其值。如果被锁定了，会在当前 buffer 显示出来。
 
      - operation-in-region

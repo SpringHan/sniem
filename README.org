@@ -88,7 +88,7 @@
 
        Most of the editing operations is related to ~last-point~ (Without ~(sniem-paste)~).
        - You can press ~p~ after the operations to execute it with ~last-point~.
-       - ~(sniem-lock/unlock-last-point)~
+       - ~(sniem-lock-unlock-last-point)~
          Lock or unlock the ~last-point~. When it is locked, it will display in the buffer.
 
      - operation-in-region

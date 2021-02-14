@@ -3,9 +3,9 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: Editing Method
+;; Keywords: convenience, united-editing-method
 
 
 ;; This file is not part of GNU Emacs
@@ -214,7 +214,7 @@
     (sniem-prev-symbol . "symbol←")
     (sniem-beg-of-mark . "mark-beg")
     (sniem-end-of-mark . "mark-end")
-    (sniem-lock/unlock-last-point . "lock-LP")
+    (sniem-lock-unlock-last-point . "lock-LP")
     (sniem-goto-last-point . "goto-LP")
     (sniem-move-last-point . "move-LP-p")
     (sniem-goto-next . "lines ↓")
@@ -260,9 +260,9 @@
                                ('qwerty sniem-cheatsheet-layout-qwerty))))
       (-> (propertize cheatsheet-layout 'face 'font-lock-comment-face)
           (sniem-cheatsheet--replace)
-          (sniem-show-cheatsheet)))))
+          (sniem-cheatsheet--show-cheatsheet)))))
 
-(defun sniem-show-cheatsheet (cs)
+(defun sniem-cheatsheet--show-cheatsheet (cs)
   "Show the cheatsheet.
 Argument CS is the cheatsheet of current keyboard."
   (with-current-buffer (get-buffer-create "*Sniem Cheatsheet*")

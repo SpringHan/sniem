@@ -3,9 +3,9 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: Editing Method
+;; Keywords: convenience, united-editing-method
 
 
 ;; This file is not part of GNU Emacs
@@ -49,6 +49,7 @@
       (sniem--enable)
     (sniem--disable)))
 
+;;;###autoload
 (define-globalized-minor-mode global-sniem-mode
   sniem-mode sniem-initialize)
 
@@ -152,7 +153,7 @@
   "Move the last point to current point."
   (interactive)
   (setq-local sniem-last-point (point))
-  (sniem-lock/unlock-last-point))
+  (sniem-lock-unlock-last-point))
 
 ;;; Functional functions
 
@@ -235,7 +236,7 @@ LAYOUT can be qwerty, colemak or dvorak."
               "H" 'sniem-5-backward-char
               "l" 'sniem-forward-char
               "L" 'sniem-5-forward-char
-              "n" 'sniem-lock/unlock-last-point
+              "n" 'sniem-lock-unlock-last-point
               "N" 'sniem-goto-last-point
               "t" 'sniem-next-symbol
               "T" 'sniem-prev-symbol)
@@ -253,7 +254,7 @@ LAYOUT can be qwerty, colemak or dvorak."
                "N" 'sniem-5-backward-char
                "i" 'sniem-forward-char
                "I" 'sniem-5-forward-char
-               "k" 'sniem-lock/unlock-last-point
+               "k" 'sniem-lock-unlock-last-point
                "K" 'sniem-goto-last-point
                "t" 'sniem-next-symbol
                "T" 'sniem-prev-symbol)
@@ -272,7 +273,7 @@ LAYOUT can be qwerty, colemak or dvorak."
       "H" 'sniem-5-backward-char
       "t" 'sniem-forward-char
       "T" 'sniem-5-forward-char
-      "k" 'sniem-lock/unlock-last-point
+      "k" 'sniem-lock-unlock-last-point
       "K" 'sniem-goto-last-point
       "l" 'sniem-next-symbol
       "L" 'sniem-prev-symbol)
@@ -324,7 +325,7 @@ Optional argument MSG is the message which will be outputed."
   "Read the fn for `sniem-digit-argument-or-fn'.
 Argument STRING is the string get from the input."
   (pcase string
-    ("." 'sniem-lock/unlock-last-goto-point)
+    ("." 'sniem-lock-unlock-last-goto-point)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
@@ -355,7 +356,7 @@ Argument STRING is the string get from the input."
        (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
        (x (char-to-string x))))))
 
-(defun sniem-lock/unlock-last-point (&optional lock)
+(defun sniem-lock-unlock-last-point (&optional lock)
   "LOCK or unlock `sniem-last-point'."
   (interactive)
   (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
@@ -366,7 +367,7 @@ Argument STRING is the string get from the input."
                                          "locked"
                                        "unlocked")))
 
-(defun sniem-lock/unlock-last-goto-point (&optional lock)
+(defun sniem-lock-unlock-last-goto-point (&optional lock)
   "LOCK/unlock the `sniem-last-goto-point'."
   (interactive)
   (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))

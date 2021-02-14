@@ -3,9 +3,9 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: Editing Method
+;; Keywords: convenience, united-editing-method
 
 
 ;; This file is not part of GNU Emacs
@@ -160,10 +160,10 @@ Argument FORWARD means search forward."
   "Reset the regexp."
   (setq sniem-mark-jump-regexp
         (concat "\\(?:.*\\)\\("
-                (mapconcat #'sniem--self sniem-mark-jump-items "\\|")
+                (mapconcat #'sniem-mark-jump--self sniem-mark-jump-items "\\|")
                 "\\)\\(?:.*\\)")))
 
-(defun sniem--self (arg)
+(defun sniem-mark-jump--self (arg)
   "Return ARG itself."
   arg)
 
