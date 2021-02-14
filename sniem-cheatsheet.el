@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: Editing Method
 
@@ -29,6 +29,10 @@
 ;; Simple united editing method.
 
 ;;; Code:
+
+(require 's)
+(require 'dash)
+(require 'sniem-var)
 
 (defconst sniem-cheatsheet-layout-qwerty
   "                                                      Cheatsheet For Qwerty
@@ -277,7 +281,7 @@ Argument CS is the cheatsheet of current keyboard."
     (line-number-mode -1)
     (setq-local buffer-read-only t))
   (switch-to-buffer "*Sniem Cheatsheet*")
-  (ignore (beginning-of-buffer)))
+  (goto-char (point-min)))
 
 (defun sniem-cheatsheet--replace (cs)
   "Replace the keys in the cheatsheet.
@@ -314,7 +318,7 @@ Argument KEY is the key of command."
         (setq scmd ""))
       (if (<= (length scmd) (or sp-cmd-space 9))
           (-> (->> (or sp-cmd-space 9)
-                   number-to-string
+                   (number-to-string)
                    (concat "% "))
               (concat "s")
               (format scmd))

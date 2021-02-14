@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: Editing Method
 
@@ -31,7 +31,11 @@
 ;;; Code:
 
 (defmacro sniem-define-motion (name arg docstring &rest body)
-  "Define motion for sniem."
+  "Define motion for sniem.
+Argument NAME is the name of motion.
+Argument ARG is the arg of motion.
+Argument DOCSTRING is the docstring.
+Optional argument BODY is the main body of motion function."
   (declare (indent defun)
            (doc-string 3))
   (let ((inter (if (eq (car-safe (car-safe `,body)) 'interactive)

@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs) (s "20180406.808") (dash "20200524.1947"))
+;; Package-Requires: ((emacs "25.1") (s "20180406.808") (dash "20200524.1947"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: Editing Method
 
@@ -29,6 +29,9 @@
 ;; Simple united editing method.
 
 ;;; Code:
+
+(require 'sniem)
+(require 'sniem-object-catch)
 
 (defcustom sniem-space-command nil
   "The command binded on SPC."
