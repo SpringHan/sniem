@@ -2,11 +2,6 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
-;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: convenience, united-editing-method
-
 
 ;; This file is not part of GNU Emacs
 
@@ -44,6 +39,7 @@
     ("(" . ")")
     ("{" . "}"))
   "The global symbol alist."
+  :type 'list
   :group 'sniem-object-catch)
 
 (defcustom sniem-object-catch-last-points nil
@@ -65,9 +61,6 @@
   "If the prefix is string."
   :type 'boolean
   :group 'sniem-object-catch)
-
-(defvar global-sniem-object-catch-status nil
-  "The status for `global-sniem-object-catch-mode'.")
 
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
@@ -175,7 +168,7 @@ Argument PARENT means get the parent pair of the content selected."
   (interactive (list (char-to-string (read-char))))
   (if (sniem-object-catch--get-second-char char)
       (sniem-object-catch char t)
-    (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist.")))
+    (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist." char)))
 
 (defun sniem-object-catch-repeat ()
   "Repeat the last catch."
@@ -244,6 +237,11 @@ Argument PREFIX-POINT is the prefix point."
         (push-mark (cdr region-forward-p)))
       (cons prefix-point (1+ second-point)))))
 
+(defmacro prog3 (form1 form2 form3 &rest body)
+  "Eval FORM1, FORM2, FORM3 and BODY, return the FORM3."
+  (declare (indent 0) (debug t))
+  `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
+
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
   "Format the POINT for char.
 Argument PAIR is the pair."
@@ -295,18 +293,13 @@ The current char is not quote and the char before prefix is not backslash."
   "Check if the current major mode belongs to Lisp mode."
   (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
-(defmacro prog3 (form1 form2 form3 &rest body)
-  "Eval FORM1, FORM2, FORM3 and BODY, return the FORM3."
-  (declare (indent 0) (debug t))
-  `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
-
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
   (= 92 (char-before)))
 
-(defmacro sniem-object-catch-mode-defalist (mode-name &rest alist)
+(defmacro sniem-object-catch-mode-defalist (modename &rest alist)
   "Define ALIST for major mode.
-Argument MODE-NAME if the mode name."
+Argument MODENAME if the mode name."
   (declare (indent 1))
   `(let ((sym-alist sniem-object-catch-global-symbol-alist)
          tmp)
@@ -314,7 +307,7 @@ Argument MODE-NAME if the mode name."
        (if (setq tmp (sniem-object-catch--symbol-exists-p (car list)))
            (setf (cdr (nth tmp sym-alist)) (cdr list))
          (add-to-list 'sym-alist list)))
-     (add-hook (intern (concat (symbol-name ',mode-name) "-hook"))
+     (add-hook (intern (concat (symbol-name ',modename) "-hook"))
                `(lambda () (setq-local sniem-object-catch-global-symbol-alist
                                        ',sym-alist)))))
 
@@ -323,12 +316,6 @@ Argument MODE-NAME if the mode name."
                                       (setq-local sniem-object-catch-last-points nil))
                                     (when sniem-object-catch-prefix-string-p
                                       (setq-local sniem-object-catch-prefix-string-p nil))))
-
-(sniem-normal-set-key
- "(" 'sniem-object-catch-round
- "[" 'sniem-object-catch-square
- "{" 'sniem-object-catch-curly
- "<C-M-return>" 'sniem-object-catch-parent-by-char)
 
 (provide 'sniem-object-catch)
 

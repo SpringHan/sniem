@@ -2,11 +2,6 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
-;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: convenience, united-editing-method
-
 
 ;; This file is not part of GNU Emacs
 
@@ -221,7 +216,7 @@
     (sniem-goto-prev . "lines ↑")
     (sniem-find-forward . "find →")
     (sniem-find-backward . "find ←")
-    (sniem-up/down-case . "↑/↓ case")
+    (sniem-up-down-case . "↑/↓ case")
     (save-buffers-kill-terminal . "exit")
     (sniem-yank-in-region . "Y [mark]")
     (sniem-delete-in-region . "D [mark]")

@@ -2,11 +2,6 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
-;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: convenience, united-editing-method
-
 
 ;; This file is not part of GNU Emacs
 
@@ -30,6 +25,7 @@
 
 ;;; Code:
 
+(require 'sniem-var)
 (require 'sniem-macro)
 (require 'sniem-common)
 
@@ -92,7 +88,7 @@ Optional argument ABOVE is t, it will open line above."
       (progn
         (beginning-of-line)
         (insert "\n")
-        (beginning-of-buffer))
+        (goto-char (point-min)))
     (sniem--open-line t))
   (indent-according-to-mode)
   (sniem-insert))
@@ -125,20 +121,20 @@ Optional argument ABOVE is t, it will open line above."
                                     (when sniem-mark-line
                                       (setq-local sniem-mark-line nil))))
 
-(defun sniem-up/down-case ()
+(defun sniem-up-down-case ()
   "Up or down case."
   (interactive)
   (let ((char (following-char)))
     (if (eq (upcase char) char)
         (setq char (downcase char))
       (setq char (upcase char)))
-    (delete-forward-char 1)
+    (delete-char 1)
     (insert-char char)))
 
 (defun sniem-replace-char (char)
   "Replace the CHAR under cursor."
   (interactive "c")
-  (delete-forward-char 1)
+  (delete-char 1)
   (insert-char char)
   (sniem-backward-char nil t))
 
@@ -372,7 +368,7 @@ Argument N is the page of the contents."
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
       (101 (call-last-kbd-macro))
-      (110 (call-interactively (name-last-kbd-macro))))))
+      (110 (call-interactively #'name-last-kbd-macro)))))
 
 (advice-add 'keyboard-quit :before
             (lambda ()
@@ -386,8 +382,7 @@ Argument PREFIX is the prefix of the pair."
   (let ((second (sniem-object-catch--get-second-char (char-to-string prefix)))
         (prefix-point (region-beginning))
         (second-point (region-end))
-        (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning))))
-        (second-char (buffer-substring-no-properties (region-end) (1+ (region-end)))))
+        (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning)))))
     (if (null second)
         (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
       (save-mark-and-excursion
@@ -457,7 +452,7 @@ Argument CHAR-STRING is the string to compair."
   (interactive "P")
   (setq n (or n 1))
   (unless (bobp)
-    (previous-line n))
+    (line-move (- 0 n)))
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
@@ -470,7 +465,7 @@ Argument CHAR-STRING is the string to compair."
   (interactive "P")
   (setq n (or n 1))
   (unless (eobp)
-    (next-line n))
+    (line-move n))
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
@@ -556,8 +551,7 @@ Argument DIRECT is the direction for find."
   "Move to next word. If the region is active, goto the next word which is same as it."
   (interactive "P")
   (if (or (region-active-p) word sniem-kmacro-mark-content)
-      (let ((point (point))
-            (word (cond (word word)
+      (let ((word (cond (word word)
                         (sniem-kmacro-mark-content
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))
@@ -575,8 +569,7 @@ Argument DIRECT is the direction for find."
   "Move to prev word. If the region is active, goto the prev word which is same as it."
   (interactive "P")
   (if (or (region-active-p) word sniem-kmacro-mark-content)
-      (let ((point (point))
-            (word (cond (word word)
+      (let ((word (cond (word word)
                         (sniem-kmacro-mark-content
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))

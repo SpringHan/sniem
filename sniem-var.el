@@ -2,11 +2,6 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
-;; Homepage: https://github.com/SpringHan/sniem.git
-;; Keywords: convenience, united-editing-method
-
 
 ;; This file is not part of GNU Emacs
 
@@ -106,7 +101,7 @@
 (defvar sniem-motion-mode-cursor t
   "Cursor type for motion mode.")
 
-(defvar sniem-insert-quit-key "ESC"
+(defvar sniem-insert-quit-key "<escape>"
   "The `sniem-quit-insert' key.")
 
 (defcustom sniem-leader-keymap
@@ -164,7 +159,7 @@
     (define-key map "\"" 'sniem-beg-of-mark)
     (define-key map "<" 'sniem-goto-prev)
     (define-key map ">" 'sniem-goto-next)
-    (define-key map "`" 'sniem-up/down-case)
+    (define-key map "`" 'sniem-up-down-case)
     (define-key map "1" 'digit-argument)
     (define-key map "2" 'digit-argument)
     (define-key map "3" 'digit-argument)
@@ -181,6 +176,10 @@
     (define-key map "?" 'sniem-cheatsheet)
     (define-key map (kbd "SPC") 'sniem-digit-argument-or-fn)
     (define-key map (kbd "RET") 'sniem-object-catch)
+    (define-key map (kbd "(") 'sniem-object-catch-round)
+    (define-key map (kbd "[") 'sniem-object-catch-square)
+    (define-key map (kbd "{") 'sniem-object-catch-curly)
+    (define-key map (kbd "<C-M-return>") 'sniem-object-catch-parent-by-char)
     (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)
     (define-key map (kbd "M-<return>") 'sniem-object-catch-parent)
     (define-key map (kbd "DEL") 'sniem-backward-char)
@@ -191,7 +190,7 @@
 
 (defcustom sniem-insert-state-keymap
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "ESC") 'sniem-quit-insert)
+    (define-key map (kbd "<escape>") 'sniem-quit-insert)
     map)
   "Insert mode keymap."
   :type 'keymap
