@@ -369,13 +369,26 @@ Argument STRING is the string get from the input."
 
 (defun sniem-lock-unlock-last-goto-point (&optional lock)
   "LOCK/unlock the `sniem-last-goto-point'."
-  (interactive)
-  (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
-                                        (point)
-                                      nil))
-  (message "[Sniem]: Goto point was %s." (if sniem-last-goto-point
-                                             "set"
-                                           "unset")))
+  (interactive "P")
+  (if (not (region-active-p))
+      (if (and (null lock) sniem-mark-content-overlay)
+          (progn
+            (delete-overlay sniem-mark-content-overlay)
+            (setq-local sniem-mark-content-overlay nil))
+        (when (= lock 0)
+          (setq lock nil))
+        (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
+                                              (point)
+                                            nil))
+        (message "[Sniem]: Goto point was %s." (if sniem-last-goto-point
+                                                   "set"
+                                                 "unset")))
+    (when sniem-mark-content-overlay
+      (delete-overlay sniem-mark-content-overlay))
+    (let ((overlay (make-overlay (region-beginning) (region-end))))
+      (deactivate-mark)
+      (overlay-put overlay 'face 'region)
+      (setq-local sniem-mark-content-overlay overlay))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.

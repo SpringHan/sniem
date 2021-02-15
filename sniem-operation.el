@@ -629,14 +629,23 @@ Argument DIRECT is the direction for find."
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
-(defun sniem-goto-last-point (&optional non-point-set)
+(defun sniem-goto-last-point (&optional type non-point-set)
   "Goto `sniem-last-point'.
+Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
-  (interactive)
+  (interactive "P")
   (let ((current-point (point)))
-    (goto-char (if sniem-last-goto-point
-                   sniem-last-goto-point
-                 sniem-last-point))
+    (if type
+        (goto-char (pcase type
+                     ((and 1 (guard sniem-last-goto-point)) sniem-last-goto-point)
+                     ((and 2 (guard sniem-mark-content-overlay))
+                      (overlay-start sniem-mark-content-overlay))
+                     (_ sniem-last-point)))
+      (goto-char (if sniem-last-goto-point
+                     sniem-last-goto-point
+                   (if sniem-mark-content-overlay
+                       (overlay-start sniem-mark-content-overlay)
+                     sniem-last-point))))
     (unless (or sniem-last-point-locked sniem-last-goto-point non-point-set)
       (setq-local sniem-last-point current-point))))
 
