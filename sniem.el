@@ -375,7 +375,7 @@ Argument STRING is the string get from the input."
           (progn
             (delete-overlay sniem-mark-content-overlay)
             (setq-local sniem-mark-content-overlay nil))
-        (when (= lock 0)
+        (when (and (numberp lock) (= lock 0))
           (setq lock nil))
         (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
                                               (point)
