@@ -222,7 +222,7 @@
     (sniem-delete-in-region . "D [mark]")
     (sniem-change-in-region . "C [mark]")
     (sniem-paste-in-region . "P [mark]")
-    (keyboard-quit . "quit")
+    (sniem-keyboard-quit . "quit")
     (sniem-append-line . "A-line")
     (sniem-insert-line . "I-line")
     (sniem-delete-char . "D-char")

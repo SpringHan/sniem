@@ -155,6 +155,14 @@
   (setq-local sniem-last-point (point))
   (sniem-lock-unlock-last-point))
 
+(defun sniem-keyboard-quit ()
+  "Like `keyboard-quit'. 
+But when it's recording kmacro and there're region, deactivate mark."
+  (interactive)
+  (if (and (region-active-p) defining-kbd-macro)
+      (deactivate-mark)
+    (keyboard-quit)))
+
 ;;; Functional functions
 
 (defun sniem-initialize ()

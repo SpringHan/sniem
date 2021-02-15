@@ -154,7 +154,7 @@
     (define-key map "V" 'sniem-scroll-down-command)
     (define-key map "q" 'sniem-macro)
     (define-key map "Q" 'save-buffers-kill-terminal)
-    (define-key map ";" 'keyboard-quit)
+    (define-key map ";" 'sniem-keyboard-quit)
     (define-key map "'" 'sniem-end-of-mark)
     (define-key map "\"" 'sniem-beg-of-mark)
     (define-key map "<" 'sniem-goto-prev)
