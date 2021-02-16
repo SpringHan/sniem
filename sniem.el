@@ -96,7 +96,7 @@
   "Unable sniem."
   (unless (apply #'derived-mode-p sniem-close-mode-alist)
     (unless sniem-space-command
-      (setq sniem-space-command (key-binding (kbd "SPC"))))
+      (setq-local sniem-space-command (key-binding (kbd "SPC"))))
     (cond ((apply #'derived-mode-p sniem-normal-mode-alist)
            (sniem-change-mode 'normal))
           ((apply #'derived-mode-p sniem-insert-mode-alist)
