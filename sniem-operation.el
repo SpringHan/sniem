@@ -379,22 +379,28 @@ Argument N is the page of the contents."
   "Modify the region's pair.
 Argument PREFIX is the prefix of the pair."
   (interactive "c")
-  (let ((second (sniem-object-catch--get-second-char (char-to-string prefix)))
+  (let ((second (unless (= 32 prefix)
+                  (sniem-object-catch--get-second-char (char-to-string prefix))))
         (prefix-point (region-beginning))
         (second-point (region-end))
         (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning)))))
-    (if (null second)
+    (if (and (null second)
+             (/= prefix 32))
         (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
       (save-mark-and-excursion
         (goto-char prefix-point)
         (when (sniem-pair--pair-p prefix-char)
           (delete-char 1))
-        (insert prefix)
-        (goto-char second-point)
+        (unless (= prefix 32)
+          (insert prefix))
+        (goto-char (if (= prefix 32)
+                       (1- second-point)
+                     second-point))
         (if (sniem-pair--pair-p prefix-char)
             (delete-char -1)
           (forward-char))
-        (insert second)))))
+        (unless (= prefix 32)
+          (insert second))))))
 
 (defun sniem-pair--pair-p (char-string)
   "Check if the CHAR belongs to pair.

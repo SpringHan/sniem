@@ -63,7 +63,7 @@
        | .   | set the last-goto-point to the current position or mark the current region |
        | SPC | execute function in motion-hint                                            |
        | /   | reverse the direction of object-catch                                      |
-       | p   | Add or change the pair of region                                           |
+       | p   | Add, change or delete the pair of region                                   |
        | <   | Jump to prev comment mark                                                  |
        | >   | Jump to next comment mark                                                  |
        | m   | Insert new comment mark                                                    |
