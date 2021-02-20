@@ -267,6 +267,14 @@ Argument PAIR is the pair."
                  (forward-char)))))
     point))
 
+(defun sniem-object-catch-format-pointc (char)
+  "Format the CHAR has same char in comment."
+  (let ((point (point))        
+        backwardp forwardp balone falone another-point)
+    (save-mark-and-excursion)))
+
+(defun sniem-object-catch--while-check-format (char forward))
+
 (defun sniem-object-catch--get-second-char (prefix)
   "Get the second char by the PREFIX."
   (catch 'second-char
