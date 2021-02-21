@@ -156,7 +156,7 @@
   (sniem-lock-unlock-last-point))
 
 (defun sniem-keyboard-quit ()
-  "Like `keyboard-quit'. 
+  "Like `keyboard-quit'.
 But when it's recording kmacro and there're region, deactivate mark."
   (interactive)
   (if (and (region-active-p) defining-kbd-macro)
@@ -230,65 +230,68 @@ Optional argument KEYS are the keys you want to add."
   "Set the keyboard layout, then you can use the default keymap for your layout.
 
 LAYOUT can be qwerty, colemak or dvorak."
-  (pcase layout
-    ('qwerty (sniem-normal-set-key
-              "e" 'sniem-join
-              "u" 'undo
-              "k" 'sniem-prev-line
-              "K" 'sniem-5-prev-line
-              "j" 'sniem-next-line
-              "J" 'sniem-5-next-line
-              "i" 'sniem-insert
-              "I" 'sniem-insert-line
-              "h" 'sniem-backward-char
-              "H" 'sniem-5-backward-char
-              "l" 'sniem-forward-char
-              "L" 'sniem-5-forward-char
-              "n" 'sniem-lock-unlock-last-point
-              "N" 'sniem-goto-last-point
-              "t" 'sniem-next-symbol
-              "T" 'sniem-prev-symbol)
-             (setq sniem-keyboard-layout 'qwerty))
-    ('colemak (sniem-normal-set-key
-               "j" 'sniem-join
-               "l" 'undo
-               "u" 'sniem-prev-line
-               "U" 'sniem-5-prev-line
-               "e" 'sniem-next-line
-               "E" 'sniem-5-next-line
-               "h" 'sniem-insert
-               "H" 'sniem-insert-line
-               "n" 'sniem-backward-char
-               "N" 'sniem-5-backward-char
-               "i" 'sniem-forward-char
-               "I" 'sniem-5-forward-char
-               "k" 'sniem-lock-unlock-last-point
-               "K" 'sniem-goto-last-point
-               "t" 'sniem-next-symbol
-               "T" 'sniem-prev-symbol)
-              (setq sniem-keyboard-layout 'colemak))
-    ((or 'dvp 'dvorak)
-     (sniem-normal-set-key
-      "j" 'sniem-join
-      "u" 'undo
-      "e" 'sniem-prev-line
-      "E" 'sniem-5-prev-line
-      "n" 'sniem-next-line
-      "N" 'sniem-5-next-line
-      "i" 'sniem-insert
-      "I" 'sniem-insert-line
-      "h" 'sniem-backward-char
-      "H" 'sniem-5-backward-char
-      "t" 'sniem-forward-char
-      "T" 'sniem-5-forward-char
-      "k" 'sniem-lock-unlock-last-point
-      "K" 'sniem-goto-last-point
-      "l" 'sniem-next-symbol
-      "L" 'sniem-prev-symbol)
-     (setq sniem-keyboard-layout (if (eq layout 'dvp)
-                                     'dvp
-                                   'dvorak)))
-    (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
+  (cond
+   ((eq layout 'qwerty)
+    (sniem-normal-set-key
+     "e" 'sniem-join
+     "u" 'undo
+     "k" 'sniem-prev-line
+     "K" 'sniem-5-prev-line
+     "j" 'sniem-next-line
+     "J" 'sniem-5-next-line
+     "i" 'sniem-insert
+     "I" 'sniem-insert-line
+     "h" 'sniem-backward-char
+     "H" 'sniem-5-backward-char
+     "l" 'sniem-forward-char
+     "L" 'sniem-5-forward-char
+     "n" 'sniem-lock-unlock-last-point
+     "N" 'sniem-goto-last-point
+     "t" 'sniem-next-symbol
+     "T" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout 'qwerty))
+   ((eq layout 'colemak)
+    (sniem-normal-set-key
+     "j" 'sniem-join
+     "l" 'undo
+     "u" 'sniem-prev-line
+     "U" 'sniem-5-prev-line
+     "e" 'sniem-next-line
+     "E" 'sniem-5-next-line
+     "h" 'sniem-insert
+     "H" 'sniem-insert-line
+     "n" 'sniem-backward-char
+     "N" 'sniem-5-backward-char
+     "i" 'sniem-forward-char
+     "I" 'sniem-5-forward-char
+     "k" 'sniem-lock-unlock-last-point
+     "K" 'sniem-goto-last-point
+     "t" 'sniem-next-symbol
+     "T" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout 'colemak))
+   ((or (eq layout 'dvorak)
+        (eq layout 'dvp))
+    (sniem-normal-set-key
+     "j" 'sniem-join
+     "u" 'undo
+     "e" 'sniem-prev-line
+     "E" 'sniem-5-prev-line
+     "n" 'sniem-next-line
+     "N" 'sniem-5-next-line
+     "i" 'sniem-insert
+     "I" 'sniem-insert-line
+     "h" 'sniem-backward-char
+     "H" 'sniem-5-backward-char
+     "t" 'sniem-forward-char
+     "T" 'sniem-5-forward-char
+     "k" 'sniem-lock-unlock-last-point
+     "K" 'sniem-goto-last-point
+     "l" 'sniem-next-symbol
+     "L" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout (if (eq layout 'dvp)
+                                    'dvp
+                                  'dvorak)))
+   (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
 
 (defun sniem-digit-argument-or-fn (arg)
   "The digit argument function.
