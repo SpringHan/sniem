@@ -156,7 +156,7 @@
   (sniem-lock-unlock-last-point))
 
 (defun sniem-keyboard-quit ()
-  "Like `keyboard-quit'. 
+  "Like `keyboard-quit'.
 But when it's recording kmacro and there're region, deactivate mark."
   (interactive)
   (if (and (region-active-p) defining-kbd-macro)
@@ -177,28 +177,12 @@ But when it's recording kmacro and there're region, deactivate mark."
       (when (equal ele item)
         (throw 'exists t)))))
 
-(defun sniem-change-mode (mode)
-  "Change editing MODE."
-  (unless (eq (sniem-current-mode) mode)
-    (pcase mode
-      ('normal (sniem-normal-mode t))
-      ('insert (sniem-insert-mode t))
-      ('motion (sniem-motion-mode t)))
-    (sniem-cursor-change)))
-
 (defun sniem-cursor-change ()
   "Change cursor type."
   (setq-local cursor-type (pcase (sniem-current-mode)
                             ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
                             ('motion sniem-motion-mode-cursor))))
-
-(defun sniem-current-mode ()
-  "Get current mode."
-  (cond (sniem-normal-mode 'normal)
-        (sniem-insert-mode 'insert)
-        (sniem-motion-mode 'motion)
-        (t nil)))
 
 (defun sniem-set-leader-key (key)
   "Set the leader KEY for normal mode."
@@ -230,65 +214,68 @@ Optional argument KEYS are the keys you want to add."
   "Set the keyboard layout, then you can use the default keymap for your layout.
 
 LAYOUT can be qwerty, colemak or dvorak."
-  (pcase layout
-    ('qwerty (sniem-normal-set-key
-              "e" 'sniem-join
-              "u" 'undo
-              "k" 'sniem-prev-line
-              "K" 'sniem-5-prev-line
-              "j" 'sniem-next-line
-              "J" 'sniem-5-next-line
-              "i" 'sniem-insert
-              "I" 'sniem-insert-line
-              "h" 'sniem-backward-char
-              "H" 'sniem-5-backward-char
-              "l" 'sniem-forward-char
-              "L" 'sniem-5-forward-char
-              "n" 'sniem-lock-unlock-last-point
-              "N" 'sniem-goto-last-point
-              "t" 'sniem-next-symbol
-              "T" 'sniem-prev-symbol)
-             (setq sniem-keyboard-layout 'qwerty))
-    ('colemak (sniem-normal-set-key
-               "j" 'sniem-join
-               "l" 'undo
-               "u" 'sniem-prev-line
-               "U" 'sniem-5-prev-line
-               "e" 'sniem-next-line
-               "E" 'sniem-5-next-line
-               "h" 'sniem-insert
-               "H" 'sniem-insert-line
-               "n" 'sniem-backward-char
-               "N" 'sniem-5-backward-char
-               "i" 'sniem-forward-char
-               "I" 'sniem-5-forward-char
-               "k" 'sniem-lock-unlock-last-point
-               "K" 'sniem-goto-last-point
-               "t" 'sniem-next-symbol
-               "T" 'sniem-prev-symbol)
-              (setq sniem-keyboard-layout 'colemak))
-    ((or 'dvp 'dvorak)
-     (sniem-normal-set-key
-      "j" 'sniem-join
-      "u" 'undo
-      "e" 'sniem-prev-line
-      "E" 'sniem-5-prev-line
-      "n" 'sniem-next-line
-      "N" 'sniem-5-next-line
-      "i" 'sniem-insert
-      "I" 'sniem-insert-line
-      "h" 'sniem-backward-char
-      "H" 'sniem-5-backward-char
-      "t" 'sniem-forward-char
-      "T" 'sniem-5-forward-char
-      "k" 'sniem-lock-unlock-last-point
-      "K" 'sniem-goto-last-point
-      "l" 'sniem-next-symbol
-      "L" 'sniem-prev-symbol)
-     (setq sniem-keyboard-layout (if (eq layout 'dvp)
-                                     'dvp
-                                   'dvorak)))
-    (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
+  (cond
+   ((eq layout 'qwerty)
+    (sniem-normal-set-key
+     "e" 'sniem-join
+     "u" 'undo
+     "k" 'sniem-prev-line
+     "K" 'sniem-5-prev-line
+     "j" 'sniem-next-line
+     "J" 'sniem-5-next-line
+     "i" 'sniem-insert
+     "I" 'sniem-insert-line
+     "h" 'sniem-backward-char
+     "H" 'sniem-5-backward-char
+     "l" 'sniem-forward-char
+     "L" 'sniem-5-forward-char
+     "n" 'sniem-lock-unlock-last-point
+     "N" 'sniem-goto-last-point
+     "t" 'sniem-next-symbol
+     "T" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout 'qwerty))
+   ((eq layout 'colemak)
+    (sniem-normal-set-key
+     "j" 'sniem-join
+     "l" 'undo
+     "u" 'sniem-prev-line
+     "U" 'sniem-5-prev-line
+     "e" 'sniem-next-line
+     "E" 'sniem-5-next-line
+     "h" 'sniem-insert
+     "H" 'sniem-insert-line
+     "n" 'sniem-backward-char
+     "N" 'sniem-5-backward-char
+     "i" 'sniem-forward-char
+     "I" 'sniem-5-forward-char
+     "k" 'sniem-lock-unlock-last-point
+     "K" 'sniem-goto-last-point
+     "t" 'sniem-next-symbol
+     "T" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout 'colemak))
+   ((or (eq layout 'dvorak)
+        (eq layout 'dvp))
+    (sniem-normal-set-key
+     "j" 'sniem-join
+     "u" 'undo
+     "e" 'sniem-prev-line
+     "E" 'sniem-5-prev-line
+     "n" 'sniem-next-line
+     "N" 'sniem-5-next-line
+     "i" 'sniem-insert
+     "I" 'sniem-insert-line
+     "h" 'sniem-backward-char
+     "H" 'sniem-5-backward-char
+     "t" 'sniem-forward-char
+     "T" 'sniem-5-forward-char
+     "k" 'sniem-lock-unlock-last-point
+     "K" 'sniem-goto-last-point
+     "l" 'sniem-next-symbol
+     "L" 'sniem-prev-symbol)
+    (setq sniem-keyboard-layout (if (eq layout 'dvp)
+                                    'dvp
+                                  'dvorak)))
+   (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
 
 (defun sniem-digit-argument-or-fn (arg)
   "The digit argument function.
@@ -299,35 +286,6 @@ Argument ARG is the `digit-argument' result."
     (prefix-command-preserve-state)
     (setq prefix-arg arg)
     (universal-argument--mode)))
-
-(defun sniem-digit-argument-get (&optional msg)
-  "A function which make you can use the middle of the keyboard.
-Instead of the num keyboard.
-Optional argument MSG is the message which will be outputed."
-  (interactive)
-  (let ((number "")
-        (arg "")
-        fn)
-    (while (not (string= number "over"))
-      (setq number (sniem-digit-argument-read-char))
-      (unless (string= number "over")
-        (cond ((string= number "delete")
-               (setq arg (substring arg 0 -1)))
-              ((setq fn (sniem-digit-argument-fn-get number))
-               (setq number "over"))
-              (t (setq arg (concat arg number)))))
-      (message "%s%s" (if msg
-                          msg
-                        "C-u ")
-               arg))
-    (setq arg (if (string-empty-p arg)
-                  nil
-                (string-to-number arg)))
-    (if fn
-        (if arg
-            `(funcall-interactively ',fn ,arg)
-          `(call-interactively ',fn))
-      arg)))
 
 (defun sniem-digit-argument-fn-get (string)
   "Read the fn for `sniem-digit-argument-or-fn'.
@@ -363,17 +321,6 @@ Argument STRING is the string get from the input."
        (100 "6") (104 "7") (116 "8") (110 "9") (115 "0")
        (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
        (x (char-to-string x))))))
-
-(defun sniem-lock-unlock-last-point (&optional lock)
-  "LOCK or unlock `sniem-last-point'."
-  (interactive)
-  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
-                                          nil
-                                        t))
-  (sniem-show-last-point (not sniem-last-point-locked))
-  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
-                                         "locked"
-                                       "unlocked")))
 
 (defun sniem-lock-unlock-last-goto-point (&optional lock)
   "LOCK/unlock the `sniem-last-goto-point'."
@@ -411,40 +358,6 @@ Optional argument HIDE is t, the last point will be show."
       (setq-local sniem-last-point-overlay
                   (make-overlay sniem-last-point (1+ sniem-last-point) (current-buffer) t t))
       (overlay-put sniem-last-point-overlay 'face cursor-color))))
-
-(defun sniem-motion-hint (motion)
-  "Hint after MOTION."
-  (let (overlay point)
-    (when sniem-motion-hint-overlays
-      (mapc #'delete-overlay sniem-motion-hint-overlays)
-      (setq sniem-motion-hint-overlays nil))
-    (save-mark-and-excursion
-      (catch 'stop
-        (dotimes (i 10)
-          (call-interactively motion)
-          (if (and point (= (point) point))
-              (throw 'stop nil)
-            (setq overlay (make-overlay (point) (1+ (point))))
-            (overlay-put overlay 'display (format "%s%s"
-                                                  (propertize (number-to-string (1+ i))
-                                                              'face 'sniem-motion-hint-face)
-                                                  (pcase (following-char)
-                                                    ((pred (= 10)) "\n")
-                                                    ((pred (= 9)) "\t")
-                                                    (_ ""))))
-            (setq point (point))
-            (push overlay sniem-motion-hint-overlays)))))
-    (sit-for sniem-motion-hint-sit-time)
-    (mapc #'delete-overlay sniem-motion-hint-overlays)
-    (setq sniem-motion-hint-overlays nil)
-    (setq-local sniem-motion-hint-motion motion)))
-
-(defun sniem-move-with-hint-num (num)
-  "Move with NUM to eval the last `sniem-motion-hint-motion'."
-  (interactive "P")
-  (dotimes (_ num)
-    (funcall-interactively sniem-motion-hint-motion))
-  (sniem-motion-hint sniem-motion-hint-motion))
 
 (defun sniem-set-quit-insert-key (key)
   "Set the `sniem-quit-insert' KEY."
