@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'sniem-var)
 (require 'sniem-common)
 (require 'sniem-macro)
 
@@ -120,7 +121,10 @@ Argument PARENT means get the parent pair of the content selected."
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char)
               second-point (if (string= char second-char)
-                               (sniem-object-catch-format-point2 char prefix-point)
+                               (if (and (not (nth 3 (syntax-ppss)))
+                                        (nth 8 (syntax-ppss)))
+                                   (sniem-object-catch-format-pointc char)
+                                 (sniem-object-catch-format-point2 char prefix-point))
                              (sniem-object-catch-format-point char second-char)))
         (when (consp second-point)
           (setq prefix-point (car second-point)
@@ -270,11 +274,35 @@ Argument PAIR is the pair."
 
 (defun sniem-object-catch-format-pointc (char)
   "Format the CHAR has same char in comment."
-  (let ((point (point))        
-        backwardp forwardp balone falone another-point)
-    (save-mark-and-excursion)))
+  (let (balone falone)
+    (setq balone (sniem-object-catch--while-check-format char))
+    (setq falone (sniem-object-catch--while-check-format char t))
+    (if balone
+        (cons balone (1+ (point)))
+      (1+ falone))))
 
-(defun sniem-object-catch--while-check-format (char forward))
+(defun sniem-object-catch--while-check-format (char &optional forward)
+  "Check the pair which has same CHAR in a while with the direction.
+When the FORWARD is non-nil, the direction is forward.
+Otherwise it's backward."
+  (let ((command (if forward
+                     'forward-char
+                   'backward-char))
+        alone another-point)
+    (save-mark-and-excursion
+      (while (and (not (or (bobp)
+                           (eobp)))
+                  (or (funcall command) t)
+                  (or (nth 8 (syntax-ppss))
+                      (ignore-errors
+                        (= (char-before) 10))))
+        (when (string= char (buffer-substring-no-properties (point) (1+ (point))))
+          (cond ((null another-point)
+                 (setq another-point (point)))
+                (alone (setq alone nil))
+                (t (setq alone t))))))
+    (when (not alone)
+      another-point)))
 
 (defun sniem-object-catch--symbol-exists-p (symbol)
   "Check if the SYMBOL is exists."
