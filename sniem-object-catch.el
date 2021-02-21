@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'sniem-common)
 (require 'sniem-macro)
 
 (defgroup sniem-object-catch nil
@@ -266,13 +267,6 @@ Argument PAIR is the pair."
                  (= (following-char) 92)
                  (forward-char)))))
     point))
-
-(defun sniem-object-catch--get-second-char (prefix)
-  "Get the second char by the PREFIX."
-  (catch 'second-char
-    (dolist (char-cons sniem-object-catch-global-symbol-alist)
-      (when (string= prefix (car char-cons))
-        (throw 'second-char (cdr-safe char-cons))))))
 
 (defun sniem-object-catch--symbol-exists-p (symbol)
   "Check if the SYMBOL is exists."

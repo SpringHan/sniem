@@ -32,7 +32,11 @@ Argument ARG is the arg of motion.
 Argument DOCSTRING is the docstring.
 Optional argument BODY is the main body of motion function."
   (declare (indent defun)
-           (doc-string 3))
+           (doc-string 3)
+           (debug (&define name lambda-lsit
+                           [&optional stringp]
+                           [&optional ("interactive" [&rest form])]
+                           def-body)))
   (let ((inter (if (eq (car-safe (car-safe `,body)) 'interactive)
                    (pop `,body)
                  '(interactive))))

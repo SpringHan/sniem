@@ -177,28 +177,12 @@ But when it's recording kmacro and there're region, deactivate mark."
       (when (equal ele item)
         (throw 'exists t)))))
 
-(defun sniem-change-mode (mode)
-  "Change editing MODE."
-  (unless (eq (sniem-current-mode) mode)
-    (pcase mode
-      ('normal (sniem-normal-mode t))
-      ('insert (sniem-insert-mode t))
-      ('motion (sniem-motion-mode t)))
-    (sniem-cursor-change)))
-
 (defun sniem-cursor-change ()
   "Change cursor type."
   (setq-local cursor-type (pcase (sniem-current-mode)
                             ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
                             ('motion sniem-motion-mode-cursor))))
-
-(defun sniem-current-mode ()
-  "Get current mode."
-  (cond (sniem-normal-mode 'normal)
-        (sniem-insert-mode 'insert)
-        (sniem-motion-mode 'motion)
-        (t nil)))
 
 (defun sniem-set-leader-key (key)
   "Set the leader KEY for normal mode."
@@ -303,35 +287,6 @@ Argument ARG is the `digit-argument' result."
     (setq prefix-arg arg)
     (universal-argument--mode)))
 
-(defun sniem-digit-argument-get (&optional msg)
-  "A function which make you can use the middle of the keyboard.
-Instead of the num keyboard.
-Optional argument MSG is the message which will be outputed."
-  (interactive)
-  (let ((number "")
-        (arg "")
-        fn)
-    (while (not (string= number "over"))
-      (setq number (sniem-digit-argument-read-char))
-      (unless (string= number "over")
-        (cond ((string= number "delete")
-               (setq arg (substring arg 0 -1)))
-              ((setq fn (sniem-digit-argument-fn-get number))
-               (setq number "over"))
-              (t (setq arg (concat arg number)))))
-      (message "%s%s" (if msg
-                          msg
-                        "C-u ")
-               arg))
-    (setq arg (if (string-empty-p arg)
-                  nil
-                (string-to-number arg)))
-    (if fn
-        (if arg
-            `(funcall-interactively ',fn ,arg)
-          `(call-interactively ',fn))
-      arg)))
-
 (defun sniem-digit-argument-fn-get (string)
   "Read the fn for `sniem-digit-argument-or-fn'.
 Argument STRING is the string get from the input."
@@ -366,17 +321,6 @@ Argument STRING is the string get from the input."
        (100 "6") (104 "7") (116 "8") (110 "9") (115 "0")
        (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
        (x (char-to-string x))))))
-
-(defun sniem-lock-unlock-last-point (&optional lock)
-  "LOCK or unlock `sniem-last-point'."
-  (interactive)
-  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
-                                          nil
-                                        t))
-  (sniem-show-last-point (not sniem-last-point-locked))
-  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
-                                         "locked"
-                                       "unlocked")))
 
 (defun sniem-lock-unlock-last-goto-point (&optional lock)
   "LOCK/unlock the `sniem-last-goto-point'."
@@ -414,40 +358,6 @@ Optional argument HIDE is t, the last point will be show."
       (setq-local sniem-last-point-overlay
                   (make-overlay sniem-last-point (1+ sniem-last-point) (current-buffer) t t))
       (overlay-put sniem-last-point-overlay 'face cursor-color))))
-
-(defun sniem-motion-hint (motion)
-  "Hint after MOTION."
-  (let (overlay point)
-    (when sniem-motion-hint-overlays
-      (mapc #'delete-overlay sniem-motion-hint-overlays)
-      (setq sniem-motion-hint-overlays nil))
-    (save-mark-and-excursion
-      (catch 'stop
-        (dotimes (i 10)
-          (call-interactively motion)
-          (if (and point (= (point) point))
-              (throw 'stop nil)
-            (setq overlay (make-overlay (point) (1+ (point))))
-            (overlay-put overlay 'display (format "%s%s"
-                                                  (propertize (number-to-string (1+ i))
-                                                              'face 'sniem-motion-hint-face)
-                                                  (pcase (following-char)
-                                                    ((pred (= 10)) "\n")
-                                                    ((pred (= 9)) "\t")
-                                                    (_ ""))))
-            (setq point (point))
-            (push overlay sniem-motion-hint-overlays)))))
-    (sit-for sniem-motion-hint-sit-time)
-    (mapc #'delete-overlay sniem-motion-hint-overlays)
-    (setq sniem-motion-hint-overlays nil)
-    (setq-local sniem-motion-hint-motion motion)))
-
-(defun sniem-move-with-hint-num (num)
-  "Move with NUM to eval the last `sniem-motion-hint-motion'."
-  (interactive "P")
-  (dotimes (_ num)
-    (funcall-interactively sniem-motion-hint-motion))
-  (sniem-motion-hint sniem-motion-hint-motion))
 
 (defun sniem-set-quit-insert-key (key)
   "Set the `sniem-quit-insert' KEY."
