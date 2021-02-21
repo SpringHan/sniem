@@ -291,14 +291,14 @@ Otherwise it's backward."
                    'backward-char))
         current-char alone another-point)
     (save-mark-and-excursion
-      (while (and (not (or (bobp)
-                           (eobp)))
+      (while (and (not (sniem-object-catch--border forward))
                   (or (funcall command) t)
                   (or (nth 8 (syntax-ppss))
                       (ignore-errors
                         (= (char-before) 10))
                       (sniem-object-catch--face-around-eq)))
-        (when (and (ignore-errors
+        (when (and (not (sniem-object-catch-backslash-p))
+                   (ignore-errors
                      (setq current-char
                            (buffer-substring-no-properties (point) (1+ (point)))))
                    (string= char current-char))
@@ -308,6 +308,13 @@ Otherwise it's backward."
                 (t (setq alone t))))))
     (when (not alone)
       another-point)))
+
+(defun sniem-object-catch--border (forward)
+  "Check if it's border now.
+FORWARD means now it's forward direction."
+  (if forward
+      (eobp)
+    (bobp)))
 
 (defun sniem-object-catch--face-around-eq ()
   "Check if the faces around the point are equal."
@@ -320,9 +327,8 @@ Otherwise it's backward."
             rface (progn
                     (ignore-errors (forward-char))
                     (face-at-point))))
-    (when (and (eq face lface)
-               (eq face rface))
-      t)))
+    (and (eq face lface)
+         (eq face rface))))
 
 (defun sniem-object-catch--symbol-exists-p (symbol)
   "Check if the SYMBOL is exists."
@@ -345,7 +351,8 @@ The current char is not quote and the char before prefix is not backslash."
 
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
-  (= 92 (char-before)))
+  (unless (bobp)
+    (= 92 (char-before))))
 
 (defmacro sniem-object-catch-mode-defalist (modename &rest alist)
   "Define ALIST for major mode.
