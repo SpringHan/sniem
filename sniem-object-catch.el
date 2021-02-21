@@ -121,8 +121,9 @@ Argument PARENT means get the parent pair of the content selected."
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char)
               second-point (if (string= char second-char)
-                               (if (and (not (nth 3 (syntax-ppss)))
-                                        (nth 8 (syntax-ppss)))
+                               (if (or (and (not (nth 3 (syntax-ppss)))
+                                            (nth 8 (syntax-ppss)))
+                                       (sniem-object-catch--face-around-eq))
                                    (sniem-object-catch-format-pointc char)
                                  (sniem-object-catch-format-point2 char prefix-point))
                              (sniem-object-catch-format-point char second-char)))
@@ -230,7 +231,7 @@ Argument PREFIX-POINT is the prefix point."
                (eq (face-at-point) prefix-face))
              (setq second-point (sniem-object-catch-format-point1 pair prefix-point)
                    prefix-point (sniem-object-catch-format-point1 pair prefix-point t t)))
-             
+
             ((progn
                (forward-char 2)
                (or (eq (face-at-point) prefix-face)
@@ -288,21 +289,47 @@ Otherwise it's backward."
   (let ((command (if forward
                      'forward-char
                    'backward-char))
-        alone another-point)
+        current-char alone another-point)
     (save-mark-and-excursion
-      (while (and (not (or (bobp)
-                           (eobp)))
+      (while (and (not (sniem-object-catch--border forward))
                   (or (funcall command) t)
                   (or (nth 8 (syntax-ppss))
                       (ignore-errors
-                        (= (char-before) 10))))
-        (when (string= char (buffer-substring-no-properties (point) (1+ (point))))
+                        (= (char-before) 10))
+                      (sniem-object-catch--face-around-eq)))
+
+        (when (and (not (sniem-object-catch-backslash-p))
+                   (ignore-errors
+                     (setq current-char
+                           (buffer-substring-no-properties (point) (1+ (point)))))
+                   (string= char current-char))
           (cond ((null another-point)
                  (setq another-point (point)))
                 (alone (setq alone nil))
                 (t (setq alone t))))))
     (when (not alone)
       another-point)))
+
+(defun sniem-object-catch--border (forward)
+  "Check if it's border now.
+FORWARD means now it's forward direction."
+  (if forward
+      (eobp)
+    (bobp)))
+
+(defun sniem-object-catch--face-around-eq ()
+  "Check if the faces around the point are equal."
+  (let ((face (face-at-point))
+        lface rface)
+    (save-mark-and-excursion
+      (setq lface (progn
+                    (ignore-errors (backward-char))
+                    (face-at-point))
+            rface (progn
+                    (ignore-errors (forward-char))
+                    (face-at-point))))
+    (and (eq face lface)
+         (eq face rface))))
 
 (defun sniem-object-catch--symbol-exists-p (symbol)
   "Check if the SYMBOL is exists."
@@ -325,7 +352,8 @@ The current char is not quote and the char before prefix is not backslash."
 
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
-  (= 92 (char-before)))
+  (unless (bobp)
+    (= 92 (char-before))))
 
 (defmacro sniem-object-catch-mode-defalist (modename &rest alist)
   "Define ALIST for major mode.
