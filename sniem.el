@@ -371,6 +371,7 @@ Optional argument HIDE is t, the last point will be show."
 (require 'sniem-object-catch)
 (require 'sniem-cheatsheet)
 (require 'sniem-mark-jump)
+(require 'sniem-expand-region)
 
 ;;; Third-Party Settings
 (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)

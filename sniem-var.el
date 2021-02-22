@@ -139,6 +139,7 @@
     (define-key map "b" 'sniem-beginning-of-line)
     (define-key map "B" 'sniem-end-of-line)
     (define-key map "m" 'sniem-mark)
+    (define-key map "M" 'sniem-expand-region-string)
     (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
