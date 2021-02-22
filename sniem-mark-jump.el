@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'sniem-common)
 (require 'sniem-operation)
 
 (defcustom sniem-mark-jump-items

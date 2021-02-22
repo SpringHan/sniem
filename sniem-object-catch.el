@@ -243,7 +243,7 @@ Argument PREFIX-POINT is the prefix point."
         (push-mark (cdr region-forward-p)))
       (cons prefix-point (1+ second-point)))))
 
-(defmacro prog3 (form1 form2 form3 &rest body)
+(defmacro sniem-prog3 (form1 form2 form3 &rest body)
   "Eval FORM1, FORM2, FORM3 and BODY, return the FORM3."
   (declare (indent 0) (debug t))
   `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
@@ -266,7 +266,7 @@ Argument PAIR is the pair."
         (setq point (progn
                       (forward-char)
                       (point)))
-        (while (prog3
+        (while (sniem-prog3
                  (setq point (funcall search-command pair))
                  (backward-char)
                  (= (following-char) 92)
@@ -344,10 +344,6 @@ FORWARD means now it's forward direction."
 The current char is not quote and the char before prefix is not backslash."
   (not (or (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))
            (sniem-object-catch-backslash-p))))
-
-(defun sniem-object-catch-lisp-mode-p ()
-  "Check if the current major mode belongs to Lisp mode."
-  (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
