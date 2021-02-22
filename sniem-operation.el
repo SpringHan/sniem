@@ -382,10 +382,16 @@ Argument N is the page of the contents."
               (when sniem-kmacro-mark-content
                 (setq-local sniem-kmacro-mark-content nil))))
 
-(defun sniem-pair (prefix)
+(defun sniem-pair (prefix &optional add)
   "Modify the region's pair.
 Argument PREFIX is the prefix of the pair."
-  (interactive "c")
+  (interactive (list (let ((var (read-char)))
+                       (if (= var 97)
+                           (list (read-char) t)
+                         var))))
+  (when (cdr-safe prefix)
+    (setq add t
+          prefix (car prefix)))
   (let ((second (unless (= 32 prefix)
                   (sniem-object-catch--get-second-char (char-to-string prefix))))
         (prefix-point (region-beginning))
@@ -396,14 +402,16 @@ Argument PREFIX is the prefix of the pair."
         (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
       (save-mark-and-excursion
         (goto-char prefix-point)
-        (when (sniem-pair--pair-p prefix-char)
+        (when (and (null add)
+                   (sniem-pair--pair-p prefix-char))
           (delete-char 1))
         (unless (= prefix 32)
           (insert prefix))
         (goto-char (if (= prefix 32)
                        (1- second-point)
                      second-point))
-        (if (sniem-pair--pair-p prefix-char)
+        (if (and (null add)
+                 (sniem-pair--pair-p prefix-char))
             (delete-char -1)
           (forward-char))
         (unless (= prefix 32)
