@@ -222,31 +222,31 @@ Argument PREFIX-POINT is the prefix point."
   (let ((region-forward-p (when (and (region-active-p) sniem-object-catch-forward-p)
                             (prog1 (cons (region-beginning) (region-end))
                               (deactivate-mark))))
+        (face-eq-p (lambda (face1)
+                     (let ((face2 (get-text-property (point) 'face)))
+                       (ignore-errors
+                         (or (eq face1 face2)
+                             (memq face1 face2)
+                             (memq face2 face1))))))
         prefix-face second-point)
     (save-mark-and-excursion
       (goto-char prefix-point)
       (setq prefix-face (face-at-point))
       (cond ((progn
                (backward-char)
-               (eq (face-at-point) prefix-face))
+               (funcall face-eq-p prefix-face))
              (setq second-point (sniem-object-catch-format-point1 pair prefix-point)
                    prefix-point (sniem-object-catch-format-point1 pair prefix-point t t)))
 
             ((progn
                (forward-char 2)
-               (or (eq (face-at-point) prefix-face)
-                   (eq (face-at-point) 'show-paren-match))) ; NOTE: This expression in here maybe have bug.
+               (funcall face-eq-p prefix-face)) ; NOTE: This expression in here maybe have bug.
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
                    second-point (sniem-object-catch-format-point1 pair (point) t))))
       (when region-forward-p
         (goto-char (car region-forward-p))
         (push-mark (cdr region-forward-p)))
       (cons prefix-point (1+ second-point)))))
-
-(defmacro sniem-prog3 (form1 form2 form3 &rest body)
-  "Eval FORM1, FORM2, FORM3 and BODY, return the FORM3."
-  (declare (indent 0) (debug t))
-  `(progn ,form1 ,form2 (prog1 ,form3 ,@body)))
 
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
   "Format the POINT for char.
@@ -261,16 +261,13 @@ Argument PAIR is the pair."
                       (funcall search-command pair)
                       (unless prefix (backward-char))
                       (point))))
-      (when (prog2 (backward-char) (= (following-char) 92)
-              (forward-char))
+      (when (sniem-object-catch-backslash-p)
         (setq point (progn
                       (forward-char)
                       (point)))
-        (while (sniem-prog3
+        (while (progn
                  (setq point (funcall search-command pair))
-                 (backward-char)
-                 (= (following-char) 92)
-                 (forward-char)))))
+                 (sniem-object-catch-backslash-p)))))
     point))
 
 (defun sniem-object-catch-format-pointc (char)
@@ -348,7 +345,11 @@ The current char is not quote and the char before prefix is not backslash."
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
   (unless (bobp)
-    (= 92 (char-before))))
+    (and (= 92 (char-before))
+         (not (ignore-errors
+                (save-mark-and-excursion
+                  (backward-char)
+                  (= 92 (char-before))))))))
 
 (defmacro sniem-object-catch-mode-defalist (modename &rest alist)
   "Define ALIST for major mode.
