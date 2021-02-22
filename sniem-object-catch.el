@@ -209,7 +209,10 @@ Argument SECOND-CHAR is the end char of the pair."
              (setq times (1+ times)))
             ((and (string= tmp second-char) (> times 0)
                   (not (sniem-object-catch-backslash-p))
-                  (eq sniem-object-catch-prefix-string-p (nth 3 (syntax-ppss))))
+                  (or (not (and sniem-object-catch-prefix-string-p
+                                (nth 3 (syntax-ppss))))
+                      (and sniem-object-catch-prefix-string-p
+                           (nth 3 (syntax-ppss)))))
              (setq times (1- times)))
             ((and (string= tmp second-char) (= times -1))
              (setq times 0)))
