@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'sniem-var)
+
 (defun sniem-current-mode ()
   "Get current mode."
   (cond (sniem-normal-mode 'normal)
@@ -121,6 +123,10 @@ Optional argument MSG is the message which will be outputed."
             `(funcall-interactively ',fn ,arg)
           `(call-interactively ',fn))
       arg)))
+
+(defun sniem-object-catch-lisp-mode-p ()
+  "Check if the current major mode belongs to Lisp mode."
+  (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
 (defun sniem--mems (ele list)
   "Like memq, but use `string-equal'.

@@ -275,7 +275,7 @@ LAYOUT can be qwerty, colemak or dvorak."
     (setq sniem-keyboard-layout (if (eq layout 'dvp)
                                     'dvp
                                   'dvorak)))
-   (_ (user-error "[Sniem]: The %s layout is not supplied!" layout))))
+   (t (user-error "[Sniem]: The %s layout is not supplied!" layout))))
 
 (defun sniem-digit-argument-or-fn (arg)
   "The digit argument function.
