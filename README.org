@@ -58,15 +58,15 @@
      - middle-keyboard-digit-argument-or-function
 
        This function is defaultly bound on ~<SPC>~. After you execute it, the middle keys of the keyboard can be instead of numbers and ~-~, the record will be over after you pressed ~<SPC>~. You can also use the keys in the table to do the special operations:
-       | Key | function                                                                   |
-       | ,   | repeat object-catch                                                        |
-       | .   | set the last-goto-point to the current position or mark the current region |
-       | SPC | execute function in motion-hint                                            |
-       | /   | reverse the direction of object-catch                                      |
-       | p   | Add, change or delete the pair of region                                   |
-       | <   | Jump to prev comment mark                                                  |
-       | >   | Jump to next comment mark                                                  |
-       | m   | Insert new comment mark                                                    |
+       | Key | Function                                 |
+       | ,   | Repeat object-catch                      |
+       | .   | Mark the content at point or a region    |
+       | SPC | Execute function in motion-hint          |
+       | /   | Reverse the direction of object-catch    |
+       | p   | Add, change or delete the pair of region |
+       | <   | Jump to prev comment mark                |
+       | >   | Jump to next comment mark                |
+       | m   | Insert new comment mark                  |
 ** Some special operations
    - Motions
 
@@ -80,7 +80,7 @@
 
      - ~(sniem-goto-last-point)~
 
-       Normally, goto the ~last-point~. If the ~last-goto-point~, goto the ~last-goto-point~. Otherwise if there is ~sniem-mark-content-overlay~, goto the first point of it.
+       Normally, goto the ~last-point~. If the ~sniem-mark-content~ is exists, goto the ~mark-content~.
 
    - Editing operations
 
