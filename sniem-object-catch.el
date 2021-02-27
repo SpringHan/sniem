@@ -173,7 +173,12 @@ Argument PARENT means get the parent pair of the content selected."
 (defun sniem-object-catch-parent ()
   "Catch region for its parent."
   (interactive)
-  (sniem-object-catch nil t))
+  (let ((pair (pcase last-input-event
+                (41 "(")
+                (93 "[")
+                (125 "{")
+                (_ nil))))
+    (sniem-object-catch pair t)))
 
 (defun sniem-object-catch-parent-by-char (char)
   "Catch region for its parent by CHAR."
@@ -212,19 +217,17 @@ Argument SECOND-CHAR is the end char of the pair."
       (cond ((and (string= tmp prefix) (not (string= prefix second-char))
                   (or (and sniem-object-catch-prefix-string-p
                            (nth 3 (syntax-ppss)))
-                      (not (and sniem-object-catch-prefix-string-p
-                                (nth 3 (syntax-ppss)))))
+                      (and (null sniem-object-catch-prefix-string-p)
+                           (null (nth 3 (syntax-ppss)))))
                   (not (= (char-before) 92)))
              (setq times (1+ times)))
             ((and (string= tmp second-char) (> times 0)
                   (not (= (char-before) 92))
-                  (or (not (and sniem-object-catch-prefix-string-p
-                                (nth 3 (syntax-ppss))))
-                      (and sniem-object-catch-prefix-string-p
-                           (nth 3 (syntax-ppss)))))
-             (setq times (1- times)))
-            ((and (string= tmp second-char) (= times -1))
-             (setq times 0)))
+                  (or (and sniem-object-catch-prefix-string-p
+                           (nth 3 (syntax-ppss)))
+                      (and (null sniem-object-catch-prefix-string-p)
+                           (null (nth 3 (syntax-ppss))))))
+             (setq times (1- times))))
       (forward-char))
     (point)))
 

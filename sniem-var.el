@@ -42,18 +42,8 @@
   :type 'number
   :group 'sniem)
 
-(defcustom sniem-last-goto-point nil
-  "The last goto point."
-  :type 'number
-  :group 'sniem)
-
 (defcustom sniem-last-point-overlay nil
   "The overlay for last point."
-  :type 'overlay
-  :group 'sniem)
-
-(defcustom sniem-last-goto-point-overlay nil
-  "The overlay for last goto point."
   :type 'overlay
   :group 'sniem)
 
@@ -89,6 +79,16 @@
 
 (defcustom sniem-mark-line nil
   "If in the mark line status."
+  :type 'boolean
+  :group 'sniem)
+
+(defcustom sniem-delete-edit nil
+  "If it's in delete edit."
+  :type 'boolean
+  :group 'sniem)
+
+(defcustom sniem-change-edit nil
+  "If it's in change edit."
   :type 'boolean
   :group 'sniem)
 
@@ -139,7 +139,6 @@
     (define-key map "b" 'sniem-beginning-of-line)
     (define-key map "B" 'sniem-end-of-line)
     (define-key map "m" 'sniem-mark)
-    (define-key map "M" 'sniem-expand-region-string)
     (define-key map "/" 'isearch-forward)
     (define-key map "w" 'sniem-next-word)
     (define-key map "W" 'sniem-prev-word)
@@ -180,6 +179,9 @@
     (define-key map (kbd "(") 'sniem-object-catch-round)
     (define-key map (kbd "[") 'sniem-object-catch-square)
     (define-key map (kbd "{") 'sniem-object-catch-curly)
+    (define-key map (kbd ")") 'sniem-object-catch-parent)
+    (define-key map (kbd "]") 'sniem-object-catch-parent)
+    (define-key map (kbd "}") 'sniem-object-catch-parent)
     (define-key map (kbd "<C-M-return>") 'sniem-object-catch-parent-by-char)
     (define-key map (kbd "C-<return>") 'sniem-object-catch-by-char)
     (define-key map (kbd "M-<return>") 'sniem-object-catch-parent)

@@ -64,15 +64,15 @@
    - middle-keyboard-digit-argument-or-function
 
      此功能默认绑定在 ~<SPC>~ 键上。执行后，可通过键盘中间的键来分别代替数字键和减号，回车即录入完毕；也可按下以下键来进行特殊操作:
-     | Key | function                                                |
-     | ,   | 重复 object-catch                                       |
-     | .   | 设置 last-goto-point 到当前位置或者将当前所选的内容记录 |
-     | SPC | 执行 motion-hint                                        |
-     | /   | 反转 object-catch 方向                                  |
-     | p   | 添加，更改或删除当前选中内容的 pair                     |
-     | <   | 跳转到下一个 comment mark                               |
-     | >   | 跳转到上一个 comment mark                               |
-     | m   | 插入新的 comment mark                                   |
+     | Key | function                            |
+     | ,   | 重复 object-catch                   |
+     | .   | 标记当前光标下内容或区域            |
+     | SPC | 执行 motion-hint                    |
+     | /   | 反转 object-catch 方向              |
+     | p   | 添加，更改或删除当前选中内容的 pair |
+     | <   | 跳转到下一个 comment mark           |
+     | >   | 跳转到上一个 comment mark           |
+     | m   | 插入新的 comment mark               |
 ** 一些特殊操作
 
    - 移动
@@ -84,9 +84,7 @@
        一般情况下，跳转到下一个词或者上一个词。如果有内容被选中，则跳转到下一个或上一个与选中内容相同的位置
 
      - ~(sniem-goto-last-point)~
-       一般情况下，跳转到 ~last-point~ 的位置。如果设置了 ~last-goto-point~ ，则跳转到 ~last-goto-point~ 的位置。如果有内容被记录，则跳转到其第一个字符。
-       一般情况下优先级:
-       被记录的内容 > ~last-goto-point~ > ~last-point~
+       一般情况下，跳转到 ~last-point~ 的位置。如果有内容被记录，则跳转到其第一个字符。
 
    - 编辑操作
 

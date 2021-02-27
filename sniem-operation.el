@@ -114,7 +114,8 @@ Optional argument ABOVE is t, it will open line above."
      (push-mark sniem-last-point t t)
      (when sniem-last-point-locked
        (sniem-lock-unlock-last-point)))
-    (109 (push-mark (point) t t))))
+    (109 (push-mark (point) t t))
+    (t (sniem-expand-region-string type))))
 
 ;;; Hook for mark
 (add-hook 'deactivate-mark-hook #'(lambda ()
@@ -164,9 +165,13 @@ Optional argument ABOVE is t, it will open line above."
 
 (defun sniem-delete (action)
   "Delete ACTION."
-  (interactive (list (if (region-active-p)
-                         t
-                       (read-char sniem-delete-message))))
+  (interactive (list (if sniem-delete-edit
+                         (progn
+                           (setq-local sniem-delete-edit nil)
+                           112)
+                       (if (region-active-p)
+                           t
+                         (read-char sniem-delete-message)))))
   (pcase action
     ((pred symbolp) (sniem-delete-region (region-beginning) (region-end)))
     (100 (if (= (line-beginning-position) (line-end-position))
@@ -184,7 +189,9 @@ Optional argument ABOVE is t, it will open line above."
     (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
-           (sniem-lock-unlock-last-point)))))
+           (sniem-lock-unlock-last-point)))
+    (101 (setq-local sniem-delete-edit t)
+         (sniem-lock-unlock-last-point t))))
 
 (defun sniem-delete-in-region ()
   "Delete in region."
@@ -206,14 +213,19 @@ Argument END is the end point of the region."
 (defun sniem-change (action)
   "Change contents.
 Argument ACTION is the action of change."
-  (interactive (list (if (region-active-p)
-                         t
-                       (read-char sniem-change-message))))
+  (interactive (list (if sniem-change-edit
+                         (progn
+                           (setq-local sniem-change-edit nil)
+                           112)
+                       (if (region-active-p)
+                           t
+                         (read-char sniem-change-message)))))
   (pcase action
-    ((pred symbolp) (sniem-delete t))
-    (99 (sniem-delete 68) (indent-according-to-mode))
-    (112 (sniem-delete 112)))
-  (sniem-insert))
+    ((pred symbolp) (sniem-delete t) (sniem-insert))
+    (99 (sniem-delete 68) (indent-according-to-mode) (sniem-insert))
+    (112 (sniem-delete 112) (sniem-insert))
+    (101 (setq-local sniem-change-edit t)
+         (sniem-lock-unlock-last-point t))))
 
 (defun sniem-change-in-region ()
   "Change in region."
@@ -475,7 +487,9 @@ Argument CHAR-STRING is the string to compair."
   (unless (bobp)
     (line-move (- 0 n)))
   (when (and (region-active-p) sniem-mark-line)
-    (end-of-line)))
+    (if (= (region-beginning) (point))
+        (beginning-of-line)
+      (end-of-line))))
 
 (sniem-define-motion sniem-5-prev-line ()
   "Eval `sniem-prev-line' 5 times."
@@ -488,7 +502,9 @@ Argument CHAR-STRING is the string to compair."
   (unless (eobp)
     (line-move n))
   (when (and (region-active-p) sniem-mark-line)
-    (end-of-line)))
+    (if (= (region-beginning) (point))
+        (beginning-of-line)
+      (end-of-line))))
 
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."
@@ -657,17 +673,11 @@ Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
   (let ((current-point (point)))
     (if type
-        (goto-char (pcase type
-                     ((and 1 (guard sniem-last-goto-point)) sniem-last-goto-point)
-                     ((and 2 (guard sniem-mark-content-overlay))
-                      (overlay-start sniem-mark-content-overlay))
-                     (_ sniem-last-point)))
-      (goto-char (if sniem-last-goto-point
-                     sniem-last-goto-point
-                   (if sniem-mark-content-overlay
-                       (overlay-start sniem-mark-content-overlay)
-                     sniem-last-point))))
-    (unless (or sniem-last-point-locked sniem-last-goto-point non-point-set)
+        (goto-char sniem-last-point)
+      (goto-char (if sniem-mark-content-overlay
+                     (overlay-start sniem-mark-content-overlay)
+                   sniem-last-point)))
+    (unless (or sniem-last-point-locked non-point-set)
       (setq-local sniem-last-point current-point))))
 
 (provide 'sniem-operation)

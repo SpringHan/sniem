@@ -291,7 +291,7 @@ Argument ARG is the `digit-argument' result."
   "Read the fn for `sniem-digit-argument-or-fn'.
 Argument STRING is the string get from the input."
   (pcase string
-    ("." 'sniem-lock-unlock-last-goto-point)
+    ("." 'sniem-mark-content)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
@@ -322,28 +322,24 @@ Argument STRING is the string get from the input."
        (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
        (x (char-to-string x))))))
 
-(defun sniem-lock-unlock-last-goto-point (&optional lock)
-  "LOCK/unlock the `sniem-last-goto-point'."
+(defun sniem-mark-content (&optional mark)
+  "Mark/unmark the content.
+Optional Argument MARK means mark forcibly."
   (interactive "P")
-  (if (not (region-active-p))
-      (if (and (null lock) sniem-mark-content-overlay)
-          (progn
-            (delete-overlay sniem-mark-content-overlay)
-            (setq-local sniem-mark-content-overlay nil))
-        (when (and (numberp lock) (= lock 0))
-          (setq lock nil))
-        (setq-local sniem-last-goto-point (if (or lock (null sniem-last-goto-point))
-                                              (point)
-                                            nil))
-        (message "[Sniem]: Goto point was %s." (if sniem-last-goto-point
-                                                   "set"
-                                                 "unset")))
-    (when sniem-mark-content-overlay
+  (let ((mark-content (lambda ()
+                        (if (region-active-p)
+                            (progn
+                              (setq-local sniem-mark-content-overlay
+                                          (make-overlay (region-beginning) (region-end)))
+                              (deactivate-mark))
+                          (setq-local sniem-mark-content-overlay
+                                      (make-overlay (point) (1+ (point)))))
+                        (overlay-put sniem-mark-content-overlay 'face 'region))))
+    (when (overlayp sniem-mark-content-overlay)
       (delete-overlay sniem-mark-content-overlay))
-    (let ((overlay (make-overlay (region-beginning) (region-end))))
-      (deactivate-mark)
-      (overlay-put overlay 'face 'region)
-      (setq-local sniem-mark-content-overlay overlay))))
+    (if (or (null sniem-mark-content-overlay) mark)
+        (funcall mark-content)
+      (setq-local sniem-mark-content-overlay nil))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
@@ -384,7 +380,7 @@ Optional argument HIDE is t, the last point will be show."
     ('normal (format "[N:%s%s%s]"
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
-                     (if sniem-last-goto-point ":L" "")))
+                     (if sniem-mark-content-overlay ":M" "")))
     ('insert "[I]")
     ('motion "[M]")))
 (when (featurep 'awesome-tray)
