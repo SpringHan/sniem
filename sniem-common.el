@@ -32,6 +32,7 @@
   (cond (sniem-normal-mode 'normal)
         (sniem-insert-mode 'insert)
         (sniem-motion-mode 'motion)
+        (sniem-expand-mode 'expand)
         (t nil)))
 
 (defun sniem-change-mode (mode)
@@ -40,7 +41,8 @@
     (pcase mode
       ('normal (sniem-normal-mode t))
       ('insert (sniem-insert-mode t))
-      ('motion (sniem-motion-mode t)))
+      ('motion (sniem-motion-mode t))
+      ('expand (sniem-expand-mode t)))
     (sniem-cursor-change)))
 
 (defun sniem-lock-unlock-last-point (&optional lock)

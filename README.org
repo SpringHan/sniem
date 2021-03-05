@@ -8,11 +8,11 @@
 ** Installation
    #+begin_src emacs-lisp
      (use-package
-       sniem
-       :load-path "path/to/sniem"
-       :init (global-sniem-mode t)
-       :config
-       (sniem-set-keyboard-layout 'qwerty))
+      sniem
+      :load-path "path/to/sniem"
+      :init (global-sniem-mode t)
+      :config
+      (sniem-set-keyboard-layout 'qwerty))
    #+end_src
 ** What is sniem
    Sniem means Simple United Editing Method，it's a new editing method for Emacs.
@@ -35,10 +35,37 @@
 
      Sniem has 3 modes.
      - ~NORMAL~: This mode is the default mode for the editing buffers.
+       
+       You can use ~(sniem-normal-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
 
      - ~INSERT~: This mode will be used when you executed ~sniem-insert~ in ~NORMAL~ mode. It's used to edit. In this mode, there's only one binding for ~sniem~, that is ~<ESC>~ which will make you exit ~INSERT~ mode back to ~NORMAL~ mode.
 
      - ~MOTION~: This mode is used in special modes, there's only has one binding for ~sniem~, that is ~<SPC>~ which can let you use leader keys.
+
+     - ~EXPAND~: This mode is used to expand region more comfortablely.
+       
+       You can use ~(sniem-expand-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
+       
+       | Key   | Function                                                         |
+       | ~SPC~ | Quit expand mode and goto NORMAL mode                            |
+       | ~RET~ | Call the object-catch function                                   |
+       | ~r~   | Repeat the object-catch                                          |
+       | ~p~   | Catch the parent pair of the content selected                    |
+       | ~b~   | Catch pair by its prefix char                                    |
+       | ~B~   | Catch the parent pair of the content selected by its prefix char |
+       | ~o~   | Catch ~()~ pair                                                  |
+       | ~O~   | Catch parent ~()~ pair for the content selected                  |
+       | ~s~   | Catch ~[]~ pair                                                  |
+       | ~S~   | Catch parent ~[]~ pair for the content selected                  |
+       | ~c~   | Catch ~{}~ pair                                                  |
+       | ~C~   | Catch parent ~{}~ pair for the content selected                  |
+       | ~q~   | Catch ~''~ pair                                                  |
+       | ~Q~   | Catch parent ~''~ pair for the content selected                  |
+       | ~d~   | Catch ~""~ pair                                                  |
+       | ~D~   | Catch parent ~""~ pair for the content selected                  |
+       | ~a~   | Catch ~<>~ pair                                                  |
+       | ~A~   | Catch parent ~<>~ pair for the content selected                  |
+       | ~/~   | Reverse the direction of catch                                   |
 
      - Keyboard layout
 

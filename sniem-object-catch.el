@@ -155,30 +155,28 @@ Argument PARENT means get the parent pair of the content selected."
       (sniem-object-catch char)
     (message "[Sniem-Object-Catch]: %s is not defined in the symbol alist." char)))
 
-(defun sniem-object-catch-round ()
-  "Catch region by `('."
+(defun sniem-object-catch-char ()
+  "Catch region by the last char."
   (interactive)
-  (sniem-object-catch-by-char "("))
-
-(defun sniem-object-catch-square ()
-  "Catch region by `['."
-  (interactive)
-  (sniem-object-catch-by-char "["))
-
-(defun sniem-object-catch-curly ()
-  "Catch region by `{'."
-  (interactive)
-  (sniem-object-catch-by-char "{"))
+  (let ((pair (sniem-object-catch--get-last-char)))
+    (sniem-object-catch pair nil)))
 
 (defun sniem-object-catch-parent ()
   "Catch region for its parent."
   (interactive)
-  (let ((pair (pcase last-input-event
-                (41 "(")
-                (93 "[")
-                (125 "{")
-                (_ nil))))
+  (let ((pair (sniem-object-catch--get-last-char)))
     (sniem-object-catch pair t)))
+
+(defun sniem-object-catch--get-last-char ()
+  "Get the last char."
+  (pcase last-input-event
+    ((or 41 79 111) "(")
+    ((or 83 93 115) "[")
+    ((or 67 125 99) "{")
+    ((or 39 113 81) "'")
+    ((or 34 100 68) "\"")
+    ((or 60 97 65) "<")
+    (_ nil)))
 
 (defun sniem-object-catch-parent-by-char (char)
   "Catch region for its parent by CHAR."

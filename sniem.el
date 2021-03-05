@@ -71,10 +71,17 @@
   (when sniem-motion-mode
     (sniem-motion-mode-init)))
 
+(define-minor-mode sniem-expand-mode
+  "Expand mode for sniem."
+  nil nil sniem-expand-state-keymap
+  (when sniem-expand-mode
+    (sniem-expand-mode-init)))
+
 (defun sniem-normal-mode-init ()
   "Normal mode init."
   (sniem-insert-mode -1)
   (sniem-motion-mode -1)
+  (sniem-expand-mode -1)
   (when current-input-method
     (toggle-input-method)
     (setq-local sniem-input-method-closed t)))
@@ -83,6 +90,7 @@
   "Insert mode init."
   (sniem-normal-mode -1)
   (sniem-motion-mode -1)
+  (sniem-expand-mode -1)
   (when sniem-input-method-closed
     (toggle-input-method)
     (setq-local sniem-input-method-closed nil)))
@@ -90,7 +98,14 @@
 (defun sniem-motion-mode-init ()
   "Motion mode init."
   (sniem-normal-mode -1)
-  (sniem-insert-mode -1))
+  (sniem-insert-mode -1)
+  (sniem-expand-mode -1))
+
+(defun sniem-expand-mode-init ()
+  "Expand mode init."
+  (sniem-normal-mode -1)
+  (sniem-insert-mode -1)
+  (sniem-motion-mode -1))
 
 (defun sniem--enable ()
   "Unable sniem."
@@ -111,6 +126,19 @@
   (sniem-motion-mode -1))
 
 ;;; Interactive functions
+
+(defun sniem-expand-with-catch ()
+  "Enter expand mode with object catch."
+  (interactive)
+  (sniem-object-catch)
+  (sniem-expand-mode t))
+
+(defun sniem-expand-enter-or-quit ()
+  "Quit expand mode."
+  (interactive)
+  (if sniem-expand-mode
+      (sniem-change-mode 'normal)
+    (sniem-change-mode 'expand)))
 
 (defun sniem-execute-space-command ()
   "Execute space command."
@@ -182,7 +210,8 @@ But when it's recording kmacro and there're region, deactivate mark."
   (setq-local cursor-type (pcase (sniem-current-mode)
                             ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
-                            ('motion sniem-motion-mode-cursor))))
+                            ('motion sniem-motion-mode-cursor)
+                            (t cursor-type))))
 
 (defun sniem-set-leader-key (key)
   "Set the leader KEY for normal mode."
@@ -209,6 +238,17 @@ Optional argument KEYS are the keys you want to add."
       (setq key (pop keys)
             func (pop keys))
       (define-key sniem-normal-state-keymap (kbd key) func))))
+
+(defun sniem-expand-set-key (&rest keys)
+  "Bind key to expand mode keymap.
+
+\(fn KEY FUNC...)
+Optional argument KEYS are the keys you want to add."
+  (let (key func)
+    (while keys
+      (setq key (pop keys)
+            func (pop keys))
+      (define-key sniem-expand-state-keymap (kbd key) func))))
 
 (defun sniem-set-keyboard-layout (layout)
   "Set the keyboard layout, then you can use the default keymap for your layout.
@@ -382,7 +422,9 @@ Optional argument HIDE is t, the last point will be show."
                      (if sniem-last-point-locked ":l" "")
                      (if sniem-mark-content-overlay ":M" "")))
     ('insert "[I]")
-    ('motion "[M]")))
+    ('motion "[M]")
+    ('expand (format "[E:%s]"
+                     (if sniem-object-catch-forward-p ">" "<")))))
 (when (featurep 'awesome-tray)
   (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
 

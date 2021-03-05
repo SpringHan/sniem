@@ -36,7 +36,7 @@
      Sniem 有以下几个模式
      - ~NORMAL~
 
-       一般情况下的模式，此模式下绑定了许多按键，可通过 ~(sniem-cheatsheet)~ 或者 ~?~ 键来查看绑定的按键
+       一般情况下的模式，此模式下绑定了许多按键，可通过 ~(sniem-cheatsheet)~ 或者 ~?~ 键来查看绑定的按键。可通过 ~(sniem-normal-set-key)~ 来绑定按键，用法与 ~(sniem-leader-set-key)~ 相同。
        
      - ~INSERT~
 
@@ -45,6 +45,33 @@
      - ~MOTION~
 
        与 ~INSERT~ 模式相同，除了 ~<SPC>~ 键被绑定为 leader，其它按键都是原本的按键。(原来的空格键被绑定为了 ~<SPC> <SPC>~)
+
+     - ~EXPAND~
+
+       这个模式使扩展选中区域更舒适。
+       
+       可通过 ~(sniem-expand-set-key)~ 来绑定按键，用法与 ~(sniem-leader-set-key)~ 相同。
+       
+       | Key   | Function                                   |
+       | ~SPC~ | 切换到 NORMAL 模式                         |
+       | ~RET~ | 调用 object-catch                          |
+       | ~r~   | 重复上一次的 object-catch                  |
+       | ~p~   | 抓取当前选中内容的父级 pair                |
+       | ~b~   | 获取 pair 通过其前缀字符                   |
+       | ~B~   | 获取当前选中内容的父级 pair 通过其前缀字符 |
+       | ~o~   | 获取 ~()~ pair                             |
+       | ~O~   | 获取当前选中内容的父级 ~()~ pair           |
+       | ~s~   | 获取 ~[]~ pair                             |
+       | ~S~   | 获取当前选中内容的父级 ~[]~ pair           |
+       | ~c~   | 获取 ~{}~ pair                             |
+       | ~C~   | 获取当前选中内容的父级 ~{}~ pair           |
+       | ~q~   | 获取 ~''~ pair                             |
+       | ~Q~   | 获取当前选中内容的父级 ~''~ pair           |
+       | ~d~   | 获取 ~""~ pair                             |
+       | ~D~   | 获取当前选中内容的父级 ~""~ pair           |
+       | ~a~   | 获取 ~<>~ pair                             |
+       | ~A~   | 获取当前选中内容的父级 ~<>~ pair           |
+       | ~/~   | 反转抓取的方向                             |
 
    - Keyboard layout
 
