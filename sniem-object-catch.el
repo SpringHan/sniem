@@ -124,7 +124,8 @@ Argument PARENT means get the parent pair of the content selected."
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char))
         (if (and (not (string= char second-char))
-                 (= (char-before) 92))
+                 (ignore-errors
+                   (= (char-before) 92)))
             (setq go-on t)
           (setq second-point (if (string= char second-char)
                                  (if (or (and (not (nth 3 (syntax-ppss)))
@@ -359,9 +360,10 @@ The current char is not quote and the char before prefix is not backslash."
   "Check if the char before current point is \\."
   (unless (bobp)
     (and (= 92 (char-before))
-         (not (ignore-errors
-                (save-mark-and-excursion
-                  (backward-char)
+         (not (save-mark-and-excursion
+                (backward-char)
+                (if (bobp)
+                    t
                   (= 92 (char-before))))))))
 
 (defmacro sniem-object-catch-mode-defalist (modename &rest alist)

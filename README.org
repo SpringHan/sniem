@@ -46,26 +46,26 @@
        
        You can use ~(sniem-expand-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
        
-       | Key   | Function                                                         |
-       | ~SPC~ | Quit expand mode and goto NORMAL mode                            |
-       | ~RET~ | Call the object-catch function                                   |
-       | ~r~   | Repeat the object-catch                                          |
-       | ~p~   | Catch the parent pair of the content selected                    |
-       | ~b~   | Catch pair by its prefix char                                    |
-       | ~B~   | Catch the parent pair of the content selected by its prefix char |
-       | ~o~   | Catch ~()~ pair                                                  |
-       | ~O~   | Catch parent ~()~ pair for the content selected                  |
-       | ~s~   | Catch ~[]~ pair                                                  |
-       | ~S~   | Catch parent ~[]~ pair for the content selected                  |
-       | ~c~   | Catch ~{}~ pair                                                  |
-       | ~C~   | Catch parent ~{}~ pair for the content selected                  |
-       | ~q~   | Catch ~''~ pair                                                  |
-       | ~Q~   | Catch parent ~''~ pair for the content selected                  |
-       | ~d~   | Catch ~""~ pair                                                  |
-       | ~D~   | Catch parent ~""~ pair for the content selected                  |
-       | ~a~   | Catch ~<>~ pair                                                  |
-       | ~A~   | Catch parent ~<>~ pair for the content selected                  |
-       | ~/~   | Reverse the direction of catch                                   |
+       | Key              | Function                                                         |
+       | ~RET~            | Call the object-catch function                                   |
+       | ~r~              | Repeat the object-catch                                          |
+       | ~p~              | Catch the parent pair of the content selected                    |
+       | ~b~              | Catch pair by its prefix char                                    |
+       | ~B~              | Catch the parent pair of the content selected by its prefix char |
+       | ~o~              | Catch ~()~ pair                                                  |
+       | ~O~              | Catch parent ~()~ pair for the content selected                  |
+       | ~s~              | Catch ~[]~ pair                                                  |
+       | ~S~              | Catch parent ~[]~ pair for the content selected                  |
+       | ~c~              | Catch ~{}~ pair                                                  |
+       | ~C~              | Catch parent ~{}~ pair for the content selected                  |
+       | ~q~              | Catch ~''~ pair                                                  |
+       | ~Q~              | Catch parent ~''~ pair for the content selected                  |
+       | ~d~              | Catch ~""~ pair                                                  |
+       | ~D~              | Catch parent ~""~ pair for the content selected                  |
+       | ~a~              | Catch ~<>~ pair                                                  |
+       | ~A~              | Catch parent ~<>~ pair for the content selected                  |
+       | ~/~              | Reverse the direction of catch                                   |
+       | Other alpha keys | Quit expand mode and goto NORMAL mode                            |
 
      - Keyboard layout
 

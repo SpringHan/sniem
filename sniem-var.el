@@ -210,8 +210,7 @@
 
 (defcustom sniem-expand-state-keymap
   (let ((map (make-sparse-keymap)))
-    (suppress-keymap map)
-    (define-key map (kbd "SPC") 'sniem-expand-enter-or-quit)
+    (define-key map [remap self-insert-command] 'sniem-expand-enter-or-quit)
     (define-key map (kbd "RET") 'sniem-object-catch)
     (define-key map "p" 'sniem-object-catch-parent)
     (define-key map "r" 'sniem-object-catch-repeat)
