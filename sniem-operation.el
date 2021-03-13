@@ -117,7 +117,7 @@ Optional argument ABOVE is t, it will open line above."
     (109 (push-mark (point) t t))
     (102 (mark-defun))
     (98 (mark-whole-buffer))
-    (t (sniem-expand-region-string type))))
+    (_ (sniem-expand-region-string type))))
 
 ;;; Hook for mark
 (add-hook 'deactivate-mark-hook #'(lambda ()

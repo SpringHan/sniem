@@ -211,7 +211,7 @@ But when it's recording kmacro and there're region, deactivate mark."
                             ('normal sniem-normal-mode-cursor)
                             ('insert sniem-insert-mode-cursor)
                             ('motion sniem-motion-mode-cursor)
-                            (t cursor-type))))
+                            (_ cursor-type))))
 
 (defun sniem-set-leader-key (key)
   "Set the leader KEY for normal mode."
