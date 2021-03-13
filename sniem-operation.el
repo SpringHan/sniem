@@ -162,7 +162,9 @@ Optional argument ABOVE is t, it will open line above."
   (interactive)
   (if (eolp)
       (delete-char -1)
-    (kill-ring-save (point) (1+ (point)))
+    (unless (or (= (following-char) 32)
+                (= (following-char) 10))
+      (kill-ring-save (point) (1+ (point))))
     (delete-char 1)))
 
 (defun sniem-delete (action)
