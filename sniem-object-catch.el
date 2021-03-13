@@ -72,7 +72,9 @@
       (if (bobp)
           (progn
             (goto-char point)
-            (keyboard-quit))
+            (when sniem-object-catch-last-points
+              (push-mark (cdr sniem-object-catch-last-points) t t))
+            (user-error "[Sniem-Object-Catch]: Can't get more item!"))
         (backward-char)))
     (when sniem-object-catch-prefix-string-p
       (setq-local sniem-object-catch-prefix-string-p nil))))
@@ -124,7 +126,9 @@ Argument PARENT means get the parent pair of the content selected."
           (message "[Sniem-Object-Catch]: Can not find a symbol in alist.")
         (setq second-char (sniem-object-catch--get-second-char char))
         (if (and (not (string= char second-char))
-                 (ignore-errors
+                 (if (and (bobp)
+                          (= (point) prefix-point))
+                     (ignore-errors (= (char-before) 92))
                    (= (char-before) 92)))
             (setq go-on t)
           (setq second-point (if (string= char second-char)

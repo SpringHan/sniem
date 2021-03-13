@@ -115,6 +115,8 @@ Optional argument ABOVE is t, it will open line above."
      (when sniem-last-point-locked
        (sniem-lock-unlock-last-point)))
     (109 (push-mark (point) t t))
+    (102 (mark-defun))
+    (98 (mark-whole-buffer))
     (t (sniem-expand-region-string type))))
 
 ;;; Hook for mark
@@ -594,6 +596,8 @@ Argument DIRECT is the direction for find."
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
                                                            (region-end))))))
+        (when (= (point) (region-beginning))
+          (goto-char (region-end)))
         (deactivate-mark)
         (ignore-errors (search-forward word))
         (push-mark (- (point) (length word)) t t))
@@ -612,7 +616,8 @@ Argument DIRECT is the direction for find."
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
                                                            (region-end))))))
-        (backward-word)                 ;Goto the first char of the word
+        (when (= (point) (region-end))
+          (goto-char (region-beginning)))
         (deactivate-mark)
         (search-backward word)
         (push-mark (point) t t)
