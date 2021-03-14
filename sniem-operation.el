@@ -621,7 +621,7 @@ Argument DIRECT is the direction for find."
         (when (= (point) (region-end))
           (goto-char (region-beginning)))
         (deactivate-mark)
-        (search-backward word)
+        (ignore-errors (search-backward word))
         (push-mark (point) t t)
         (goto-char (+ (point) (length word))))
     (backward-word n))
