@@ -125,7 +125,7 @@
     (define-key map "A" 'sniem-append-line)
     (define-key map "o" 'sniem-open-line)
     (define-key map "O" 'sniem-open-line-previous)
-    (define-key map "s" 'eval-last-sexp)
+    (define-key map "s" 'sniem-search)
     (define-key map "S" 'save-buffer)
     (define-key map "r" 'sniem-replace-char)
     (define-key map "R" 'sniem-replace-word)

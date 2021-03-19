@@ -360,6 +360,13 @@ The current char is not quote and the char before prefix is not backslash."
   (not (or (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))
            (sniem-object-catch-backslash-p))))
 
+(defun sniem-object-catch--get-second-char (prefix)
+  "Get the second char by the PREFIX."
+  (catch 'second-char
+    (dolist (char-cons sniem-object-catch-global-symbol-alist)
+      (when (string= prefix (car char-cons))
+        (throw 'second-char (cdr-safe char-cons))))))
+
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
   (unless (bobp)

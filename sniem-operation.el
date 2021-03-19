@@ -29,6 +29,10 @@
 (require 'sniem-macro)
 (require 'sniem-common)
 
+(declare-function sniem-object-catch--get-second-char "sniem-object-catch")
+(declare-function sniem-current-mode "sniem")
+(declare-function sniem-change-mode "sniem")
+
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
   (interactive)
@@ -116,8 +120,17 @@ Optional argument ABOVE is t, it will open line above."
        (sniem-lock-unlock-last-point)))
     (109 (push-mark (point) t t))
     (102 (mark-defun))
-    (98 (mark-whole-buffer))
-    (_ (sniem-expand-region-string type))))
+    (98 (push-mark (point-min) t t)
+        (goto-char (point-max)))
+    (_
+     (let* ((thing (pcase type
+                     (115 'symbol)
+                     (119 'word)
+                     (_ (user-error "[Sniem]: The %s type is error!" type))))
+            (points (bounds-of-thing-at-point thing)))
+       (when points
+         (goto-char (car points))
+         (push-mark (cdr points) t t))))))
 
 ;;; Hook for mark
 (add-hook 'deactivate-mark-hook #'(lambda ()
@@ -444,6 +457,12 @@ Argument CHAR-STRING is the string to compair."
     ;; Write like this because `memq' and others can not work well.
     (not (sniem--mems char-string alpha-list))))
 
+(defun sniem-search (content)
+  "Search the CONTENT."
+  (interactive (list (completing-read "Enter the search content: "
+                                      search-ring)))
+  (sniem-next-word nil t content))
+
 ;;; Motions
 
 (sniem-define-motion sniem-beginning-of-line ()
@@ -598,11 +617,13 @@ Argument DIRECT is the direction for find."
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
                                                            (region-end))))))
-        (when (= (point) (region-beginning))
-          (goto-char (region-end)))
-        (deactivate-mark)
+        (when (region-active-p)
+          (when (= (point) (region-beginning))
+            (goto-char (region-end)))
+          (deactivate-mark))
         (ignore-errors (search-forward word))
-        (push-mark (- (point) (length word)) t t))
+        (push-mark (- (point) (length word)) t t)
+        (sniem-add-to-history word))
     (forward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -618,16 +639,23 @@ Argument DIRECT is the direction for find."
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
                                                            (region-end))))))
-        (when (= (point) (region-end))
-          (goto-char (region-beginning)))
-        (deactivate-mark)
+        (when (region-active-p)
+          (when (= (point) (region-end))
+            (goto-char (region-beginning)))
+          (deactivate-mark))
         (ignore-errors (search-backward word))
         (push-mark (point) t t)
-        (goto-char (+ (point) (length word))))
+        (goto-char (+ (point) (length word)))
+        (sniem-add-to-history word))
     (backward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
                           (sniem-prev-word ,n t ,word t)))))
+
+(defun sniem-add-to-history (search)
+  "Add the SEARCH content to the `search-ring'."
+  (unless (sniem--mems search search-ring)
+    (add-to-history 'search-ring search search-ring-max)))
 
 (sniem-define-motion sniem-next-symbol (&optional n)
   "Move to next symbol."

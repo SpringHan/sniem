@@ -28,6 +28,8 @@
 (require 'sniem-common)
 (require 'sniem-operation)
 
+(declare-function sniem-change-mode "sniem")
+
 (defcustom sniem-mark-jump-items
   '("TODO" "BUG" "NOTE")
   "The faces for `sniem-mark-jump'."

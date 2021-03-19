@@ -27,23 +27,9 @@
 
 (require 'sniem-var)
 
-(defun sniem-current-mode ()
-  "Get current mode."
-  (cond (sniem-normal-mode 'normal)
-        (sniem-insert-mode 'insert)
-        (sniem-motion-mode 'motion)
-        (sniem-expand-mode 'expand)
-        (t nil)))
-
-(defun sniem-change-mode (mode)
-  "Change editing MODE."
-  (unless (eq (sniem-current-mode) mode)
-    (pcase mode
-      ('normal (sniem-normal-mode t))
-      ('insert (sniem-insert-mode t))
-      ('motion (sniem-motion-mode t))
-      ('expand (sniem-expand-mode t)))
-    (sniem-cursor-change)))
+(declare-function sniem-show-last-point "sniem")
+(declare-function sniem-digit-argument-read-char "sniem")
+(declare-function sniem-digit-argument-fn-get "sniem")
 
 (defun sniem-lock-unlock-last-point (&optional lock)
   "LOCK or unlock `sniem-last-point'."
@@ -55,13 +41,6 @@
   (message "[Sniem]: Last point %s." (if sniem-last-point-locked
                                          "locked"
                                        "unlocked")))
-
-(defun sniem-object-catch--get-second-char (prefix)
-  "Get the second char by the PREFIX."
-  (catch 'second-char
-    (dolist (char-cons sniem-object-catch-global-symbol-alist)
-      (when (string= prefix (car char-cons))
-        (throw 'second-char (cdr-safe char-cons))))))
 
 (defun sniem-motion-hint (motion)
   "Hint after MOTION."
@@ -112,6 +91,8 @@ Optional argument MSG is the message which will be outputed."
                (setq arg (substring arg 0 -1)))
               ((setq fn (sniem-digit-argument-fn-get number))
                (setq number "over"))
+              ((null number)
+               (error nil))
               (t (setq arg (concat arg number)))))
       (message "%s%s" (if msg
                           msg

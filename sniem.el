@@ -317,15 +317,35 @@ LAYOUT can be qwerty, colemak or dvorak."
                                   'dvorak)))
    (t (user-error "[Sniem]: The %s layout is not supplied!" layout))))
 
+(defun sniem-current-mode ()
+  "Get current mode."
+  (cond (sniem-normal-mode 'normal)
+        (sniem-insert-mode 'insert)
+        (sniem-motion-mode 'motion)
+        (sniem-expand-mode 'expand)
+        (t nil)))
+
+(defun sniem-change-mode (mode)
+  "Change editing MODE."
+  (unless (eq (sniem-current-mode) mode)
+    (pcase mode
+      ('normal (sniem-normal-mode t))
+      ('insert (sniem-insert-mode t))
+      ('motion (sniem-motion-mode t))
+      ('expand (sniem-expand-mode t)))
+    (sniem-cursor-change)))
+
 (defun sniem-digit-argument-or-fn (arg)
   "The digit argument function.
 Argument ARG is the `digit-argument' result."
-  (interactive (list (sniem-digit-argument-get)))
-  (if (listp arg)
-      (eval arg)
-    (prefix-command-preserve-state)
-    (setq prefix-arg arg)
-    (universal-argument--mode)))
+  (interactive (list (ignore-errors (sniem-digit-argument-get))))
+  (if arg
+      (if (listp arg)
+          (eval arg)
+        (prefix-command-preserve-state)
+        (setq prefix-arg arg)
+        (universal-argument--mode))
+    (message "Quited digit argument")))
 
 (defun sniem-digit-argument-fn-get (string)
   "Read the fn for `sniem-digit-argument-or-fn'.
@@ -347,19 +367,19 @@ Argument STRING is the string get from the input."
      (pcase (read-char)
        (97 "1") (114 "2") (115 "3") (116 "4") (100 "5")
        (104 "6") (110 "7") (101 "8") (105 "9") (111 "0")
-       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (39 "-") (13 "over") (127 "delete") (59 nil)
        (x (char-to-string x))))
     ('qwerty
      (pcase (read-char)
        (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
-       (39 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (39 "-") (13 "over") (127 "delete") (59 nil)
        (x (char-to-string x))))
     ('dvorak
      (pcase (read-char)
        (97 "1") (111 "2") (101 "3") (117 "4") (105 "5")
        (100 "6") (104 "7") (116 "8") (110 "9") (115 "0")
-       (45 "-") (13 "over") (127 "delete") (59 (keyboard-quit))
+       (45 "-") (13 "over") (127 "delete") (59 nil)
        (x (char-to-string x))))))
 
 (defun sniem-mark-content (&optional mark)
@@ -407,7 +427,6 @@ Optional argument HIDE is t, the last point will be show."
 (require 'sniem-object-catch)
 (require 'sniem-cheatsheet)
 (require 'sniem-mark-jump)
-(require 'sniem-expand-region)
 
 ;;; Third-Party Settings
 (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
