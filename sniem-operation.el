@@ -461,7 +461,21 @@ Argument CHAR-STRING is the string to compair."
   "Search the CONTENT."
   (interactive (list (completing-read "Enter the search content: "
                                       search-ring)))
-  (sniem-next-word nil t content))
+  (sniem-next-word nil t content)
+  (unless (ignore-errors
+            (sniem--string-equal
+             (buffer-substring-no-properties (region-beginning) (region-end))
+             content))
+    (sniem-prev-word nil t content)
+    (unless (ignore-errors
+              (sniem--string-equal
+               (buffer-substring-no-properties (region-beginning) (region-end))
+               content))
+      (message "[Sniem]: The content %S is not exsits in current buffer." content))))
+
+(defun sniem--string-equal (string1 string2)
+  "Like `string-equal', but don't care the case."
+  (string-equal (downcase string1) (downcase string2)))
 
 ;;; Motions
 
@@ -616,14 +630,17 @@ Argument DIRECT is the direction for find."
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
-                                                           (region-end))))))
+                                                           (region-end)))))
+            tmp)
         (when (region-active-p)
           (when (= (point) (region-beginning))
-            (goto-char (region-end)))
-          (deactivate-mark))
-        (ignore-errors (search-forward word))
-        (push-mark (- (point) (length word)) t t)
-        (sniem-add-to-history word))
+            (goto-char (region-end))))
+        (setq tmp (ignore-errors (search-forward word)))
+        (when tmp
+          (when (region-active-p)
+            (deactivate-mark))
+          (push-mark (- (point) (length word)) t t)
+          (sniem-add-to-history word)))
     (forward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -638,15 +655,20 @@ Argument DIRECT is the direction for find."
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))
                         (t (buffer-substring-no-properties (region-beginning)
-                                                           (region-end))))))
+                                                           (region-end)))))
+            tmp)
         (when (region-active-p)
-          (when (= (point) (region-end))
-            (goto-char (region-beginning)))
-          (deactivate-mark))
-        (ignore-errors (search-backward word))
-        (push-mark (point) t t)
-        (goto-char (+ (point) (length word)))
-        (sniem-add-to-history word))
+          (unless (= (point) (region-beginning))
+            (setq tmp (region-end))
+            (goto-char (region-beginning))
+            (push-mark tmp t t)))
+        (setq tmp (ignore-errors (search-backward word)))
+        (when tmp
+          (when (region-active-p)
+            (deactivate-mark))
+          (push-mark (point) t t)
+          (goto-char (+ (point) (length word)))
+          (sniem-add-to-history word)))
     (backward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -654,8 +676,11 @@ Argument DIRECT is the direction for find."
 
 (defun sniem-add-to-history (search)
   "Add the SEARCH content to the `search-ring'."
-  (unless (sniem--mems search search-ring)
-    (add-to-history 'search-ring search search-ring-max)))
+  (if (sniem--mems (downcase search) search-ring)
+      (unless (string-equal (downcase search) (car search-ring))
+        (setq search-ring (delete (downcase search) search-ring))
+        (add-to-history 'search-ring (downcase search) search-ring-max))
+    (add-to-history 'search-ring (downcase search) search-ring-max)))
 
 (sniem-define-motion sniem-next-symbol (&optional n)
   "Move to next symbol."
