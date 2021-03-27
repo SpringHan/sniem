@@ -57,7 +57,8 @@
       (progn
         (goto-char (region-end))
         (deactivate-mark))
-    (forward-char))
+    (unless (= (line-end-position) (point))
+      (forward-char)))
   (sniem-insert))
 
 (defun sniem-append-line ()
