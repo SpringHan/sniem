@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(require 'subr-x)
+
 (require 'sniem-var)
 
 (declare-function sniem-show-last-point "sniem")

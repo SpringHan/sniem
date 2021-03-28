@@ -42,6 +42,8 @@
 (require 'sniem-macro)
 (require 'sniem-operation)
 
+(eval-when-compile
+  (defvar awesome-tray-module-alist))
 
 (define-minor-mode sniem-mode
   "Simple united editing method mode."
