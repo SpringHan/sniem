@@ -32,6 +32,7 @@
 (declare-function sniem-object-catch--get-second-char "sniem-object-catch")
 (declare-function sniem-current-mode "sniem")
 (declare-function sniem-change-mode "sniem")
+(declare-function sniem-mark-content "sniem")
 
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
@@ -136,7 +137,10 @@ Optional argument ABOVE is t, it will open line above."
 ;;; Hook for mark
 (add-hook 'deactivate-mark-hook #'(lambda ()
                                     (when sniem-mark-line
-                                      (setq-local sniem-mark-line nil))))
+                                      (setq-local sniem-mark-line nil))
+                                    (when sniem-search-result-tip
+                                      (delete-overlay sniem-search-result-tip)
+                                      (setq-local sniem-search-result-tip nil))))
 
 (defun sniem-up-down-case ()
   "Up or down case."
@@ -165,10 +169,32 @@ Optional argument ABOVE is t, it will open line above."
 (defun sniem-replace-word ()
   "Replace the word under cursor."
   (interactive)
-  (let* ((word (thing-at-point 'word t))
-         (replaced (read-string "Enter the new word: " word))
-         (word-points (bounds-of-thing-at-point 'word)))
-    (delete-region (car word-points) (cdr word-points))
+  (let* ((word (if (region-active-p)
+                   (buffer-substring-no-properties (region-beginning) (region-end))
+                 (thing-at-point 'word t)))
+         (word-points (if (region-active-p)
+                          (cons (region-beginning) (region-end))
+                        (bounds-of-thing-at-point 'word)))
+         replace-region-p replaced)
+    (when (and (region-active-p)
+               sniem-mark-content-overlay
+               (overlayp sniem-mark-content-overlay))
+      (setq replace-region-p (y-or-n-p "Replace the region with the marked content?")))
+    (if replace-region-p
+        (progn
+          (save-mark-and-excursion
+            (goto-char (overlay-start sniem-mark-content-overlay))
+            (setq replaced (buffer-substring-no-properties
+                            (overlay-start sniem-mark-content-overlay)
+                            (overlay-end sniem-mark-content-overlay)))
+            (delete-region (overlay-start sniem-mark-content-overlay)
+                           (overlay-end sniem-mark-content-overlay))
+            (insert word)
+            (sniem-mark-content t (cons (- (point) (length word)) (point))))
+          (delete-region (region-beginning) (region-end))
+          (deactivate-mark))
+      (setq replaced (read-string "Enter the new word: " word))
+      (delete-region (car word-points) (cdr word-points)))
     (insert replaced)))
 
 (defun sniem-delete-char ()
@@ -641,7 +667,8 @@ Argument DIRECT is the direction for find."
           (when (region-active-p)
             (deactivate-mark))
           (push-mark (- (point) (length word)) t t)
-          (sniem-add-to-history word)))
+          (sniem-add-to-history word)
+          (sniem-search--check-result word)))
     (forward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -669,11 +696,41 @@ Argument DIRECT is the direction for find."
             (deactivate-mark))
           (push-mark (point) t t)
           (goto-char (+ (point) (length word)))
-          (sniem-add-to-history word)))
+          (sniem-add-to-history word)
+          (sniem-search--check-result word)))
     (backward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
                           (sniem-prev-word ,n t ,word t)))))
+
+(defun sniem-search--check-result (word)
+  "Check the search result. 
+WORD is the search content.
+
+If it's the first, print first at the end of the line.
+Else if it's the last, print last, or it's the only one, print only."
+  (when sniem-search-result-tip
+    (delete-overlay sniem-search-result-tip)
+    (setq-local sniem-search-result-tip nil))
+  (let ((first (save-mark-and-excursion
+                 (goto-char (region-beginning))
+                 (not (ignore-errors (search-backward word)))))
+        (end (save-mark-and-excursion
+               (goto-char (region-end))
+               (not (ignore-errors (search-forward word))))))
+    (cond ((and first end)
+           (sniem-search--add-overlay " [ONLY]"))
+          (first
+           (sniem-search--add-overlay " [FIRST]"))
+          (end
+           (sniem-search--add-overlay " [END]")))))
+
+(defun sniem-search--add-overlay (content)
+  "Add the tip overlay with CONTENT."
+  (let ((ov (make-overlay (line-end-position) (1+ (line-end-position)))))
+    (overlay-put ov 'face 'font-lock-comment-face)
+    (overlay-put ov 'display (concat content "\n"))
+    (setq-local sniem-search-result-tip ov)))
 
 (defun sniem-add-to-history (search)
   "Add the SEARCH content to the `search-ring'."

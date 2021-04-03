@@ -242,6 +242,11 @@
   :type 'overlay
   :group 'sniem)
 
+(defcustom sniem-search-result-tip nil
+  "The tip of the search result."
+  :type 'overlay
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode

@@ -3,7 +3,7 @@
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
 ;; Version: 1.0
-;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0") (cl-lib "1.0"))
+;; Package-Requires: ((emacs "26.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: convenience, united-editing-method
 
@@ -30,7 +30,6 @@
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 's)
 (require 'dash)
 
@@ -383,18 +382,21 @@ Argument STRING is the string get from the input."
        (45 "-") (13 "over") (127 "delete") (59 nil)
        (x (char-to-string x))))))
 
-(defun sniem-mark-content (&optional mark)
+(defun sniem-mark-content (&optional mark points)
   "Mark/unmark the content.
-Optional Argument MARK means mark forcibly."
+Optional Argument MARK means mark forcibly.
+Optional Argument POINTS is the points of the content to mark."
   (interactive "P")
   (let ((mark-content (lambda ()
-                        (if (region-active-p)
-                            (progn
-                              (setq-local sniem-mark-content-overlay
-                                          (make-overlay (region-beginning) (region-end)))
-                              (deactivate-mark))
-                          (setq-local sniem-mark-content-overlay
-                                      (make-overlay (point) (1+ (point)))))
+                        (cond (points
+                               (setq-local sniem-mark-content-overlay
+                                           (make-overlay (car points) (cdr points))))
+                              ((region-active-p)
+                               (setq-local sniem-mark-content-overlay
+                                           (make-overlay (region-beginning) (region-end)))
+                               (deactivate-mark))
+                              (t (setq-local sniem-mark-content-overlay
+                                             (make-overlay (point) (1+ (point))))))
                         (overlay-put sniem-mark-content-overlay 'face 'region))))
     (when (overlayp sniem-mark-content-overlay)
       (delete-overlay sniem-mark-content-overlay))
