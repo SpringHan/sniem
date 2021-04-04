@@ -383,7 +383,7 @@ Argument STRING is the string get from the input."
      (pcase (read-char)
        (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
-       (39 "-") (13 "over") (127 "delete") (59 nil)
+       (39 "-") (13 "over") (127 "delete") (39 nil)
        (x (char-to-string x))))
     ('dvorak
      (pcase (read-char)
