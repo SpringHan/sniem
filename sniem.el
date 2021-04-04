@@ -117,7 +117,15 @@
           ((apply #'derived-mode-p sniem-insert-mode-alist)
            (sniem-change-mode 'insert))
           (t (sniem-change-mode 'motion)))
-    (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)))
+    (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)
+    (add-hook 'deactivate-mark-hook #'(lambda ()
+                                        (when sniem-mark-line
+                                          (setq-local sniem-mark-line nil))
+                                        (when sniem-search-result-tip
+                                          (delete-overlay sniem-search-result-tip)
+                                          (setq-local sniem-search-result-tip nil))))
+    (sniem-init-hook)
+    (sniem-init-advice)))
 
 (defun sniem--disable ()
   "Disable sniem."
@@ -196,7 +204,9 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-initialize ()
   "Initialize sniem."
   (unless (minibufferp)
-    (sniem-mode t)))
+    (sniem-mode t)
+    (sniem-init-advice)
+    (sniem-init-hook)))
 
 (defun sniem--ele-exists-p (ele list)
   "Check if ELE is belong to the LIST."
@@ -432,8 +442,39 @@ Optional argument HIDE is t, the last point will be show."
 (require 'sniem-mark-jump)
 
 ;;; Third-Party Settings
-(advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
-(advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)
+(defun sniem-init-hook ()
+  "The inin functions."
+  (let ((fn (if sniem-mode
+                'add-hook
+              'remove-hook)))
+    (funcall fn 'deactivate-mark-hook
+             #'(lambda ()
+                 (when sniem-mark-line
+                   (setq-local sniem-mark-line nil))
+                 (when sniem-search-result-tip
+                   (delete-overlay sniem-search-result-tip)
+                   (setq-local sniem-search-result-tip nil))
+                 (when sniem-object-catch-last-points
+                   (setq-local sniem-object-catch-last-points nil))
+                 (when sniem-object-catch-prefix-string-p
+                   (setq-local sniem-object-catch-prefix-string-p nil))))))
+
+(defun sniem-init-advice ()
+  "The init function for advice."
+  (if sniem-mode
+      (progn
+        (advice-add 'keyboard-quit :before
+                   (lambda ()
+                     (when sniem-kmacro-mark-content
+                       (setq-local sniem-kmacro-mark-content nil))))
+        (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
+        (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode))
+    (advice-remove 'keyboard-quit
+                   (lambda ()
+                     (when sniem-kmacro-mark-content
+                       (setq-local sniem-kmacro-mark-content nil))))
+    (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
+    (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
 
 ;;; State info print support
 (defun sniem-state ()
@@ -448,6 +489,7 @@ Optional argument HIDE is t, the last point will be show."
     ('expand (format "[E:%s]"
                      (if sniem-object-catch-forward-p ">" "<")))))
 (when (featurep 'awesome-tray)
+  (defvar awesome-tray-module-alist)
   (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
 
 (provide 'sniem)

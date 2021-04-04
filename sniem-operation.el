@@ -134,14 +134,6 @@ Optional argument ABOVE is t, it will open line above."
          (goto-char (car points))
          (push-mark (cdr points) t t))))))
 
-;;; Hook for mark
-(add-hook 'deactivate-mark-hook #'(lambda ()
-                                    (when sniem-mark-line
-                                      (setq-local sniem-mark-line nil))
-                                    (when sniem-search-result-tip
-                                      (delete-overlay sniem-search-result-tip)
-                                      (setq-local sniem-search-result-tip nil))))
-
 (defun sniem-up-down-case ()
   "Up or down case."
   (interactive)
@@ -179,7 +171,7 @@ Optional argument ABOVE is t, it will open line above."
     (when (and (region-active-p)
                sniem-mark-content-overlay
                (overlayp sniem-mark-content-overlay))
-      (setq replace-region-p (y-or-n-p "Replace the region with the marked content?")))
+      (setq replace-region-p (y-or-n-p "Replace the region with the marked content? ")))
     (if replace-region-p
         (progn
           (save-mark-and-excursion
@@ -433,14 +425,10 @@ Argument N is the page of the contents."
       (101 (call-last-kbd-macro))
       (110 (call-interactively #'name-last-kbd-macro)))))
 
-(advice-add 'keyboard-quit :before
-            (lambda ()
-              (when sniem-kmacro-mark-content
-                (setq-local sniem-kmacro-mark-content nil))))
-
 (defun sniem-pair (prefix &optional add)
   "Modify the region's pair.
-Argument PREFIX is the prefix of the pair."
+Argument PREFIX is the prefix of the pair.
+Optional Argument ADD means forced to add the pair."
   (interactive (list (let ((var (read-char)))
                        (if (= var 97)
                            (list (read-char) t)
@@ -501,7 +489,8 @@ Argument CHAR-STRING is the string to compair."
       (message "[Sniem]: The content %S is not exsits in current buffer." content))))
 
 (defun sniem--string-equal (string1 string2)
-  "Like `string-equal', but don't care the case."
+  "Like `string-equal', but don't care the case.
+STRING1 and STRING2 are the strings to compair."
   (string-equal (downcase string1) (downcase string2)))
 
 ;;; Motions
@@ -663,12 +652,15 @@ Argument DIRECT is the direction for find."
           (when (= (point) (region-beginning))
             (goto-char (region-end))))
         (setq tmp (ignore-errors (search-forward word)))
-        (when tmp
-          (when (region-active-p)
-            (deactivate-mark))
-          (push-mark (- (point) (length word)) t t)
-          (sniem-add-to-history word)
-          (sniem-search--check-result word)))
+        (if tmp
+            (progn
+              (when (region-active-p)
+                (deactivate-mark))
+              (push-mark (- (point) (length word)) t t)
+              (sniem-add-to-history word)
+              (sniem-search--check-result word))
+          (when (= (point) (region-end))
+            (push-mark (- (point) (length word)) t t))))
     (forward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -704,7 +696,7 @@ Argument DIRECT is the direction for find."
                           (sniem-prev-word ,n t ,word t)))))
 
 (defun sniem-search--check-result (word)
-  "Check the search result. 
+  "Check the search result.
 WORD is the search content.
 
 If it's the first, print first at the end of the line.

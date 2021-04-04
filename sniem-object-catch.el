@@ -391,12 +391,6 @@ Argument MODENAME if the mode name."
                `(lambda () (setq-local sniem-object-catch-global-symbol-alist
                                        ',sym-alist)))))
 
-(add-hook 'deactivate-mark-hook #'(lambda ()
-                                    (when sniem-object-catch-last-points
-                                      (setq-local sniem-object-catch-last-points nil))
-                                    (when sniem-object-catch-prefix-string-p
-                                      (setq-local sniem-object-catch-prefix-string-p nil))))
-
 (provide 'sniem-object-catch)
 
 ;;; sniem-object-catch.el ends here
