@@ -98,7 +98,7 @@ Optional argument MSG is the message which will be outputed."
                           msg
                         "C-u ")
                arg))
-    (setq arg (if (string-empty-p arg)
+    (setq arg (if (string= "" arg)
                   nil
                 (string-to-number arg)))
     (if fn
@@ -106,10 +106,6 @@ Optional argument MSG is the message which will be outputed."
             `(funcall-interactively ',fn ,arg)
           `(call-interactively ',fn))
       arg)))
-
-(defun sniem-object-catch-lisp-mode-p ()
-  "Check if the current major mode belongs to Lisp mode."
-  (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
 
 (defun sniem--mems (ele list)
   "Like memq, but use `string-equal'.

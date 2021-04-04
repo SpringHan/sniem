@@ -51,6 +51,10 @@
   :type 'string
   :group 'sniem)
 
+(defun sniem-mark-jump-lisp-mode-p ()
+  "Check if the current major mode belongs to Lisp mode."
+  (string-match-p "\\(?:.*\\)lisp\\(?:.*\\)" (symbol-name major-mode)))
+
 (defun sniem-mark-jump-insert (type &optional name)
   "Insert the mark with TYPE.
 Optional argument NAME means enable the name."
@@ -65,7 +69,7 @@ Optional argument NAME means enable the name."
                 comment-start)
       (unless (= (line-beginning-position) (line-end-position))
         (sniem-open-line-previous))
-      (insert (if (sniem-object-catch-lisp-mode-p)
+      (insert (if (sniem-mark-jump-lisp-mode-p)
                   (concat comment-start comment-start)
                 comment-start))))
   (insert (if (string= " " (substring comment-start -1))

@@ -34,7 +34,8 @@
   :group 'sniem)
 
 (defcustom sniem-object-catch-global-symbol-alist
-  '(("\"" . "\"")
+  '((emacs-lisp-mode . (("'" . "")))
+    ("\"" . "\"")
     ("'" . "'")
     ("[" . "]")
     ("<" . ">")
@@ -99,7 +100,7 @@ Argument PARENT means get the parent pair of the content selected."
                               char
                               (setq tmp
                                     (buffer-substring-no-properties (point) (1+ (point)))))
-                             (sniem-object-catch-prefix-normal-p))
+                             (not (sniem-object-catch-backslash-p)))
                         (throw 'point-stop (point))
                       (if (or (bobp) (eobp))
                           (throw 'point-stop nil)
@@ -109,7 +110,7 @@ Argument PARENT means get the parent pair of the content selected."
                 (while t
                   (if (and (sniem-object-catch--get-second-char
                             (setq tmp (buffer-substring-no-properties (point) (1+ (point)))))
-                           (sniem-object-catch-prefix-normal-p))
+                           (not (sniem-object-catch-backslash-p)))
                       (progn
                         (setq char tmp)
                         (throw 'point-stop (point)))
@@ -354,18 +355,18 @@ FORWARD means now it's forward direction."
           (throw 'exists index))
         (setq index (1+ index))))))
 
-(defun sniem-object-catch-prefix-normal-p ()
-  "Check if the current major mode belongs to Lisp mode.
-The current char is not quote and the char before prefix is not backslash."
-  (not (or (and (= 39 (following-char)) (sniem-object-catch-lisp-mode-p))
-           (sniem-object-catch-backslash-p))))
-
 (defun sniem-object-catch--get-second-char (prefix)
   "Get the second char by the PREFIX."
-  (catch 'second-char
-    (dolist (char-cons sniem-object-catch-global-symbol-alist)
-      (when (string= prefix (car char-cons))
-        (throw 'second-char (cdr-safe char-cons))))))
+  (let ((current-pairs (alist-get major-mode sniem-object-catch-global-symbol-alist))
+        (default (alist-get prefix sniem-object-catch-global-symbol-alist
+                            nil nil 'equal))
+        local)
+    (cond ((and current-pairs
+                (setq local (alist-get prefix current-pairs nil nil 'equal)))
+           (if (string= local "")
+               nil
+             local))
+          (t default))))
 
 (defun sniem-object-catch-backslash-p ()
   "Check if the char before current point is \\."
@@ -377,19 +378,43 @@ The current char is not quote and the char before prefix is not backslash."
                     t
                   (= 92 (char-before))))))))
 
+(defun sniem-object-catch--index (ele list)
+  "Get the index of LIST whose first item is equal to ELE."
+  (catch 'index
+    (let ((index 0))
+      (dolist (item list)
+        (when (equal ele (car item))
+          (throw 'index index))
+        (setq index (1+ index))))))
+
+(defun sniem-object-catch--append (ele list)
+  "Like `add-to-list', but it will replace the origin, then return it.
+
+ELE is the element to add.
+LIST is the list for operating.;"
+  (let (prefix tmp)
+    (dotimes (n (length list))
+      (setq prefix (car (nth n list)))
+      (when (setq tmp (alist-get prefix ele nil nil 'string-equal))
+        (setf (nth n list) (cons prefix tmp))
+        (setq ele (delete (nth (sniem-object-catch--index prefix ele) ele) ele))))
+    (append ele list)))
+
 (defmacro sniem-object-catch-mode-defalist (modename &rest alist)
   "Define ALIST for major mode.
 Argument MODENAME if the mode name."
   (declare (indent 1))
-  `(let ((sym-alist sniem-object-catch-global-symbol-alist)
-         tmp)
-     (dolist (list ',alist)
-       (if (setq tmp (sniem-object-catch--symbol-exists-p (car list)))
-           (setf (cdr (nth tmp sym-alist)) (cdr list))
-         (add-to-list 'sym-alist list)))
-     (add-hook (intern (concat (symbol-name ',modename) "-hook"))
-               `(lambda () (setq-local sniem-object-catch-global-symbol-alist
-                                       ',sym-alist)))))
+  `(let ((mode-pairs (alist-get ',modename sniem-object-catch-global-symbol-alist))
+         final)
+     (if mode-pairs
+         (setq final (sniem-object-catch--append ',alist mode-pairs))
+       (setq final ',alist))
+     (if mode-pairs
+         (setf (nth (sniem-object-catch--index ',modename sniem-object-catch-global-symbol-alist)
+                    sniem-object-catch-global-symbol-alist)
+               (cons ',modename final))
+       (setq sniem-object-catch-global-symbol-alist
+             (append (list (cons ',modename final)) sniem-object-catch-global-symbol-alist)))))
 
 (provide 'sniem-object-catch)
 

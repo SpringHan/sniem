@@ -449,9 +449,6 @@ Optional argument HIDE is t, the last point will be show."
              #'(lambda ()
                  (when sniem-mark-line
                    (setq-local sniem-mark-line nil))
-                 (when sniem-search-result-tip
-                   (delete-overlay sniem-search-result-tip)
-                   (setq-local sniem-search-result-tip nil))
                  (when sniem-object-catch-last-points
                    (setq-local sniem-object-catch-last-points nil))
                  (when sniem-object-catch-prefix-string-p
@@ -462,15 +459,21 @@ Optional argument HIDE is t, the last point will be show."
   (if sniem-mode
       (progn
         (advice-add 'keyboard-quit :before
-                   (lambda ()
-                     (when sniem-kmacro-mark-content
-                       (setq-local sniem-kmacro-mark-content nil))))
+                    (lambda ()
+                      (when sniem-kmacro-mark-content
+                        (setq-local sniem-kmacro-mark-content nil))
+                      (when sniem-search-result-tip
+                        (delete-overlay sniem-search-result-tip)
+                        (setq-local sniem-search-result-tip nil))))
         (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
         (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode))
     (advice-remove 'keyboard-quit
                    (lambda ()
                      (when sniem-kmacro-mark-content
-                       (setq-local sniem-kmacro-mark-content nil))))
+                       (setq-local sniem-kmacro-mark-content nil))
+                     (when sniem-search-result-tip
+                       (delete-overlay sniem-search-result-tip)
+                       (setq-local sniem-search-result-tip nil))))
     (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
     (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
 

@@ -476,12 +476,12 @@ Argument CHAR-STRING is the string to compair."
   "Search the CONTENT."
   (interactive (list (completing-read "Enter the search content: "
                                       search-ring)))
-  (sniem-next-word nil t content)
+  (sniem-next-word nil nil content)
   (unless (ignore-errors
             (sniem--string-equal
              (buffer-substring-no-properties (region-beginning) (region-end))
              content))
-    (sniem-prev-word nil t content)
+    (sniem-prev-word nil nil content)
     (unless (ignore-errors
               (sniem--string-equal
                (buffer-substring-no-properties (region-beginning) (region-end))
@@ -657,10 +657,11 @@ Argument DIRECT is the direction for find."
               (when (region-active-p)
                 (deactivate-mark))
               (push-mark (- (point) (length word)) t t)
-              (sniem-add-to-history word)
-              (sniem-search--check-result word))
+              (sniem-add-to-history word))
           (when (= (point) (region-end))
-            (push-mark (- (point) (length word)) t t))))
+            (push-mark (- (point) (length word)) t t)))
+        (unless no-hint
+          (sniem-search--check-result word)))
     (forward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
@@ -689,7 +690,8 @@ Argument DIRECT is the direction for find."
           (push-mark (point) t t)
           (goto-char (+ (point) (length word)))
           (sniem-add-to-history word)
-          (sniem-search--check-result word)))
+          (unless no-hint
+            (sniem-search--check-result word))))
     (backward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)
