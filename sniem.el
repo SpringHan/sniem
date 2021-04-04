@@ -118,20 +118,20 @@
            (sniem-change-mode 'insert))
           (t (sniem-change-mode 'motion)))
     (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)
-    (add-hook 'deactivate-mark-hook #'(lambda ()
-                                        (when sniem-mark-line
-                                          (setq-local sniem-mark-line nil))
-                                        (when sniem-search-result-tip
-                                          (delete-overlay sniem-search-result-tip)
-                                          (setq-local sniem-search-result-tip nil))))
-    (sniem-init-hook)
-    (sniem-init-advice)))
+    (unless sniem-initialized
+      (sniem-init-hook)
+      (sniem-init-advice)
+      (setq sniem-initialized t))))
 
 (defun sniem--disable ()
   "Disable sniem."
   (sniem-normal-mode -1)
   (sniem-insert-mode -1)
-  (sniem-motion-mode -1))
+  (sniem-motion-mode -1)
+  (when sniem-initialized
+    (sniem-init-hook)
+    (sniem-init-advice)
+    (setq sniem-initialized nil)))
 
 ;;; Interactive functions
 
@@ -204,9 +204,7 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-initialize ()
   "Initialize sniem."
   (unless (minibufferp)
-    (sniem-mode t)
-    (sniem-init-advice)
-    (sniem-init-hook)))
+    (sniem-mode t)))
 
 (defun sniem--ele-exists-p (ele list)
   "Check if ELE is belong to the LIST."

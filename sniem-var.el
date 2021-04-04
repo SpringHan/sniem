@@ -30,6 +30,11 @@
   :type 'symbol
   :group 'sniem)
 
+(defcustom sniem-initialized nil
+  "If the sniem initialized."
+  :type 'boolean
+  :group 'sniem)
+
 (defcustom sniem-mode-keymap
   (let ((map (make-sparse-keymap)))
     map)
