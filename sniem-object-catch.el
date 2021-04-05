@@ -322,7 +322,7 @@ Otherwise it's backward."
                  (setq another-point (point)))
                 (alone (setq alone nil))
                 (t (setq alone t))))))
-    (when (not alone)
+    (unless alone
       another-point)))
 
 (defun sniem-object-catch--border (forward)

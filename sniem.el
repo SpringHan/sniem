@@ -121,6 +121,9 @@
     (unless sniem-initialized
       (sniem-init-hook)
       (sniem-init-advice)
+      (when (featurep 'awesome-tray)
+        (defvar awesome-tray-module-alist)
+        (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
       (setq sniem-initialized t))))
 
 (defun sniem--disable ()
@@ -164,7 +167,7 @@
   (let ((key (pcase last-input-event
                (120 "C-x ") (109 "M-") (98 "C-M-") (118 "C-")))
         tmp)
-    (when (null key)
+    (unless key
       (setq key (concat "C-" (char-to-string last-input-event) " ")))
 
     (message key)
@@ -381,7 +384,7 @@ Argument STRING is the string get from the input."
      (pcase (read-char)
        (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
-       (39 "-") (13 "over") (127 "delete") (39 nil)
+       (39 "-") (13 "over") (127 "delete") (92 nil)
        (x (char-to-string x))))
     ('dvorak
      (pcase (read-char)
@@ -446,13 +449,13 @@ Optional argument HIDE is t, the last point will be show."
                 'add-hook
               'remove-hook)))
     (funcall fn 'deactivate-mark-hook
-             #'(lambda ()
-                 (when sniem-mark-line
-                   (setq-local sniem-mark-line nil))
-                 (when sniem-object-catch-last-points
-                   (setq-local sniem-object-catch-last-points nil))
-                 (when sniem-object-catch-prefix-string-p
-                   (setq-local sniem-object-catch-prefix-string-p nil))))))
+             (lambda ()
+               (when sniem-mark-line
+                 (setq-local sniem-mark-line nil))
+               (when sniem-object-catch-last-points
+                 (setq-local sniem-object-catch-last-points nil))
+               (when sniem-object-catch-prefix-string-p
+                 (setq-local sniem-object-catch-prefix-string-p nil))))))
 
 (defun sniem-init-advice ()
   "The init function for advice."
@@ -489,9 +492,6 @@ Optional argument HIDE is t, the last point will be show."
     ('motion "[M]")
     ('expand (format "[E:%s]"
                      (if sniem-object-catch-forward-p ">" "<")))))
-(when (featurep 'awesome-tray)
-  (defvar awesome-tray-module-alist)
-  (add-to-list 'awesome-tray-module-alist '("sniem-state" . (sniem-state awesome-tray-module-evil-face))))
 
 (provide 'sniem)
 

@@ -651,7 +651,7 @@ Argument DIRECT is the direction for find."
         (when (region-active-p)
           (when (= (point) (region-beginning))
             (goto-char (region-end))))
-        (setq tmp (ignore-errors (search-forward word)))
+        (setq tmp (search-forward word nil t))
         (if tmp
             (progn
               (when (region-active-p)
@@ -683,7 +683,7 @@ Argument DIRECT is the direction for find."
             (setq tmp (region-end))
             (goto-char (region-beginning))
             (push-mark tmp t t)))
-        (setq tmp (ignore-errors (search-backward word)))
+        (setq tmp (search-backward word nil t))
         (when tmp
           (when (region-active-p)
             (deactivate-mark))
@@ -708,10 +708,10 @@ Else if it's the last, print last, or it's the only one, print only."
     (setq-local sniem-search-result-tip nil))
   (let ((first (save-mark-and-excursion
                  (goto-char (region-beginning))
-                 (not (ignore-errors (search-backward word)))))
+                 (not (search-backward word nil t))))
         (end (save-mark-and-excursion
                (goto-char (region-end))
-               (not (ignore-errors (search-forward word))))))
+               (not (search-forward word nil t)))))
     (cond ((and first end)
            (sniem-search--add-overlay " [ONLY]"))
           (first
