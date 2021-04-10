@@ -9,7 +9,6 @@
    #+begin_src emacs-lisp
      (use-package
        sniem
-       :load-path "path/to/sniem"
        :init (global-sniem-mode t)
        :config
        (sniem-set-keyboard-layout 'qwerty))

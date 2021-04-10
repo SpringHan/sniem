@@ -209,7 +209,16 @@ Optional argument ABOVE is t, it will open line above."
                            t
                          (read-char sniem-delete-message)))))
   (pcase action
-    ((pred symbolp) (sniem-delete-region (region-beginning) (region-end)))
+    ((pred symbolp)
+     (sniem-delete-region
+      (region-beginning)
+      (if (save-mark-and-excursion
+            (sniem-end-of-mark t)
+            (and (not (eobp))
+                 (= (point) (line-end-position))
+                 sniem-mark-line))
+          (1+ (region-end))
+        (region-end))))
     (100 (if (= (line-beginning-position) (line-end-position))
              (progn
                (if (bobp)
