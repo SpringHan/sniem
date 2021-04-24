@@ -495,6 +495,9 @@ Argument CHAR-STRING is the string to compair."
               (sniem--string-equal
                (buffer-substring-no-properties (region-beginning) (region-end))
                content))
+      (when sniem-search-result-tip
+        (delete-overlay sniem-search-result-tip)
+        (setq-local sniem-search-result-tip nil))
       (message "[Sniem]: The content %S is not exsits in current buffer." content))))
 
 (defun sniem--string-equal (string1 string2)
