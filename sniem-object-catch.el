@@ -262,6 +262,7 @@ Argument PREFIX-POINT is the prefix point."
                (funcall face-eq-p prefix-face)) ; NOTE: This expression in here maybe have bug.
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
                    second-point (sniem-object-catch-format-point1 pair (point) t))))
+      ;; TODO: Add a check for the pairs which has a different face with itself.
       (when region-forward-p
         (goto-char (car region-forward-p))
         (push-mark (cdr region-forward-p)))
