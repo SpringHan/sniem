@@ -247,7 +247,9 @@ Argument PREFIX-POINT is the prefix point."
                          (or (eq face1 face2)
                              (memq face1 face2)
                              (memq face2 face1))))))
-        prefix-face second-point)
+        prefix-face second-point other)
+    ;;`other' is for the situation that the faces of the pair and the content which was included by it
+    ;; are not same.
     (save-mark-and-excursion
       (goto-char prefix-point)
       (setq prefix-face (face-at-point))
@@ -261,11 +263,13 @@ Argument PREFIX-POINT is the prefix point."
                (forward-char 2)
                (funcall face-eq-p prefix-face)) ; NOTE: This expression in here maybe have bug.
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
-                   second-point (sniem-object-catch-format-point1 pair (point) t))))
-      ;; TODO: Add a check for the pairs which has a different face with itself.
+                   second-point (sniem-object-catch-format-point1 pair (point) t)))
+            (t (setq other t)))
       (when region-forward-p
         (goto-char (car region-forward-p))
-        (push-mark (cdr region-forward-p)))
+        (push-mark (cdr region-forward-p))))
+    (if other
+        (sniem-object-catch-format-pointc pair)
       (cons prefix-point (1+ second-point)))))
 
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
@@ -313,7 +317,7 @@ Otherwise it's backward."
                   (or (nth 8 (syntax-ppss))
                       (ignore-errors
                         (= (char-before) 10))
-                      (sniem-object-catch--face-around-eq)))
+                      t))
         (when (and (not (sniem-object-catch-backslash-p))
                    (ignore-errors
                      (setq current-char
