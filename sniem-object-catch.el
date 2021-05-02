@@ -243,34 +243,41 @@ Argument PREFIX-POINT is the prefix point."
                               (deactivate-mark))))
         (face-eq-p (lambda (face1)
                      (let ((face2 (get-text-property (point) 'face)))
-                       (ignore-errors
-                         (or (eq face1 face2)
-                             (memq face1 face2)
-                             (memq face2 face1))))))
-        prefix-face second-point other)
-    ;;`other' is for the situation that the faces of the pair and the content which was included by it
-    ;; are not same.
+                       (when face2
+                         (ignore-errors
+                           (or (eq face1 face2)
+                               (memq face1 face2)
+                               (memq face2 face1)))))))
+        prefix-face second-point tmp)
     (save-mark-and-excursion
       (goto-char prefix-point)
       (setq prefix-face (face-at-point))
-      (cond ((progn
-               (backward-char)
-               (funcall face-eq-p prefix-face))
+      (cond ((or (progn                 ;Check if the faces of current char and the before one are same.
+                   (backward-char)
+                   (funcall face-eq-p prefix-face))
+                 (progn                 ;Check if the faces between current char and the previous one are same.
+                   (setq tmp (face-at-point))
+                   (when (search-backward pair nil t)
+                     (forward-char)
+                     (funcall face-eq-p tmp))))
              (setq second-point (sniem-object-catch-format-point1 pair prefix-point)
                    prefix-point (sniem-object-catch-format-point1 pair prefix-point t t)))
 
-            ((progn
-               (forward-char 2)
-               (funcall face-eq-p prefix-face)) ; NOTE: This expression in here maybe have bug.
+            ((or (progn                 ;Check if the faces of current char and the after one are same.
+                   (goto-char prefix-point)
+                   (forward-char)
+                   (funcall face-eq-p prefix-face))
+                 (progn                 ;Check if the faces between current char and the next one are same.
+                   (setq tmp (face-at-point))
+                   (when (search-forward pair nil t)
+                     (backward-char 2)
+                     (funcall face-eq-p tmp))))
              (setq prefix-point (sniem-object-catch-format-point1 pair prefix-point nil t)
-                   second-point (sniem-object-catch-format-point1 pair (point) t)))
-            (t (setq other t)))
+                   second-point (sniem-object-catch-format-point1 pair (point) t))))
       (when region-forward-p
         (goto-char (car region-forward-p))
         (push-mark (cdr region-forward-p))))
-    (if other
-        (sniem-object-catch-format-pointc pair)
-      (cons prefix-point (1+ second-point)))))
+    (cons prefix-point (1+ second-point))))
 
 (defun sniem-object-catch-format-point1 (pair point &optional search prefix)
   "Format the POINT for char.
@@ -317,7 +324,7 @@ Otherwise it's backward."
                   (or (nth 8 (syntax-ppss))
                       (ignore-errors
                         (= (char-before) 10))
-                      t))
+                      (sniem-object-catch--face-around-eq)))
         (when (and (not (sniem-object-catch-backslash-p))
                    (ignore-errors
                      (setq current-char
