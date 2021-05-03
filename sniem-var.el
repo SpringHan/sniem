@@ -246,7 +246,7 @@
 
 (defcustom sniem-mark-content-overlay nil
   "The mark content overlay."
-  :type 'overlay
+  :type 'list
   :group 'sniem)
 
 (defcustom sniem-search-result-tip nil

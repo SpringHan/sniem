@@ -119,6 +119,25 @@ Argument LIST is the list to check."
           (throw 'stop nil))))
     result))
 
+(defun sniem--list-memq (list1 list2 &optional return-type)
+  "Check if there are ele of LIST1 which are also in LIST2.
+Optional Argument RETURN-TYPE is the type of the return value.
+It can be 'index or 'ele. Defaultly it's 'ele.
+
+If it's true, return the value of the ele.
+Otherwise nil will be return."
+  (let (result ele)
+    (when (and list1 list2) 
+      (catch 'stop
+        (dotimes (i (length list1))
+          (setq ele (nth i list1))
+          (when (memq ele list2)
+            (setq result (if (eq return-type 'index)
+                             i
+                           ele))
+            (throw 'stop nil)))))
+    result))
+
 (provide 'sniem-common)
 
 ;;; sniem-common.el ends here
