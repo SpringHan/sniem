@@ -72,30 +72,22 @@
     (end-of-line))
   (sniem-insert))
 
-(defun sniem--open-line (&optional above)
-  "Open new line for other function.
-Optional argument ABOVE is t, it will open line above."
-  (when above
-    (sniem-prev-line nil t))
-  (sniem-end-of-line t)
-  (insert "\n"))
-
 (defun sniem-open-line ()
   "Open new line."
   (interactive)
-  (sniem--open-line)
+  (goto-char (line-end-position))
+  (insert "\n")
   (indent-according-to-mode)
   (sniem-insert))
 
 (defun sniem-open-line-previous ()
   "Open new line."
   (interactive)
+  (beginning-of-line)
+  (insert "\n")
   (if (bobp)
-      (progn
-        (beginning-of-line)
-        (insert "\n")
-        (goto-char (point-min)))
-    (sniem--open-line t))
+      (goto-char (point-min))
+    (forward-line -1))
   (indent-according-to-mode)
   (sniem-insert))
 
@@ -722,9 +714,9 @@ Argument DIRECT is the direction for find."
             (deactivate-mark))
           (push-mark (point) t t)
           (goto-char (+ (point) (length word)))
-          (sniem-add-to-history word)
-          (unless no-hint
-            (sniem-search--check-result word))))
+          (sniem-add-to-history word))
+        (unless no-hint
+          (sniem-search--check-result word)))
     (backward-word n))
   (unless no-hint
     (sniem-motion-hint `(lambda () (interactive)

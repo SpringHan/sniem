@@ -496,7 +496,9 @@ Optional argument HIDE is t, the last point will be show."
     ('normal (format "[N:%s%s%s]"
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
-                     (if sniem-mark-content-overlay ":M" "")))
+                     (if sniem-mark-content-overlay
+                         (format ":%d" (length sniem-mark-content-overlay))
+                       "")))
     ('insert "[I]")
     ('motion "[M]")
     ('expand (format "[E:%s]"
