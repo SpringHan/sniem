@@ -65,6 +65,16 @@
   :type 'boolean
   :group 'sniem-object-catch)
 
+(defcustom sniem-object-catch-expand-p nil
+  "If to expand the region from current selecetion."
+  :type 'boolean
+  :group 'sniem-object-catch)
+
+(defcustom sniem-object-catch-last-expand nil
+  "The last expand points."
+  :type 'cons
+  :group 'sniem-object-catch)
+
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)
@@ -147,6 +157,13 @@ Argument PARENT means get the parent pair of the content selected."
                  (< prefix-point (car sniem-object-catch-last-points)))
             (setq go-on t)
           (setq-local sniem-object-catch-last-points (cons prefix-point second-point)))))
+    (when sniem-object-catch-expand-p
+      (when sniem-object-catch-last-expand
+        (when (< (car sniem-object-catch-last-expand) prefix-point)
+          (setq prefix-point (car sniem-object-catch-last-expand)))
+        (when (> (cdr sniem-object-catch-last-expand) second-point)
+          (setq second-point (cdr sniem-object-catch-last-expand))))
+      (setq-local sniem-object-catch-last-expand (cons prefix-point second-point)))
     (goto-char prefix-point)
     (push-mark second-point t t)
     (setq-local sniem-object-catch-action `(,char . ,parent))
@@ -172,6 +189,19 @@ Argument PARENT means get the parent pair of the content selected."
   (interactive)
   (let ((pair (sniem-object-catch--get-last-char)))
     (sniem-object-catch pair t)))
+
+(defun sniem-object-catch-expand ()
+  "Open/close expand option."
+  (interactive)
+  (setq-local sniem-object-catch-last-expand nil)
+  (if sniem-object-catch-expand-p
+      (progn
+        (setq-local sniem-object-catch-expand-p nil)
+        (message "[Sniem]: Expand closed."))
+    (setq-local sniem-object-catch-expand-p t)
+    (when (region-active-p)
+      (setq-local sniem-object-catch-last-expand sniem-object-catch-last-points))
+    (message "[Sniem]: Expand opened.")))
 
 (defun sniem-object-catch--get-last-char ()
   "Get the last char."

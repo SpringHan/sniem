@@ -234,6 +234,7 @@
     (define-key map "d" 'sniem-object-catch-char)
     (define-key map "D" 'sniem-object-catch-parent)
     (define-key map "/" 'sniem-object-catch-direction-reverse)
+    (define-key map "." 'sniem-object-catch-expand)
     map)
   "Expand mode keymap."
   :type 'keymap
