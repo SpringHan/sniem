@@ -148,7 +148,10 @@
   "Quit expand mode."
   (interactive)
   (if sniem-expand-mode
-      (sniem-change-mode 'normal)
+      (progn
+        (sniem-change-mode 'normal)
+        (unless (eq last-input-event 32)
+          (call-interactively (key-binding (read-kbd-macro (char-to-string last-input-event))))))
     (sniem-change-mode 'expand)))
 
 (defun sniem-execute-space-command ()
