@@ -79,6 +79,8 @@
   "Catch region."
   (interactive)
   (let ((point (point)))
+    (when (and parent sniem-object-catch-forward-p)
+      (setq-local sniem-object-catch-forward-p nil))
     (while (not (eq 'no (ignore-errors (sniem-object-catch--get char parent))))
       (if (bobp)
           (progn
@@ -198,6 +200,8 @@ Argument PARENT means get the parent pair of the content selected."
       (progn
         (setq-local sniem-object-catch-expand-p nil)
         (message "[Sniem]: Expand closed."))
+    (when sniem-object-catch-forward-p
+      (setq-local sniem-object-catch-forward-p nil))
     (setq-local sniem-object-catch-expand-p t)
     (when (region-active-p)
       (setq-local sniem-object-catch-last-expand sniem-object-catch-last-points))

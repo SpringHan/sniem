@@ -149,6 +149,8 @@
   (interactive)
   (if sniem-expand-mode
       (progn
+        (when sniem-object-catch-expand-p
+          (sniem-object-catch-expand))
         (sniem-change-mode 'normal)
         (unless (eq last-input-event 32)
           (call-interactively (key-binding (read-kbd-macro (char-to-string last-input-event))))))
