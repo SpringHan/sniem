@@ -117,11 +117,26 @@
     (98 (push-mark (point-min) t t)
         (goto-char (point-max)))
     (_
-     (let* ((thing (pcase type
+     (let* ((space-mode (when (= type 32)
+                          (progn
+                            (setq type (read-char sniem-mark-message))
+                            t)))
+            (thing (pcase type
                      (115 'symbol)
                      (119 'word)
                      (_ (user-error "[Sniem]: The %s type is error!" type))))
             (points (bounds-of-thing-at-point thing)))
+       (when (and points space-mode
+                  (save-mark-and-excursion
+                    (let (l r)
+                      (goto-char (car points))
+                      (when (= (char-before) 32)
+                        (setq l t))
+                      (goto-char (cdr points))
+                      (when (= (following-char) 32)
+                        (setq r t))
+                      (and l r))))
+         (setq points (cons (1- (car points)) (1+ (cdr points)))))
        (when points
          (goto-char (car points))
          (push-mark (cdr points) t t))))))
@@ -150,7 +165,7 @@
   (insert-char char)
   (sniem-backward-char nil t))
 
-(defun sniem-replace-word ()
+(defun sniem-replace-word (&optional replace-word)
   "Replace the word under cursor."
   (interactive)
   (let* ((word (if (region-active-p)
@@ -163,7 +178,8 @@
          replace-region-p replaced ov c-ov tmp)
     (when (and (region-active-p)
                sniem-mark-content-overlay
-               (listp sniem-mark-content-overlay))
+               (listp sniem-mark-content-overlay)
+               (null replace-word))
       (setq replace-region-p
             (completing-read "Enter the marked-content or nil to input word: "
                              (progn
@@ -178,7 +194,8 @@
                                                        (overlay-start ov) (overlay-end ov)))))))
                                marked-contents))))
     
-    (if (not (string= "nil" replace-region-p))
+    (if (and (not (string= "nil" replace-region-p))
+             (null replace-word))
         (progn
           (save-mark-and-excursion
             (setq tmp (progn (string-match "^\\(.*\\)- \\(.*\\)" replace-region-p)
@@ -198,7 +215,8 @@
             (overlay-put (car sniem-mark-content-overlay) 'face 'region))
           (delete-region (region-beginning) (region-end))
           (deactivate-mark))
-      (setq replaced (read-string "Enter the new word: " word))
+      (setq replaced (or replace-word
+                         (read-string "Enter the new word: " word)))
       (delete-region (car word-points) (cdr word-points)))
     (insert replaced)))
 
@@ -452,36 +470,41 @@ Argument N is the page of the contents."
 Argument PREFIX is the prefix of the pair.
 Optional Argument ADD means forced to add the pair."
   (interactive (list (let ((var (read-char)))
-                       (if (= var 97)
-                           (list (read-char) t)
-                         var))))
-  (when (cdr-safe prefix)
-    (setq add t
-          prefix (car prefix)))
-  (let ((second (unless (= 32 prefix)
-                  (sniem-object-catch--get-second-char (char-to-string prefix))))
-        (prefix-point (region-beginning))
-        (second-point (region-end))
-        (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning)))))
-    (if (and (null second)
-             (/= prefix 32))
-        (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
+                       (cond ((= var 97)
+                              (cons (read-char) t))
+                             ((= var 115)
+                              (cons t 's))
+                             (t var)))))
+  (if (eq (cdr-safe prefix) 's)
       (save-mark-and-excursion
-        (goto-char prefix-point)
-        (when (and (null add)
+        (sniem-space))
+    (when (cdr-safe prefix)
+      (setq add t
+            prefix (car prefix)))
+    (let ((second (unless (= 32 prefix)
+                    (sniem-object-catch--get-second-char (char-to-string prefix))))
+          (prefix-point (region-beginning))
+          (second-point (region-end))
+          (prefix-char (buffer-substring-no-properties (region-beginning) (1+ (region-beginning)))))
+      (if (and (null second)
+               (/= prefix 32))
+          (user-error "[Sniem]: The pair is not exists in `sniem-object-catch-global-symbol-alist'!")
+        (save-mark-and-excursion
+          (goto-char prefix-point)
+          (when (and (null add)
+                     (sniem-pair--pair-p prefix-char))
+            (delete-char 1))
+          (unless (= prefix 32)
+            (insert prefix))
+          (goto-char (if (= prefix 32)
+                         (1- second-point)
+                       second-point))
+          (if (and (null add)
                    (sniem-pair--pair-p prefix-char))
-          (delete-char 1))
-        (unless (= prefix 32)
-          (insert prefix))
-        (goto-char (if (= prefix 32)
-                       (1- second-point)
-                     second-point))
-        (if (and (null add)
-                 (sniem-pair--pair-p prefix-char))
-            (delete-char -1)
-          (forward-char))
-        (unless (= prefix 32)
-          (insert second))))))
+              (delete-char -1)
+            (forward-char))
+          (unless (= prefix 32)
+            (insert second)))))))
 
 (defun sniem-pair--pair-p (char-string)
   "Check if the CHAR belongs to pair.
@@ -517,6 +540,17 @@ Argument CHAR-STRING is the string to compair."
   "Like `string-equal', but don't care the case.
 STRING1 and STRING2 are the strings to compair."
   (string-equal (downcase string1) (downcase string2)))
+
+(defun sniem-space ()
+  "Add or delete space around the marked region."
+  (interactive)
+  (let ((marked-content (buffer-substring-no-properties
+                         (region-beginning)
+                         (region-end))))
+    (if (and (string-prefix-p " " marked-content)
+             (string-suffix-p " " marked-content))
+        (sniem-replace-word (substring marked-content 1 -1))
+      (sniem-replace-word (format " %s " marked-content)))))
 
 ;;; Motions
 
