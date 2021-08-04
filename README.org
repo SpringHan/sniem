@@ -154,7 +154,7 @@
        Sniem provides some great kmacro functions.
        - Basic
 
-         ~q~ for record, ~e~ for execution, ~n~ to name the last kmacro.
+         ~q~ for record, ~e~ for execution, ~n~ to name the last kmacro, ~l~ for lock or unlock the macro, ~.~ for forcely lock macro, ~c~ for call macro.
 
        - Advance
 

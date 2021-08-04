@@ -444,7 +444,9 @@ Argument N is the page of the contents."
                    (when (= (line-beginning-position) (line-end-position))
                      (forward-line))
                    (line-end-position))))
-            (apply-macro-to-region-lines region-beg region-end)
+            (apply-macro-to-region-lines region-beg region-end
+                                         (when sniem-locked-macro
+                                           sniem-locked-macro))
             (setq-local sniem-kmacro-range nil))))
     
     (when (region-active-p)
@@ -462,8 +464,42 @@ Argument N is the page of the contents."
                     (buffer-substring-no-properties (region-beginning) (region-end)))))
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
-      (101 (call-last-kbd-macro))
-      (110 (call-interactively #'name-last-kbd-macro)))))
+      (101 (if sniem-locked-macro
+               (call-interactively sniem-locked-macro)
+             (call-last-kbd-macro)))
+      (110 (call-interactively #'name-last-kbd-macro))
+      (105 (let ((macro (sniem-macro--get-kbd-macros))
+                 (file-content "")
+                 tmp)
+             (unless sniem-macro-file
+               (setq sniem-macro-file (read-file-name "Enter the macro file you want: ")))
+             (if (file-exists-p sniem-macro-file)
+                 (with-temp-buffer
+                   (insert-file-contents sniem-macro-file)
+                   (setq file-content (buffer-string)))
+               (make-empty-file sniem-macro-file))
+             (with-temp-file sniem-macro-file
+               (goto-char (point-min))
+               (insert-kbd-macro macro)
+               (insert file-content))))
+      (108 (setq sniem-locked-macro
+                 (if sniem-locked-macro
+                     nil
+                   (sniem-macro--get-kbd-macros)))
+           (message "[Sniem]: %s locked macro."
+                    (if sniem-locked-macro
+                        "Set"
+                      "Unset")))
+      (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
+      (99 (call-interactively (sniem-macro--get-kbd-macros))))))
+
+(defun sniem-macro--get-kbd-macros ()
+  "Get the kbd macro from kmacros."
+  (intern
+   (completing-read "Enter the macro: "
+                    obarray
+                    #'kmacro-keyboard-macro-p
+                    t)))
 
 (defun sniem-pair (prefix &optional add)
   "Modify the region's pair.

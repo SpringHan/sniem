@@ -255,6 +255,16 @@
   :type 'overlay
   :group 'sniem)
 
+(defcustom sniem-locked-macro nil
+  "The locked kmacro."
+  :type 'symbol
+  :group 'sniem)
+
+(defcustom sniem-macro-file nil
+  "The file to store kbd macros."
+  :type 'string
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode
@@ -285,7 +295,8 @@
 (defvar sniem-yank-message "[y] for line, [p] for From last point:"
   "The message for `sniem-yank'.")
 
-(defvar sniem-macro-message "[q] for record, [e] for Eval last kbd macro, [n] for Name for it:"
+(defvar sniem-macro-message
+  "[q] for record, [e] for Eval last kbd macro, [n] for Name for it, [l] for lock or unlock macro, [.] for forcely lock macro, [c] for call macro:"
   "The message for `sniem-macro'.")
 
 (defface sniem-motion-hint-face
