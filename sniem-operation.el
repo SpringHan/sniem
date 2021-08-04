@@ -482,15 +482,15 @@ Argument N is the page of the contents."
                (goto-char (point-min))
                (insert-kbd-macro macro)
                (insert file-content))))
-      (108 (setq sniem-locked-macro
-                 (if sniem-locked-macro
-                     nil
-                   (sniem-macro--get-kbd-macros)))
+      (108 (setq-local sniem-locked-macro
+                       (if sniem-locked-macro
+                           nil
+                         (sniem-macro--get-kbd-macros)))
            (message "[Sniem]: %s locked macro."
                     (if sniem-locked-macro
                         "Set"
                       "Unset")))
-      (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
+      (46 (setq-local sniem-locked-macro (sniem-macro--get-kbd-macros)))
       (99 (call-interactively (sniem-macro--get-kbd-macros))))))
 
 (defun sniem-macro--get-kbd-macros ()
