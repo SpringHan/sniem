@@ -75,6 +75,12 @@
   :type 'cons
   :group 'sniem-object-catch)
 
+(defcustom sniem-object-catch-auto-backward nil
+  "If this variable is non-nil.
+When you exit expand-mode, the direction'll be set to backward."
+  :type 'boolean
+  :group 'sniem-object-catch)
+
 (sniem-define-motion sniem-object-catch (&optional char parent)
   "Catch region."
   (interactive)

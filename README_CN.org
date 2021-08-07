@@ -93,6 +93,7 @@
      | Key | function                            |
      | ,   | 重复 object-catch                   |
      | .   | 标记当前光标下内容或区域            |
+     | k   | 解除当前光标下内容的标记并选中      |
      | SPC | 执行 motion-hint                    |
      | /   | 反转 object-catch 方向              |
      | p   | 添加，更改或删除当前选中内容的 pair |

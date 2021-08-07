@@ -151,6 +151,9 @@
       (progn
         (when sniem-object-catch-expand-p
           (sniem-object-catch-expand))
+        (when (and sniem-object-catch-auto-backward
+                   sniem-object-catch-forward-p)
+          (setq-local sniem-object-catch-forward-p nil))
         (sniem-change-mode 'normal)
         (unless (eq last-input-event 32)
           (call-interactively (key-binding (read-kbd-macro (char-to-string last-input-event))))))

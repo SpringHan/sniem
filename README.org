@@ -87,6 +87,7 @@
        | Key | Function                                 |
        | ,   | Repeat object-catch                      |
        | .   | Mark the content at point or a region    |
+       | k   | Unmark the content and select it         |
        | SPC | Execute function in motion-hint          |
        | /   | Reverse the direction of object-catch    |
        | p   | Add, change or delete the pair of region |
