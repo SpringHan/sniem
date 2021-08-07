@@ -125,7 +125,7 @@
                      (115 'symbol)
                      (119 'word)
                      (_ (user-error "[Sniem]: The %s type is error!" type))))
-            (points (bounds-of-thing-at-point thing)))
+            (points (sniem-mark--bounds-of-thing-at-point thing)))
        (when (and points space-mode
                   (save-mark-and-excursion
                     (let (l r)
@@ -140,6 +140,39 @@
        (when points
          (goto-char (car points))
          (push-mark (cdr points) t t))))))
+
+(defun sniem-mark--bounds-of-thing-at-point (thing)
+  "Get the bounds of theg THING a point.
+THING can be `symbol' or `word'."
+  (let ((symbol-attachments '(95 45 43 33 64 35 36 37 94 38 42 63 47 92 124))
+        (move-command 'forward-char)
+        (enter-point (point))
+        start-point end-point current-char)
+    (save-mark-and-excursion
+      (when (or (not (memq (following-char) '(32 10)))
+                (when (not (memq (char-before) '(32 10)))
+                  (setq end-point (point)
+                        move-command 'backward-char)
+                  (backward-char)
+                  t))
+        (catch 'stop
+          (funcall move-command)
+          (while t
+            (setq current-char (following-char))
+            (when (sniem-pair--pair-p current-char)
+              (if (and (eq thing 'symbol)
+                       (memq current-char symbol-attachments))
+                  nil
+                (if (eq move-command 'forward-char)
+                    (progn
+                      (setq move-command 'backward-char
+                            end-point (point))
+                      (goto-char enter-point))
+                  (setq start-point (1+ (point)))
+                  (throw 'stop t))))
+            (funcall move-command)))))
+    (when (and start-point end-point)
+      (cons start-point end-point))))
 
 (defun sniem-up-down-case ()
   "Up or down case."
@@ -545,13 +578,14 @@ Optional Argument ADD means forced to add the pair."
 (defun sniem-pair--pair-p (char-string)
   "Check if the CHAR belongs to pair.
 Argument CHAR-STRING is the string to compair."
-  (let ((alpha-list '("a" "A" "b" "B" "c" "C" "d" "D" "e" "E" "f" "F" "g" "G"
-                      "h" "H" "i" "I" "j" "J" "k" "K" "l" "L" "m" "M" "n" "N"
-                      "o" "O" "p" "P" "q" "Q" "r" "R" "s" "S" "t" "T" "u" "U"
-                      "v" "V" "w" "W" "x" "X" "y" "Y" "z" "Z" "0" "1" "2" "3"
-                      "4" "5" "6" "7" "8" "9")))
+  (let ((not-alpha-list '(33 64 35 36 37 94 38 42 40 41 45 95 61 43
+                             91 123 93 125 96 126 39 34 92 124 44 46
+                             60 62 47 63 32 10)))
     ;; Write like this because `memq' and others can not work well.
-    (not (sniem--mems char-string alpha-list))))
+    (memq (if (stringp char-string)
+              (string-to-char char-string)
+            char-string)
+          not-alpha-list)))
 
 (defun sniem-search (content)
   "Search the CONTENT."
