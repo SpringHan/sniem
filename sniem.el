@@ -368,6 +368,7 @@ Argument ARG is the `digit-argument' result."
 Argument STRING is the string get from the input."
   (pcase string
     ("." 'sniem-mark-content)
+    ("k" 'sniem-unmark-content-select-it)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
@@ -428,6 +429,20 @@ Optional Argument POINTS is the points of the content to mark."
                (delete-overlay ov)
                (setq-local sniem-mark-content-overlay
                            (delete ov sniem-mark-content-overlay)))))))
+
+(defun sniem-unmark-content-select-it ()
+  "Unmark the marked content under cursor and select it."
+  (interactive)
+  (let ((ov (sniem--list-memq sniem-mark-content-overlay
+                              (overlays-at (point))))
+        points)
+    (when ov
+      (setq points (cons (overlay-start ov) (overlay-end ov)))
+      (delete-overlay ov)
+      (setq-local sniem-mark-content-overlay
+                  (delete ov sniem-mark-content-overlay))
+      (goto-char (car points))
+      (push-mark (cdr points) t t)))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
