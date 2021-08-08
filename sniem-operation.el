@@ -502,8 +502,7 @@ Argument N is the page of the contents."
              (call-last-kbd-macro)))
       (110 (call-interactively #'name-last-kbd-macro))
       (105 (let ((macro (sniem-macro--get-kbd-macros))
-                 (file-content "")
-                 tmp)
+                 (file-content ""))
              (unless sniem-macro-file
                (setq sniem-macro-file (read-file-name "Enter the macro file you want: ")))
              (if (file-exists-p sniem-macro-file)
@@ -795,7 +794,8 @@ Argument DIRECT is the direction for find."
               (sniem-add-to-history word))
           (when (= (point) (region-end))
             (push-mark (- (point) (length word)) t t)))
-        (unless no-hint
+        (when (and tmp
+                   (null no-hint))
           (sniem-search--check-result word)))
     (forward-word n))
   (unless no-hint
@@ -825,7 +825,8 @@ Argument DIRECT is the direction for find."
           (push-mark (point) t t)
           (goto-char (+ (point) (length word)))
           (sniem-add-to-history word))
-        (unless no-hint
+        (when (and tmp
+                   (null no-hint))
           (sniem-search--check-result word)))
     (backward-word n))
   (unless no-hint
