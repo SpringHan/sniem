@@ -40,6 +40,9 @@
 (require 'sniem-var)
 (require 'sniem-macro)
 (require 'sniem-operation)
+(require 'sniem-object-catch)
+(require 'sniem-cheatsheet)
+(require 'sniem-mark-jump)
 
 
 (define-minor-mode sniem-mode
@@ -470,10 +473,6 @@ Optional argument HIDE is t, the last point will be show."
 ;;; Initialize
 (sniem-set-leader-key ",")
 
-(require 'sniem-object-catch)
-(require 'sniem-cheatsheet)
-(require 'sniem-mark-jump)
-
 ;;; Third-Party Settings
 (defun sniem-init-hook ()
   "The inin functions."
@@ -499,7 +498,11 @@ Optional argument HIDE is t, the last point will be show."
                         (setq-local sniem-kmacro-mark-content nil))
                       (when sniem-search-result-tip
                         (delete-overlay sniem-search-result-tip)
-                        (setq-local sniem-search-result-tip nil))))
+                        (setq-local sniem-search-result-tip nil))
+                      (when sniem-search-timer
+                        (cancel-timer sniem-search-timer)
+                        (setq-local sniem-search-timer nil))
+                      (sniem-search--delete-search-overlays)))
         (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
         (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode))
     (advice-remove 'keyboard-quit
@@ -508,7 +511,11 @@ Optional argument HIDE is t, the last point will be show."
                        (setq-local sniem-kmacro-mark-content nil))
                      (when sniem-search-result-tip
                        (delete-overlay sniem-search-result-tip)
-                       (setq-local sniem-search-result-tip nil))))
+                       (setq-local sniem-search-result-tip nil))
+                     (when sniem-search-timer
+                       (cancel-timer sniem-search-timer)
+                       (setq-local sniem-search-timer nil))
+                     (sniem-search--delete-search-overlays)))
     (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
     (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
 

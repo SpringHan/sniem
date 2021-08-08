@@ -265,6 +265,16 @@
   :type 'string
   :group 'sniem)
 
+(defcustom sniem-search-timer nil
+  "The timer for searching."
+  :type 'timer
+  :group 'sniem)
+
+(defcustom sniem-search-result-overlays nil
+  "The overlays for search results."
+  :type 'list
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode
