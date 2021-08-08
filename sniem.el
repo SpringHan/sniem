@@ -445,7 +445,7 @@ Optional Argument POINTS is the points of the content to mark."
       (setq-local sniem-mark-content-overlay
                   (delete ov sniem-mark-content-overlay))
       (goto-char (car points))
-      (push-mark (cdr points) t t)))))
+      (push-mark (cdr points) t t))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
