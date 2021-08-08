@@ -147,14 +147,22 @@ THING can be `symbol' or `word'."
   (let ((symbol-attachments '(95 45 43 33 64 35 36 37 94 38 42 63 47 92 124))
         (move-command 'forward-char)
         (enter-point (point))
-        start-point end-point current-char)
+        (current-char (following-char))
+        start-point end-point can-enter)
     (save-mark-and-excursion
-      (when (or (not (memq (following-char) '(32 10)))
-                (when (not (memq (char-before) '(32 10)))
+      (when (or (not (if (eq thing 'word)
+                         (sniem-pair--pair-p current-char)
+                       (memq current-char '(32 10))))
+                (when (not (if (eq thing 'word)
+                               (sniem-pair--pair-p (char-before))
+                             (memq (char-before) '(32 10))))
                   (setq end-point (point)
                         move-command 'backward-char)
                   (backward-char)
                   t))
+        (setq can-enter t))
+
+      (when can-enter
         (catch 'stop
           (funcall move-command)
           (while t
