@@ -275,6 +275,11 @@
   :type 'list
   :group 'sniem)
 
+(defcustom sniem-special-clipboard nil
+  "The special clipboard list."
+  :type 'list
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode

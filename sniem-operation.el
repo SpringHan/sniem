@@ -359,29 +359,48 @@ Argument ACTION is the action of change."
     (goto-char (1- (region-end)))
     (sniem-change t)))
 
-(defun sniem-yank (action)
-  "Yank ACTION."
+(defun sniem-yank (action &optional special)
+  "Yank ACTION.
+If SPECIAL is non-nil, yank it to the special clipboard."
   (interactive (list (if (region-active-p)
                          t
                        (read-char sniem-yank-message))))
-  (pcase action
-    ((pred symbolp) (kill-ring-save (region-beginning) (region-end)))
-    (121 (kill-ring-save (line-beginning-position)
-                         (if (= (point-max) (line-end-position))
-                             (line-end-position)
-                           (1+ (line-end-position)))))
-    (112 (kill-ring-save sniem-last-point (point))
-         (when sniem-last-point-locked
-           (sniem-lock-unlock-last-point)))))
+  (let ((yank-function (if special
+                           #'sniem-yank--special
+                         #'kill-ring-save)))
+    (pcase action
+      ((pred symbolp) (funcall yank-function (region-beginning) (region-end)))
+      (121 (funcall yank-function (line-beginning-position)
+                    (if (= (point-max) (line-end-position))
+                        (line-end-position)
+                      (1+ (line-end-position)))))
+      (112 (funcall yank-function sniem-last-point (point))
+           (when sniem-last-point-locked
+             (sniem-lock-unlock-last-point))))))
 
-(defun sniem-yank-in-region ()
-  "Yank in region."
+(defun sniem-yank-in-region (&optional special)
+  "Yank in region.
+If SPECIAL is non-nil, yank it to the special clipboard."
   (interactive)
   (when (region-active-p)
-    (kill-ring-save (1+ (region-beginning)) (1- (region-end)))))
+    (funcall (if special
+                 #'sniem-yank--special
+               #'kill-ring-save)
+             (1+ (region-beginning)) (1- (region-end)))))
 
-(defun sniem-paste (&optional n)
-  "Paste the N content in `kill-ring'."
+(defun sniem-yank--special (beg end)
+  "Yank content from BEG to END into special clipboard."
+  (setq sniem-special-clipboard
+        (append sniem-special-clipboard
+                (list
+                 (buffer-substring-no-properties
+                  beg end))))
+  (when (region-active-p)
+    (deactivate-mark)))
+
+(defun sniem-paste (&optional n special)
+  "Paste the N content in `kill-ring'.
+If SPECIAL is non-nil, paste from the special clipboard."
   (interactive "P")
   (let ((i 0)
         (regionp (when (region-active-p)
@@ -393,7 +412,9 @@ Argument ACTION is the action of change."
                       (string-to-number
                        (char-to-string
                         (setq n (read-char (format "%s:%d%s"
-                                                   (sniem-paste--output-contents i)
+                                                   (sniem-paste--output-contents
+                                                    i
+                                                    special)
                                                    (1+ (/ i 9))
                                                    (propertize "[n]: next page, [p]: prev page or 1, [1-9]: insert content, [q]: cancel"
                                                                'face 'font-lock-comment-face)))))))
@@ -415,14 +436,18 @@ Argument ACTION is the action of change."
                    (1- (+ n i)))
                  kill-ring))))
 
-(defun sniem-paste--output-contents (n)
+(defun sniem-paste--output-contents (n special)
   "Output contents for `sniem-paste'.
-Argument N is the page of the contents."
+Argument N is the page of the contents.
+If SPECIAL is non-nil, yank it to the special clipboard."
   (let (content c tmp)
     (dotimes (i 9)
       (setq c (format "%d: %s"
                       (1+ i)
-                      (nth (+ i n) kill-ring))
+                      (nth (+ i n)
+                           (if special
+                               sniem-special-clipboard
+                             kill-ring)))
             content (concat content
                             (progn
                               (when (setq tmp (sniem-paste--include-ln-p c))

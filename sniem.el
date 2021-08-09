@@ -214,6 +214,18 @@ But when it's recording kmacro and there're region, deactivate mark."
       (deactivate-mark)
     (keyboard-quit)))
 
+(defun sniem-special-clipboard-pop ()
+  "Pop the first content in special clipboard."
+  (interactive)
+  (pop sniem-special-clipboard)
+  (message "[Sniem]: Popped the special clipboard."))
+
+(defun sniem-special-clipboard-clear ()
+  "Clear the special clipboard."
+  (interactive)
+  (setq sniem-special-clipboard nil)
+  (message "[Sniem]: Cleared the special clipboard."))
+
 ;;; Functional functions
 
 (defun sniem-initialize ()
@@ -380,9 +392,21 @@ Argument STRING is the string get from the input."
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
     ("p" 'sniem-pair)
+
     ("m" 'sniem-mark-jump-insert-with-name)
     ("<" 'sniem-mark-jump-prev)
-    (">" 'sniem-mark-jump-next)))
+    (">" 'sniem-mark-jump-next)
+    ("c" 'sniem-special-clipboard-clear)
+    ("x" 'sniem-special-clipboard-pop)
+    ("P" (lambda ()
+           (interactive)
+           (funcall-interactively #'sniem-paste nil t)))
+    ("y" (lambda ()
+           (interactive)
+           (funcall-interactively #'sniem-yank nil t)))
+    ("Y" (lambda ()
+           (interactive)
+           (sniem-yank-in-region t)))))
 
 (defun sniem-digit-argument-read-char ()
   "Read char for `sniem-digit-argument'."
