@@ -59,8 +59,9 @@
 (define-minor-mode sniem-normal-mode
   "Normal mode for sniem."
   nil nil sniem-normal-state-keymap
-  (when sniem-normal-mode
-    (sniem-normal-mode-init)))
+  (if sniem-normal-mode
+      (sniem-normal-mode-init)
+    (sniem-search--cancel-selection)))
 
 (define-minor-mode sniem-insert-mode
   "Insert mode for sniem."
@@ -496,26 +497,14 @@ Optional argument HIDE is t, the last point will be show."
                     (lambda ()
                       (when sniem-kmacro-mark-content
                         (setq-local sniem-kmacro-mark-content nil))
-                      (when sniem-search-result-tip
-                        (delete-overlay sniem-search-result-tip)
-                        (setq-local sniem-search-result-tip nil))
-                      (when sniem-search-timer
-                        (cancel-timer sniem-search-timer)
-                        (setq-local sniem-search-timer nil))
-                      (sniem-search--delete-search-overlays)))
+                      (sniem-search--cancel-selection)))
         (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
         (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode))
     (advice-remove 'keyboard-quit
                    (lambda ()
                      (when sniem-kmacro-mark-content
                        (setq-local sniem-kmacro-mark-content nil))
-                     (when sniem-search-result-tip
-                       (delete-overlay sniem-search-result-tip)
-                       (setq-local sniem-search-result-tip nil))
-                     (when sniem-search-timer
-                       (cancel-timer sniem-search-timer)
-                       (setq-local sniem-search-timer nil))
-                     (sniem-search--delete-search-overlays)))
+                     (sniem-search--cancel-selection)))
     (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
     (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
 

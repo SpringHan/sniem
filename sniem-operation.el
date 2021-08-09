@@ -197,18 +197,21 @@ THING can be `symbol' or `word'."
       (delete-char 1)
       (insert-char (if (eq (upcase char) char)
                        (downcase char)
-                     (upcase char))))))
+                     (upcase char)))))
+  (sniem-search--refresh-overlay-display))
 
 (defun sniem-replace-char (char)
   "Replace the CHAR under cursor."
   (interactive "c")
   (delete-char 1)
   (insert-char char)
-  (sniem-backward-char nil t))
+  (sniem-backward-char nil t)
+  (sniem-search--modify-cancel-selection))
 
 (defun sniem-replace-word (&optional replace-word)
   "Replace the word under cursor."
   (interactive)
+  (sniem-search--cancel-selection)
   (let* ((word (if (region-active-p)
                    (buffer-substring-no-properties (region-beginning) (region-end))
                  (thing-at-point 'word t)))
@@ -269,7 +272,8 @@ THING can be `symbol' or `word'."
     (unless (or (= (following-char) 32)
                 (= (following-char) 10))
       (kill-ring-save (point) (1+ (point))))
-    (delete-char 1)))
+    (delete-char 1))
+  (sniem-search--modify-cancel-selection t))
 
 (defun sniem-delete (action)
   "Delete ACTION."
@@ -280,6 +284,7 @@ THING can be `symbol' or `word'."
                        (if (region-active-p)
                            t
                          (read-char sniem-delete-message)))))
+  (sniem-search--modify-cancel-selection t)
   (pcase action
     ((pred symbolp)
      (sniem-delete-region
@@ -400,6 +405,7 @@ Argument ACTION is the action of change."
                 (113 (keyboard-quit)))))
         (setq n 49)))
     (setq n (string-to-number (char-to-string n)))
+    (sniem-search--modify-cancel-selection t)
     (when regionp
       (goto-char (cdr regionp))
       (push-mark (car regionp) t t)
@@ -449,6 +455,7 @@ Argument N is the page of the contents."
 (defun sniem-join ()
   "Change LINE to one line."
   (interactive)
+  (sniem-search--cancel-selection)
   (let ((last-point (point)))
     (if (bolp)
         (if (save-mark-and-excursion
@@ -504,13 +511,7 @@ Argument N is the page of the contents."
         (setq-local sniem-kmacro-mark-content
                     (buffer-substring-no-properties (region-beginning) (region-end))))
 
-      (when (timerp sniem-search-timer)
-        (cancel-timer sniem-search-timer)
-        (setq-local sniem-search-timer nil))
-      (when (overlayp sniem-search-result-tip)
-        (delete-overlay sniem-search-result-tip)
-        (setq-local sniem-search-result-tip nil))
-      (sniem-search--delete-search-overlays))
+      (sniem-search--cancel-selection))
     
     (pcase action
       (113 (call-interactively #'start-kbd-macro))
@@ -560,6 +561,7 @@ Optional Argument ADD means forced to add the pair."
                              ((= var 115)
                               (cons t 's))
                              (t var)))))
+  (sniem-search--cancel-selection)
   (if (eq (cdr-safe prefix) 's)
       (save-mark-and-excursion
         (sniem-space))
@@ -791,13 +793,15 @@ Argument DIRECT is the direction for find."
 (sniem-define-motion sniem-next-word (&optional n no-hint word)
   "Move to next word. If the region is active, goto the next word which is same as it."
   (interactive "P")
-  (if (or (region-active-p) word sniem-kmacro-mark-content)
+  (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
       (let ((word (cond (word word)
                         (sniem-kmacro-mark-content
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))
-                        (t (buffer-substring-no-properties (region-beginning)
-                                                           (region-end)))))
+                        ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                           (region-end)))
+                        ((consp sniem-search-result-overlays)
+                         (car sniem-search-result-overlays))))
             tmp region-end)
         (when (region-active-p)
           (goto-char (region-beginning))
@@ -848,8 +852,10 @@ Argument DIRECT is the direction for find."
                         (sniem-kmacro-mark-content
                          (prog1 sniem-kmacro-mark-content
                            (setq-local sniem-kmacro-mark-content nil)))
-                        (t (buffer-substring-no-properties (region-beginning)
-                                                           (region-end)))))
+                        ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                           (region-end)))
+                        ((consp sniem-search-result-overlays)
+                         (car sniem-search-result-overlays))))
             tmp)
         (when (and (region-active-p)
                    (not (= (point) (region-beginning))))
@@ -888,21 +894,24 @@ Argument DIRECT is the direction for find."
 (defun sniem-search--check-result (&optional number)
   "Check the search result.
 NUMBER is the index of current overlay in all search overlays.
+Or NUMBER can be 'remove, then the function'll only remove the tip.
 
 If it's the first, print first at the end of the line.
 Else if it's the last, print last, or it's the only one, print only."
   (when sniem-search-result-tip
     (delete-overlay sniem-search-result-tip)
     (setq-local sniem-search-result-tip nil))
-  (let ((total (1- (length sniem-search-result-overlays)))
-        current)
-    (setq current (if (numberp number)
-                      number
-                    (sniem--list-memq sniem-search-result-overlays
-                                      (overlays-at (point))
-                                      'index)))
-    (sniem-search--add-overlay (format "[%d/%d]"
-                                       current total))))
+  (unless (eq number 'remove)
+    (let ((total (1- (length sniem-search-result-overlays)))
+          current)
+      (setq current (if (numberp number)
+                        number
+                      (sniem--list-memq sniem-search-result-overlays
+                                        (overlays-at (point))
+                                        'index)))
+      (when current
+        (sniem-search--add-overlay (format "[%d/%d]"
+                                           current total))))))
 
 (defun sniem-search--add-overlay (content)
   "Add the tip overlay with CONTENT."
@@ -944,14 +953,75 @@ Else if it's the last, print last, or it's the only one, print only."
       (when lint
         (sniem-search--check-result)))))
 
-(defun sniem-search--delete-search-overlays ()
-  "Delete search overlays."
+(defun sniem-search--refresh-overlay-display ()
+  "Refresh search overlays display."
   (when (consp sniem-search-result-overlays)
-    (dolist (ov sniem-search-result-overlays)
-      (when (overlayp ov)
-        (delete-overlay ov)))
-    (setq-local sniem-search-result-overlays nil)
+    (save-mark-and-excursion
+      (let (ov ovs tmp)
+        (dotimes (i (length sniem-search-result-overlays))
+          (setq ov (nth i sniem-search-result-overlays))
+
+          (when (overlayp ov)
+            (goto-char (overlay-start ov))
+            (unless (memq ov (overlays-at (setq tmp (point))))
+              (delete-overlay ov)
+              (setq ov (make-overlay
+                        tmp (+ tmp
+                               (length (car sniem-search-result-overlays)))))
+              (overlay-put ov 'face 'region)
+              (setq ovs (append ovs
+                                (list (cons (1- i)
+                                            ov)))))))
+        (when ovs
+          (dolist (item ovs)
+            (setq-local sniem-search-result-overlays
+                        (append (sniem--nth-utill
+                                 0 (car item)
+                                 sniem-search-result-overlays)
+                                (list (cdr item))
+                                (sniem--nth-utill
+                                 (1+ (car item)) nil
+                                 sniem-search-result-overlays)))))))))
+
+(defun sniem-search--delete-search-overlays (&optional overlay)
+  "Delete search overlays.
+If OVERLAY is non-nil, only delete it."
+  (when (consp sniem-search-result-overlays)
+    (if (overlayp overlay)
+        (progn
+          (setq-local sniem-search-result-overlays
+                      (delete overlay
+                              sniem-search-result-overlays))
+          (delete-overlay overlay)
+          (sniem-search--check-result 'remove))
+      (dolist (ov sniem-search-result-overlays)
+        (when (overlayp ov)
+          (delete-overlay ov)))
+      (setq-local sniem-search-result-overlays nil))
     t))
+
+(defun sniem-search--cancel-selection ()
+  "Cancel selection."
+  (sniem-search--check-result 'remove)
+  (when sniem-search-timer
+    (cancel-timer sniem-search-timer)
+    (setq-local sniem-search-timer nil))
+  (sniem-search--delete-search-overlays))
+
+(defun sniem-search--modify-cancel-selection (&optional force)
+  "Judge the modify for cancelling selection.
+If FORCE is non-nil, forcely delete the current overlay."
+  (let (tmp)
+    (when (and sniem-search-result-overlays
+               (setq tmp
+                     (sniem--list-memq sniem-search-result-overlays
+                                       (overlays-at (point))))
+               (or (not (string= (buffer-substring-no-properties
+                                  (overlay-start tmp)
+                                  (overlay-end tmp))
+                                 (car sniem-search-result-overlays)))
+                   force))
+      (sniem-search--delete-search-overlays tmp))))
 
 (sniem-define-motion sniem-next-symbol (&optional n)
   "Move to next symbol."

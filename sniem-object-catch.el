@@ -443,7 +443,7 @@ FORWARD means now it's forward direction."
   "Like `add-to-list', but it will replace the origin, then return it.
 
 ELE is the element to add.
-LIST is the list for operating.;"
+LIST is the list for operating."
   (let (prefix tmp)
     (dotimes (n (length list))
       (setq prefix (car (nth n list)))

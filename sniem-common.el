@@ -138,6 +138,23 @@ Otherwise nil will be return."
             (throw 'stop nil)))))
     result))
 
+(defun sniem--nth-utill (start end list)
+  "Get elements in LIST from START to END.
+START & END can be nil."
+  (let (ele)
+    (unless start
+      (setq start 0))
+    (unless end
+      (setq end (length list)))
+    (catch 'stop
+      (dotimes (i (length list))
+        (when (>= i start)
+          (if (<= i end)
+              (setq ele (append ele
+                                (list (nth i list))))
+            (throw 'stop t)))))
+    ele))
+
 (provide 'sniem-common)
 
 ;;; sniem-common.el ends here
