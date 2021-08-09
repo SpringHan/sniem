@@ -434,7 +434,9 @@ If SPECIAL is non-nil, paste from the special clipboard."
     (insert (nth (if regionp
                      (+ n i)
                    (1- (+ n i)))
-                 kill-ring))))
+                 (if special
+                     sniem-special-clipboard
+                   kill-ring)))))
 
 (defun sniem-paste--output-contents (n special)
   "Output contents for `sniem-paste'.
