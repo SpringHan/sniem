@@ -431,7 +431,8 @@ If SPECIAL is non-nil, paste from the special clipboard."
       (goto-char (cdr regionp))
       (push-mark (car regionp) t t)
       (sniem-delete t))
-    (insert (nth (if regionp
+    (insert (nth (if (and regionp
+                          (null special))
                      (+ n i)
                    (1- (+ n i)))
                  (if special
