@@ -84,21 +84,21 @@
      - middle-keyboard-digit-argument-or-function
 
        This function is defaultly bound on ~<SPC>~. After you execute it, the middle keys of the keyboard can be instead of numbers and ~-~, the record will be over after you pressed ~<SPC>~. You can also use the keys in the table to do the special operations:
-       | Key | Function                                   |
-       | ,   | Repeat object-catch                        |
-       | .   | Mark the content at point or a region      |
-       | k   | Unmark the content and select it           |
-       | SPC | Execute function in motion-hint            |
-       | /   | Reverse the direction of object-catch      |
-       | p   | Add, change or delete the pair of region   |
-       | <   | Jump to prev comment mark                  |
-       | >   | Jump to next comment mark                  |
-       | m   | Insert new comment mark                    |
-       | c   | Clear the special clipboard                |
-       | x   | Pop the first content in special clipboard |
-       | P   | Paste from special clipboard               |
-       | y   | Yank for special clipboard                 |
-       | Y   | Yank in region for special clipboard       |
+       | Key | Function                                  |
+       | ,   | Repeat object-catch                       |
+       | .   | Mark the content at point or a region     |
+       | k   | Unmark the content and select it          |
+       | SPC | Execute function in motion-hint           |
+       | /   | Reverse the direction of object-catch     |
+       | p   | Add, change or delete the pair of region  |
+       | <   | Jump to prev comment mark                 |
+       | >   | Jump to next comment mark                 |
+       | m   | Insert new comment mark                   |
+       | c   | Clear the special clipboard               |
+       | x   | Pop the last content in special clipboard |
+       | P   | Paste from special clipboard              |
+       | y   | Yank for special clipboard                |
+       | Y   | Yank in region for special clipboard      |
 ** Some special operations
    - Motions
 

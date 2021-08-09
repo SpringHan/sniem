@@ -215,9 +215,11 @@ But when it's recording kmacro and there're region, deactivate mark."
     (keyboard-quit)))
 
 (defun sniem-special-clipboard-pop ()
-  "Pop the first content in special clipboard."
+  "Pop the last content in special clipboard."
   (interactive)
-  (pop sniem-special-clipboard)
+  (setq sniem-special-clipboard
+        (delete (nth (1- (length sniem-special-clipboard)))
+                sniem-special-clipboard))
   (message "[Sniem]: Popped the special clipboard."))
 
 (defun sniem-special-clipboard-clear ()
