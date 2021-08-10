@@ -150,12 +150,17 @@ THING can be `symbol' or `word'."
         (current-char (following-char))
         start-point end-point can-enter)
     (save-mark-and-excursion
-      (when (or (not (if (eq thing 'word)
-                         (sniem-pair--pair-p current-char)
-                       (memq current-char '(32 10))))
-                (when (not (if (eq thing 'word)
-                               (sniem-pair--pair-p (char-before))
-                             (memq (char-before) '(32 10))))
+      (when (or (if (eq thing 'word)
+                    (not (sniem-pair--pair-p current-char))
+                  (and (not (memq current-char '(32 10)))
+                       (or (not (sniem-pair--pair-p current-char))
+                           (memq current-char symbol-attachments))))
+
+                (when (if (eq thing 'word)
+                          (not (sniem-pair--pair-p (char-before)))
+                        (and (memq (char-before) '(32 10))
+                             (or (not (sniem-pair--pair-p (char-before)))
+                                 (memq (char-before) symbol-attachments))))
                   (setq end-point (point)
                         move-command 'backward-char)
                   (backward-char)
@@ -301,7 +306,8 @@ THING can be `symbol' or `word'."
                (if (bobp)
                    (delete-char 1)
                  (delete-char -1))
-               (forward-line))
+               (when (eolp)
+                 (forward-line)))
            (sniem-delete-region (line-beginning-position)
                                 (if (= (line-end-position) (point-max))
                                     (line-end-position)
@@ -510,19 +516,16 @@ If SPECIAL is non-nil, yank it to the special clipboard."
         (end-kbd-macro)
         ;; If the `sniem-kmacro-range' is exists, call the macro to the lines
         (when sniem-kmacro-range
-          (let ((region-beg
-                 (save-mark-and-excursion
-                   (sniem-goto-line (car sniem-kmacro-range) t)
-                   (line-beginning-position)))
+          (let ((region-beg (overlay-start sniem-kmacro-range))
                 (region-end
                  (save-mark-and-excursion
-                   (sniem-goto-line (cdr sniem-kmacro-range) t)
+                   (sniem-goto-line (overlay-end sniem-kmacro-range) t)
                    (when (= (line-beginning-position) (line-end-position))
                      (forward-line))
                    (line-end-position))))
-            (apply-macro-to-region-lines region-beg region-end
-                                         (when sniem-locked-macro
-                                           sniem-locked-macro))
+            (sniem-macro--apply-to-lines region-beg region-end
+                                         sniem-locked-macro)
+            (delete-overlay sniem-kmacro-range)
             (setq-local sniem-kmacro-range nil))))
     
     (when (region-active-p)
@@ -532,10 +535,14 @@ If SPECIAL is non-nil, yank it to the special clipboard."
               (setq-local sniem-kmacro-mark-content
                           (buffer-substring-no-properties (region-beginning) (region-end)))
             (setq-local sniem-kmacro-range
-                        (cons (1+ (line-number-at-pos (region-beginning)))
-                              (line-number-at-pos (region-end))))
-            (deactivate-mark)
-            (goto-char (region-beginning)))
+                        (make-overlay
+                         (save-mark-and-excursion
+                           (goto-char (region-beginning))
+                           (forward-line)
+                           (line-beginning-position))
+                         (region-end)))
+            (goto-char (region-beginning))
+            (deactivate-mark))
         (setq-local sniem-kmacro-mark-content
                     (buffer-substring-no-properties (region-beginning) (region-end))))
 
@@ -570,6 +577,31 @@ If SPECIAL is non-nil, yank it to the special clipboard."
                       "Unset")))
       (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
       (99 (call-interactively (sniem-macro--get-kbd-macros))))))
+
+(defun sniem-macro--apply-to-lines (top bottom &optional macro)
+  "Apply the MACRO to lines from TOP to BOTTOM."
+  (when (> top bottom)
+    (let ((tmp top))
+      (setq top bottom
+            bottom tmp)))
+  (unless macro
+    (setq macro last-kbd-macro))
+  (goto-char top)
+  (let (top-line end-line move-line)
+    (setq top-line (line-number-at-pos top)
+          end-line (line-number-at-pos bottom))
+    (save-mark-and-excursion
+      (goto-char bottom)
+      (when (= (line-beginning-position) (line-end-position))
+        (setq end-line (1- end-line))))
+    (setq bottom (- end-line top-line))
+
+    (while (>= bottom 0)
+      (setq move-line (make-overlay (line-beginning-position) (1+ (line-end-position))))
+      (execute-kbd-macro macro)
+      (goto-char (overlay-end move-line))
+      (delete-overlay move-line)
+      (setq bottom (1- bottom)))))
 
 (defun sniem-macro--get-kbd-macros ()
   "Get the kbd macro from kmacros."

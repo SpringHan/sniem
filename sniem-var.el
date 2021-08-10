@@ -74,7 +74,7 @@
 
 (defcustom sniem-kmacro-range nil
   "The range for kmacro."
-  :type 'cons
+  :type 'overlay
   :group 'sniem)
 
 (defcustom sniem-kmacro-mark-content nil
