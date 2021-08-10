@@ -511,75 +511,90 @@ If SPECIAL is non-nil, yank it to the special clipboard."
   "Macro ACTION."
   (interactive (list (unless defining-kbd-macro
                        (read-char sniem-macro-message))))
-  (if defining-kbd-macro
-      (progn
-        (end-kbd-macro)
-        ;; If the `sniem-kmacro-range' is exists, call the macro to the lines
-        (when sniem-kmacro-range
-          (let ((region-beg (overlay-start sniem-kmacro-range))
-                (region-end
-                 (save-mark-and-excursion
-                   (sniem-goto-line (overlay-end sniem-kmacro-range) t)
-                   (when (= (line-beginning-position) (line-end-position))
-                     (forward-line))
-                   (line-end-position))))
-            (sniem-macro--apply-to-lines region-beg region-end
-                                         sniem-locked-macro)
-            (delete-overlay sniem-kmacro-range)
-            (setq-local sniem-kmacro-range nil))))
-    
-    (when (region-active-p)
-      (if (= action 113)
+  (catch 'stop
+    (if defining-kbd-macro
+        (progn
+          (end-kbd-macro)
+          ;; If the `sniem-kmacro-range' is exists, call the macro to the lines
+          (when sniem-kmacro-range
+            (let ((region-beg (overlay-start sniem-kmacro-range))
+                  (region-end
+                   (save-mark-and-excursion
+                     (sniem-goto-line (overlay-end sniem-kmacro-range) t)
+                     (when (= (line-beginning-position) (line-end-position))
+                       (forward-line))
+                     (line-end-position))))
+              (sniem-macro--apply-to-lines region-beg region-end
+                                           sniem-locked-macro)
+              (delete-overlay sniem-kmacro-range)
+              (setq-local sniem-kmacro-range nil))))
+      
+      (when (region-active-p)
+        (sniem-search--cancel-selection)
+        (if (= action 113)
+            (if (= (line-number-at-pos (region-beginning))
+                   (line-number-at-pos (region-end)))
+                (setq-local sniem-kmacro-mark-content
+                            (buffer-substring-no-properties (region-beginning) (region-end)))
+              (setq-local sniem-kmacro-range
+                          (make-overlay
+                           (save-mark-and-excursion
+                             (goto-char (region-beginning))
+                             (forward-line)
+                             (line-beginning-position))
+                           (region-end)))
+              (goto-char (region-beginning))
+              (deactivate-mark))
           (if (= (line-number-at-pos (region-beginning))
                  (line-number-at-pos (region-end)))
               (setq-local sniem-kmacro-mark-content
                           (buffer-substring-no-properties (region-beginning) (region-end)))
-            (setq-local sniem-kmacro-range
-                        (make-overlay
-                         (save-mark-and-excursion
-                           (goto-char (region-beginning))
-                           (forward-line)
-                           (line-beginning-position))
-                         (region-end)))
-            (goto-char (region-beginning))
-            (deactivate-mark))
-        (setq-local sniem-kmacro-mark-content
-                    (buffer-substring-no-properties (region-beginning) (region-end))))
-
-      (sniem-search--cancel-selection))
-    
-    (pcase action
-      (113 (call-interactively #'start-kbd-macro))
-      (101 (if sniem-locked-macro
-               (call-interactively sniem-locked-macro)
-             (call-last-kbd-macro)))
-      (110 (call-interactively #'name-last-kbd-macro))
-      (105 (let ((macro (sniem-macro--get-kbd-macros))
-                 (file-content ""))
-             (unless sniem-macro-file
-               (setq sniem-macro-file (read-file-name "Enter the macro file you want: ")))
-             (if (file-exists-p sniem-macro-file)
-                 (with-temp-buffer
-                   (insert-file-contents sniem-macro-file)
-                   (setq file-content (buffer-string)))
-               (make-empty-file sniem-macro-file))
-             (with-temp-file sniem-macro-file
-               (goto-char (point-min))
-               (insert-kbd-macro macro)
-               (insert file-content))))
-      (108 (setq sniem-locked-macro
-                 (if sniem-locked-macro
-                     nil
-                   (sniem-macro--get-kbd-macros)))
-           (message "[Sniem]: %s locked macro."
-                    (if sniem-locked-macro
-                        "Set"
-                      "Unset")))
-      (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
-      (99 (call-interactively (sniem-macro--get-kbd-macros))))))
+            (sniem-macro--apply-to-lines (save-mark-and-excursion
+                                           (sniem-beg-of-mark t)
+                                           (line-beginning-position))
+                                         (save-mark-and-excursion
+                                           (sniem-end-of-mark t)
+                                           (when (= (line-beginning-position)
+                                                    (line-end-position))
+                                             (forward-line))
+                                           (line-end-position))
+                                         sniem-locked-macro)
+            (throw 'stop t))))
+      
+      (pcase action
+        (113 (call-interactively #'start-kbd-macro))
+        (101 (if sniem-locked-macro
+                 (call-interactively sniem-locked-macro)
+               (call-last-kbd-macro)))
+        (110 (call-interactively #'name-last-kbd-macro))
+        (105 (let ((macro (sniem-macro--get-kbd-macros))
+                   (file-content ""))
+               (unless sniem-macro-file
+                 (setq sniem-macro-file (read-file-name "Enter the macro file you want: ")))
+               (if (file-exists-p sniem-macro-file)
+                   (with-temp-buffer
+                     (insert-file-contents sniem-macro-file)
+                     (setq file-content (buffer-string)))
+                 (make-empty-file sniem-macro-file))
+               (with-temp-file sniem-macro-file
+                 (goto-char (point-min))
+                 (insert-kbd-macro macro)
+                 (insert file-content))))
+        (108 (setq sniem-locked-macro
+                   (if sniem-locked-macro
+                       nil
+                     (sniem-macro--get-kbd-macros)))
+             (message "[Sniem]: %s locked macro."
+                      (if sniem-locked-macro
+                          "Set"
+                        "Unset")))
+        (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
+        (99 (call-interactively (sniem-macro--get-kbd-macros)))))))
 
 (defun sniem-macro--apply-to-lines (top bottom &optional macro)
   "Apply the MACRO to lines from TOP to BOTTOM."
+  (when (region-active-p)
+    (deactivate-mark))
   (when (> top bottom)
     (let ((tmp top))
       (setq top bottom
@@ -595,6 +610,7 @@ If SPECIAL is non-nil, yank it to the special clipboard."
       (when (= (line-beginning-position) (line-end-position))
         (setq end-line (1- end-line))))
     (setq bottom (- end-line top-line))
+    (message "%S, %S" top bottom)
 
     (while (>= bottom 0)
       (setq move-line (make-overlay (line-beginning-position) (1+ (line-end-position))))
