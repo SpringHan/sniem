@@ -923,7 +923,7 @@ Argument DIRECT is the direction for find."
 (sniem-define-motion sniem-prev-word (&optional n no-hint word)
   "Move to prev word. If the region is active, goto the prev word which is same as it."
   (interactive "P")
-  (if (or (region-active-p) word sniem-kmacro-mark-content)
+  (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
       (let ((word (cond (word word)
                         (sniem-kmacro-mark-content
                          (prog1 sniem-kmacro-mark-content
