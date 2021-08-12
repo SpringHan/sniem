@@ -302,10 +302,7 @@ But when it's recording kmacro and there're region, deactivate mark."
             (setq-local sniem-minibuffer-keypad-prefix
                         (sniem-keypad--convert-prefix char))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
-        (if (eq (setq command (key-binding (read-kbd-macro (char-to-string char))))
-                'sniem-minibuffer-keypad)
-            (self-insert-command 1 last-input-event)
-          (call-interactively command))))))
+        (execute-kbd-macro (vector char))))))
 
 (defun sniem-minibuffer-keypad ()
   "The function to insert the input key or execute the function."
