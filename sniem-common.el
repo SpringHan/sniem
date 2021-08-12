@@ -155,6 +155,13 @@ START & END can be nil."
             (throw 'stop t)))))
     ele))
 
+(defun sniem--index (ele list)
+  "Get the index of ELE in LIST."
+  (catch 'result
+    (dotimes (i (length list))
+      (when (equal (nth i list) ele)
+        (throw 'result i)))))
+
 (provide 'sniem-common)
 
 ;;; sniem-common.el ends here

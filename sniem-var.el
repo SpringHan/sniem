@@ -240,6 +240,15 @@
   :type 'keymap
   :group 'sniem)
 
+(defcustom sniem-minibuffer-keypad-state-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map [remap self-insert-command] 'sniem-minibuffer-keypad)
+    (define-key map (kbd "SPC") 'sniem-minibuffer-keypad-start-or-stop)
+    map)
+  "The keymap for minibuffer-keypad state."
+  :type 'keymap
+  :group 'sniem)
+
 (defcustom sniem-motion-hint-motion nil
   "The last hint motion."
   :type 'symbol
@@ -278,6 +287,21 @@
 (defcustom sniem-special-clipboard nil
   "The special clipboard list."
   :type 'list
+  :group 'sniem)
+
+(defcustom sniem-minibuffer-keypad-on nil
+  "If the minibuffer-keypad mode is opened."
+  :type 'boolean
+  :group 'sniem)
+
+(defcustom sniem-minibuffer-keypad-prefix "C-"
+  "The prefix for minibuffer-keypad."
+  :type 'string
+  :group 'sniem)
+
+(defcustom sniem-minibuffer-keymap nil
+  "The origin keymap for the minibuffer."
+  :type 'keymap
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist

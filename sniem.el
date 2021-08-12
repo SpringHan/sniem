@@ -81,11 +81,17 @@
   (when sniem-expand-mode
     (sniem-expand-mode-init)))
 
+(define-minor-mode sniem-minibuffer-keypad-mode
+  nil nil sniem-minibuffer-keypad-state-keymap
+  (when sniem-minibuffer-keypad-mode
+    (sniem-minibuffer-keypad-mode-init)))
+
 (defun sniem-normal-mode-init ()
   "Normal mode init."
   (sniem-insert-mode -1)
   (sniem-motion-mode -1)
   (sniem-expand-mode -1)
+  (sniem-minibuffer-keypad-mode -1)
   (when current-input-method
     (toggle-input-method)
     (setq-local sniem-input-method-closed t)))
@@ -95,6 +101,7 @@
   (sniem-normal-mode -1)
   (sniem-motion-mode -1)
   (sniem-expand-mode -1)
+  (sniem-minibuffer-keypad-mode -1)
   (when sniem-input-method-closed
     (toggle-input-method)
     (setq-local sniem-input-method-closed nil)))
@@ -103,13 +110,22 @@
   "Motion mode init."
   (sniem-normal-mode -1)
   (sniem-insert-mode -1)
-  (sniem-expand-mode -1))
+  (sniem-expand-mode -1)
+  (sniem-minibuffer-keypad-mode -1))
 
 (defun sniem-expand-mode-init ()
   "Expand mode init."
   (sniem-normal-mode -1)
   (sniem-insert-mode -1)
-  (sniem-motion-mode -1))
+  (sniem-motion-mode -1)
+  (sniem-minibuffer-keypad-mode -1))
+
+(defun sniem-minibuffer-keypad-mode-init ()
+  "Minibuffer-keypad mode init."
+  (sniem-normal-mode -1)
+  (sniem-insert-mode -1)
+  (sniem-motion-mode -1)
+  (sniem-expand-mode -1))
 
 (defun sniem--enable ()
   "Unable sniem."
@@ -120,14 +136,20 @@
            (sniem-change-mode 'normal))
           ((apply #'derived-mode-p sniem-insert-mode-alist)
            (sniem-change-mode 'insert))
+          ((minibufferp)
+           ;; (setq sniem-minibuffer-keymap
+           ;;       )
+           (sniem-change-mode 'minibuffer-keypad))
           (t (sniem-change-mode 'motion)))
-    (add-to-ordered-list 'emulation-mode-map-alists
-                         `((sniem-expand-mode . ,sniem-expand-state-keymap)))
-    (add-to-ordered-list 'emulation-mode-map-alists
-                         `((sniem-motion-mode . ,sniem-motion-state-keymap)))
-    (add-to-ordered-list 'emulation-mode-map-alists
-                         `((sniem-normal-mode . ,sniem-normal-state-keymap)))
     (unless sniem-initialized
+      (add-to-ordered-list 'emulation-mode-map-alists
+                           `((sniem-minibuffer-keypad-mode . ,sniem-minibuffer-keypad-state-keymap)))
+      (add-to-ordered-list 'emulation-mode-map-alists
+                           `((sniem-expand-mode . ,sniem-expand-state-keymap)))
+      (add-to-ordered-list 'emulation-mode-map-alists
+                           `((sniem-motion-mode . ,sniem-motion-state-keymap)))
+      (add-to-ordered-list 'emulation-mode-map-alists
+                           `((sniem-normal-mode . ,sniem-normal-state-keymap)))
       (sniem-init-hook)
       (sniem-init-advice)
       (when (featurep 'awesome-tray)
@@ -178,32 +200,59 @@
   (interactive)
   (sniem-change-mode 'normal))
 
-(defun sniem-keypad ()
-  "Execute the keypad command."
+(defun sniem-keypad (&optional external-char)
+  "Execute the keypad command.
+EXTERNAL-CHAR is the entrance for minibuffer-keypad mode."
   (interactive)
-  (let ((key (pcase last-input-event
-               (120 "C-x ") (109 "M-") (98 "C-M-") (118 "C-")))
-        tmp)
-    (unless key
-      (setq key (concat "C-" (char-to-string last-input-event) " ")))
+  (let ((key (if external-char
+                 (when (and (memq external-char '(44 46 47))
+                            (/= (sniem-keypad--convert-prefix
+                                 sniem-minibuffer-keypad-prefix)
+                                external-char))
+                   (setq-local sniem-minibuffer-keypad-prefix
+                               (sniem-keypad--convert-prefix external-char))
+                   (setq external-char t))
+               (pcase last-input-event
+                 (109 "M-") (98 "C-M-") (118 "C-"))))
+        tmp command prefix-used-p)
+    (unless (stringp key)
+      (setq key (if external-char
+                    (concat sniem-minibuffer-keypad-prefix
+                            (when (numberp external-char)
+                              (concat (char-to-string external-char) " ")))
+                  (concat "C-" (char-to-string last-input-event) " "))))
 
     (message key)
     (catch 'stop
+      (when (and (numberp external-char)
+                 (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1))))))
+        (throw 'stop nil))
       (while (setq tmp (read-char))
         (if (= tmp 127)
             (setq key (substring key 0 -2))
           (when (= tmp 59)
             (keyboard-quit))
           (setq key (concat key
-                            (cond ((= tmp 32) (concat (char-to-string (read-char)) " "))
-                                  ((= tmp 44) "C-")
-                                  ((= tmp 46) "M-")
-                                  ((= tmp 47) "C-M-")
-                                  (t (concat (char-to-string tmp) " "))))))
+                            (cond ((and (= tmp 44)
+                                        (null prefix-used-p))
+                                   (setq prefix-used-p t)
+                                   "C-")
+                                  ((and (= tmp 46)
+                                        (null prefix-used-p))
+                                   (setq prefix-used-p t)
+                                   "M-")
+                                  ((and (= tmp 47)
+                                        (null prefix-used-p))
+                                   (setq prefix-used-p t)
+                                   "C-M-")
+                                  (t
+                                   (when prefix-used-p
+                                     (setq prefix-used-p nil))
+                                   (concat (char-to-string tmp) " "))))))
         (message key)
-        (when (commandp (setq tmp (key-binding (read-kbd-macro (substring key 0 -1)))))
+        (when (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1)))))
           (throw 'stop nil))))
-    (call-interactively tmp)))
+    (call-interactively command)))
 
 (defun sniem-move-last-point ()
   "Move the last point to current point."
@@ -234,12 +283,42 @@ But when it's recording kmacro and there're region, deactivate mark."
   (setq sniem-special-clipboard nil)
   (message "[Sniem]: Cleared the special clipboard."))
 
+(defun sniem-minibuffer-keypad-start-or-stop ()
+  "Start or stop the minibuffer-keypad mode."
+  (interactive)
+  (self-insert-command 1 32)
+  (let ((char (read-char))
+        command)
+    (if (= 32 char)
+        (progn
+          (setq-local sniem-minibuffer-keypad-on
+                     (if sniem-minibuffer-keypad-on
+                         nil
+                       t))
+          (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
+      (if (and sniem-minibuffer-keypad-on
+               (memq char '(44 46 47)))
+          (progn
+            (setq-local sniem-minibuffer-keypad-prefix
+                        (sniem-keypad--convert-prefix char))
+            (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
+        (if (eq (setq command (key-binding (read-kbd-macro (char-to-string char))))
+                'sniem-minibuffer-keypad)
+            (self-insert-command 1 last-input-event)
+          (call-interactively command))))))
+
+(defun sniem-minibuffer-keypad ()
+  "The function to insert the input key or execute the function."
+  (interactive)
+  (if sniem-minibuffer-keypad-on
+      (sniem-keypad last-input-event)
+    (self-insert-command 1)))
+
 ;;; Functional functions
 
 (defun sniem-initialize ()
   "Initialize sniem."
-  (unless (minibufferp)
-    (sniem-mode t)))
+  (sniem-mode t))
 
 (defun sniem--ele-exists-p (ele list)
   "Check if ELE is belong to the LIST."
@@ -366,6 +445,7 @@ LAYOUT can be qwerty, colemak or dvorak."
         (sniem-insert-mode 'insert)
         (sniem-motion-mode 'motion)
         (sniem-expand-mode 'expand)
+        (sniem-minibuffer-keypad-mode 'minibuffer-keypad)
         (t nil)))
 
 (defun sniem-change-mode (mode)
@@ -375,7 +455,8 @@ LAYOUT can be qwerty, colemak or dvorak."
       ('normal (sniem-normal-mode t))
       ('insert (sniem-insert-mode t))
       ('motion (sniem-motion-mode t))
-      ('expand (sniem-expand-mode t)))
+      ('expand (sniem-expand-mode t))
+      ('minibuffer-keypad (sniem-minibuffer-keypad-mode t)))
     (sniem-cursor-change)))
 
 (defun sniem-digit-argument-or-fn (arg)
@@ -539,6 +620,25 @@ Optional argument HIDE is t, the last point will be show."
                      (sniem-search--cancel-selection)))
     (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
     (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
+
+(defun sniem-keypad--convert-prefix (prefix)
+  "Convert PREFIX from string to char or from char to string."
+  (let* ((prefix-string '("C-" "M-" "C-M-"))
+         (prefix-char '(44 46 47))
+         (from (if (stringp prefix)
+                   prefix-string
+                 prefix-char))
+         (to (if (stringp prefix)
+                 prefix-char
+               prefix-string))
+         index)
+    (setq index (sniem--index prefix from))
+    (when index
+      (nth index to))))
+
+(defun sniem--get-key (key)
+  "Get key from origin keymap."
+  (cdr (--find (equal (car it) key) global-map)))
 
 ;;; State info print support
 (defun sniem-state ()
