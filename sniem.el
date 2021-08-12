@@ -121,7 +121,12 @@
           ((apply #'derived-mode-p sniem-insert-mode-alist)
            (sniem-change-mode 'insert))
           (t (sniem-change-mode 'motion)))
-    (add-to-list 'emulation-mode-map-alists 'sniem-normal-state-keymap)
+    (add-to-ordered-list 'emulation-mode-map-alists
+                         `((sniem-expand-mode . ,sniem-expand-state-keymap)))
+    (add-to-ordered-list 'emulation-mode-map-alists
+                         `((sniem-motion-mode . ,sniem-motion-state-keymap)))
+    (add-to-ordered-list 'emulation-mode-map-alists
+                         `((sniem-normal-mode . ,sniem-normal-state-keymap)))
     (unless sniem-initialized
       (sniem-init-hook)
       (sniem-init-advice)
