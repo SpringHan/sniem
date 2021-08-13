@@ -72,6 +72,11 @@
        | ~/~                | 反转抓取的方向                             |
        | 其它字母、负号按键 | 切换到 NORMAL 模式                         |
 
+     - ~MINIBUFFER-KEYPAD~
+
+       此模式下允许用户在 minibuffer 中使用 keypad 。
+       当你打开 minibuffer 之后，你可以正常输入。但当你按下两次空格之后，就会进入 keypad 模式；再次按两次空格就会退出 keypad 模式。
+
    - Keyboard layout
 
      Sniem 针对目前主流的四种键盘布局提供了支持，可通过 ~(sniem-set-keyboard-layout)~ 来设置

@@ -32,7 +32,7 @@
 
    - Modes
 
-     Sniem has 3 modes.
+     Sniem has 5 modes.
      - ~NORMAL~: This mode is the default mode for the editing buffers.
        
        You can use ~(sniem-normal-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
@@ -65,6 +65,10 @@
        | ~A~              | Catch parent ~<>~ pair for the content selected                  |
        | ~/~              | Reverse the direction of catch                                   |
        | Other alpha keys | Quit expand mode and goto NORMAL mode                            |
+
+     - ~MINIBUFFER-KEYPAD~: This mode allows you to use keypad in any minibuffers.
+
+       When you're in a minibuffer, you can input as usual. But when you input space in twice time, the keypad mode will be opened. And you can input space twice to exit keypad mode.
 
      - Keyboard layout
 

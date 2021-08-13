@@ -293,7 +293,7 @@ Argument CS is the cheatsheet of current keyboard."
                           (concat tmp "[%s]")
                         "      [%s]")
                       key)
-              (if (and (keymapp cmd) (equal cmd sniem-leader-keymap))
+              (if (keymapp cmd)
                   "   leader"
                 (sniem-cheatsheet--command cmd ckey))
               cs))
