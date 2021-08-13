@@ -302,14 +302,26 @@ But when it's recording kmacro and there're region, deactivate mark."
             (setq-local sniem-minibuffer-keypad-prefix
                         (sniem-keypad--convert-prefix char))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
-        (execute-kbd-macro (vector char))))))
+        (sniem-minibuffer-keypad)))))
 
 (defun sniem-minibuffer-keypad ()
   "The function to insert the input key or execute the function."
   (interactive)
   (if sniem-minibuffer-keypad-on
       (sniem-keypad last-input-event)
-    (self-insert-command 1)))
+    (if (symbolp last-input-event)
+        (progn
+          (sniem-minibuffer-keypad-mode -1)
+          (let (command)
+            (when (commandp (setq command
+                                  (key-binding
+                                   (vector last-input-event))))
+              (let ((last-command-event last-input-event))
+                (ignore-errors
+                  (call-interactively command)))))
+          (sniem-minibuffer-keypad-mode t))
+      (let ((last-command-event last-input-event))
+        (call-interactively #'self-insert-command)))))
 
 ;;; Functional functions
 
