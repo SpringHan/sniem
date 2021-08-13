@@ -287,8 +287,7 @@ But when it's recording kmacro and there're region, deactivate mark."
   "Start or stop the minibuffer-keypad mode."
   (interactive)
   (self-insert-command 1 32)
-  (let ((char (read-char))
-        command)
+  (let ((char (read-char)))
     (if (= 32 char)
         (progn
           (setq-local sniem-minibuffer-keypad-on
@@ -309,16 +308,19 @@ But when it's recording kmacro and there're region, deactivate mark."
   (interactive)
   (if sniem-minibuffer-keypad-on
       (sniem-keypad last-input-event)
-    (if (symbolp last-input-event)
+    (if (or (symbolp last-input-event)
+            (< last-input-event 33)
+            (> last-input-event 126))
         (progn
           (sniem-minibuffer-keypad-mode -1)
           (let (command)
-            (when (commandp (setq command
-                                  (key-binding
-                                   (vector last-input-event))))
-              (let ((last-command-event last-input-event))
-                (ignore-errors
-                  (call-interactively command)))))
+            (if (commandp (setq command
+                                (key-binding
+                                 (vector last-input-event))))
+                (let ((last-command-event last-input-event))
+                  (ignore-errors
+                    (call-interactively command)))
+              (execute-kbd-macro (vector last-input-event))))
           (sniem-minibuffer-keypad-mode t))
       (let ((last-command-event last-input-event))
         (call-interactively #'self-insert-command)))))
@@ -644,10 +646,6 @@ Optional argument HIDE is t, the last point will be show."
     (setq index (sniem--index prefix from))
     (when index
       (nth index to))))
-
-(defun sniem--get-key (key)
-  "Get key from origin keymap."
-  (cdr (--find (equal (car it) key) global-map)))
 
 ;;; State info print support
 (defun sniem-state ()
