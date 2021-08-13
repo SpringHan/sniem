@@ -292,9 +292,9 @@ But when it's recording kmacro and there're region, deactivate mark."
     (if (= 32 char)
         (progn
           (setq-local sniem-minibuffer-keypad-on
-                     (if sniem-minibuffer-keypad-on
-                         nil
-                       t))
+                      (if sniem-minibuffer-keypad-on
+                          nil
+                        t))
           (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
       (if (and sniem-minibuffer-keypad-on
                (memq char '(44 46 47)))
