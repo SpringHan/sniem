@@ -141,13 +141,7 @@
            (sniem-change-mode 'normal))
           ((apply #'derived-mode-p sniem-insert-mode-alist)
            (sniem-change-mode 'insert))
-          ((minibufferp)
-           (sniem-change-mode 'minibuffer-keypad)
-           (when (and sniem-minibuffer-keypad-first-start
-                      (null sniem-minibuffer-keypad-open-timer))
-             (setq sniem-minibuffer-keypad-open-timer
-                   (run-with-timer
-                    0 0.2 #'sniem-minibuffer-keypad-first-start-timer))))
+          ((minibufferp))
           (t (sniem-change-mode 'motion)))
     (unless sniem-initialized
       (add-to-ordered-list 'emulation-mode-map-alists
@@ -629,7 +623,10 @@ Optional argument HIDE is t, the last point will be show."
                (when sniem-object-catch-last-points
                  (setq-local sniem-object-catch-last-points nil))
                (when sniem-object-catch-prefix-string-p
-                 (setq-local sniem-object-catch-prefix-string-p nil))))))
+                 (setq-local sniem-object-catch-prefix-string-p nil))))
+    (funcall fn 'minibuffer-setup-hook
+             (lambda ()
+               (sniem-minibuffer-keypad-mode t)))))
 
 (defun sniem-init-advice ()
   "The init function for advice."
@@ -664,20 +661,6 @@ Optional argument HIDE is t, the last point will be show."
     (setq index (sniem--index prefix from))
     (when index
       (nth index to))))
-
-(defun sniem-minibuffer-keypad-first-start-timer ()
-  "If minibuffer-keypad mode is not started, start it."
-  (when last-input-event
-    (if (or (null sniem-minibuffer-keypad-first-start)
-            (eq (key-binding (read-kbd-macro "SPC"))
-                'sniem-minibuffer-keypad-start-or-stop))
-        (progn
-          (setq sniem-minibuffer-keypad-first-start nil)
-          (when (timerp sniem-minibuffer-keypad-open-timer)
-            (cancel-timer sniem-minibuffer-keypad-open-timer)
-            (setq sniem-minibuffer-keypad-open-timer nil)))
-      (sniem-minibuffer-keypad-mode -1)
-      (sniem-minibuffer-keypad-mode t))))
 
 ;;; State info print support
 (defun sniem-state ()
