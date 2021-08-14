@@ -247,6 +247,9 @@ EXTERNAL-CHAR is the entrance for minibuffer-keypad mode."
                                         (null prefix-used-p))
                                    (setq prefix-used-p t)
                                    "C-M-")
+                                  ((= tmp 32)
+                                   (setq prefix-used-p t)
+                                   "")
                                   (t
                                    (when prefix-used-p
                                      (setq prefix-used-p nil))
