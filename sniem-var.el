@@ -304,6 +304,16 @@
   :type 'keymap
   :group 'sniem)
 
+(defcustom sniem-minibuffer-keypad-first-start t
+  "If this is the first time to start minibuffer."
+  :type 'boolean
+  :group 'sniem)
+
+(defcustom sniem-minibuffer-keypad-open-timer nil
+  "The timer for opening minibuffer-keypad at the first time to start it."
+  :type 'timer
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode

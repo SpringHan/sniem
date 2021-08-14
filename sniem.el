@@ -56,6 +56,7 @@
 (define-globalized-minor-mode global-sniem-mode
   sniem-mode sniem-initialize)
 
+;;;###autoload
 (define-minor-mode sniem-normal-mode
   "Normal mode for sniem."
   nil nil sniem-normal-state-keymap
@@ -63,24 +64,28 @@
       (sniem-normal-mode-init)
     (sniem-search--cancel-selection)))
 
+;;;###autoload
 (define-minor-mode sniem-insert-mode
   "Insert mode for sniem."
   nil nil sniem-insert-state-keymap
   (when sniem-insert-mode
     (sniem-insert-mode-init)))
 
+;;;###autoload
 (define-minor-mode sniem-motion-mode
   "Motion mode for sniem."
   nil nil sniem-motion-state-keymap
   (when sniem-motion-mode
     (sniem-motion-mode-init)))
 
+;;;###autoload
 (define-minor-mode sniem-expand-mode
   "Expand mode for sniem."
   nil nil sniem-expand-state-keymap
   (when sniem-expand-mode
     (sniem-expand-mode-init)))
 
+;;;###autoload
 (define-minor-mode sniem-minibuffer-keypad-mode
   nil nil sniem-minibuffer-keypad-state-keymap
   (when sniem-minibuffer-keypad-mode
@@ -137,9 +142,12 @@
           ((apply #'derived-mode-p sniem-insert-mode-alist)
            (sniem-change-mode 'insert))
           ((minibufferp)
-           ;; (setq sniem-minibuffer-keymap
-           ;;       )
-           (sniem-change-mode 'minibuffer-keypad))
+           (sniem-change-mode 'minibuffer-keypad)
+           (when (and sniem-minibuffer-keypad-first-start
+                      (null sniem-minibuffer-keypad-open-timer))
+             (setq sniem-minibuffer-keypad-open-timer
+                   (run-with-timer
+                    0 0.2 #'sniem-minibuffer-keypad-first-start-timer))))
           (t (sniem-change-mode 'motion)))
     (unless sniem-initialized
       (add-to-ordered-list 'emulation-mode-map-alists
@@ -286,22 +294,32 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-minibuffer-keypad-start-or-stop ()
   "Start or stop the minibuffer-keypad mode."
   (interactive)
-  (self-insert-command 1 32)
-  (let ((char (read-char)))
-    (if (= 32 char)
-        (progn
-          (setq-local sniem-minibuffer-keypad-on
-                      (if sniem-minibuffer-keypad-on
-                          nil
-                        t))
-          (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
-      (if (and sniem-minibuffer-keypad-on
-               (memq char '(44 46 47)))
+  (if current-input-method
+      (if (and (= (char-before) 32)
+               (not (= (point) (line-beginning-position))))
           (progn
-            (setq-local sniem-minibuffer-keypad-prefix
-                        (sniem-keypad--convert-prefix char))
+            (setq-local sniem-minibuffer-keypad-on
+                        (if sniem-minibuffer-keypad-on
+                            nil
+                          t))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
-        (sniem-minibuffer-keypad)))))
+        (self-insert-command 1 32))
+    (self-insert-command 1 32)
+    (let ((char (read-char)))
+      (if (= 32 char)
+          (progn
+            (setq-local sniem-minibuffer-keypad-on
+                        (if sniem-minibuffer-keypad-on
+                            nil
+                          t))
+            (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
+        (if (and sniem-minibuffer-keypad-on
+                 (memq char '(44 46 47)))
+            (progn
+              (setq-local sniem-minibuffer-keypad-prefix
+                          (sniem-keypad--convert-prefix char))
+              (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
+          (sniem-minibuffer-keypad))))))
 
 (defun sniem-minibuffer-keypad ()
   "The function to insert the input key or execute the function."
@@ -646,6 +664,20 @@ Optional argument HIDE is t, the last point will be show."
     (setq index (sniem--index prefix from))
     (when index
       (nth index to))))
+
+(defun sniem-minibuffer-keypad-first-start-timer ()
+  "If minibuffer-keypad mode is not started, start it."
+  (when last-input-event
+    (if (or (null sniem-minibuffer-keypad-first-start)
+            (eq (key-binding (read-kbd-macro "SPC"))
+                'sniem-minibuffer-keypad-start-or-stop))
+        (progn
+          (setq sniem-minibuffer-keypad-first-start nil)
+          (when (timerp sniem-minibuffer-keypad-open-timer)
+            (cancel-timer sniem-minibuffer-keypad-open-timer)
+            (setq sniem-minibuffer-keypad-open-timer nil)))
+      (sniem-minibuffer-keypad-mode -1)
+      (sniem-minibuffer-keypad-mode t))))
 
 ;;; State info print support
 (defun sniem-state ()
