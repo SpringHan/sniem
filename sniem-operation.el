@@ -152,13 +152,13 @@ THING can be `symbol' or `word'."
     (save-mark-and-excursion
       (when (or (if (eq thing 'word)
                     (not (sniem-pair--pair-p current-char))
-                  (and (not (memq current-char '(32 10)))
+                  (and (not (memq current-char '(32 10 9)))
                        (or (not (sniem-pair--pair-p current-char))
                            (memq current-char symbol-attachments))))
 
                 (when (if (eq thing 'word)
                           (not (sniem-pair--pair-p (char-before)))
-                        (and (memq (char-before) '(32 10))
+                        (and (memq (char-before) '(32 10 9))
                              (or (not (sniem-pair--pair-p (char-before)))
                                  (memq (char-before) symbol-attachments))))
                   (setq end-point (point)
@@ -674,7 +674,7 @@ Optional Argument ADD means forced to add the pair."
 Argument CHAR-STRING is the string to compair."
   (let ((not-alpha-list '(33 64 35 36 37 94 38 42 40 41 45 95 61 43
                              91 123 93 125 96 126 39 34 92 124 44 46
-                             60 62 47 63 32 10)))
+                             60 62 47 63 32 10 9)))
     ;; Write like this because `memq' and others can not work well.
     (memq (if (stringp char-string)
               (string-to-char char-string)
