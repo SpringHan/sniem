@@ -202,12 +202,14 @@
   (interactive)
   (sniem-change-mode 'normal))
 
-(defun sniem-keypad (&optional external-char)
+(defun sniem-keypad (&optional external-char no-convert)
   "Execute the keypad command.
-EXTERNAL-CHAR is the entrance for minibuffer-keypad mode."
+EXTERNAL-CHAR is the entrance for minibuffer-keypad mode.
+NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
   (interactive)
   (let ((key (if external-char
-                 (when (and (memq external-char '(44 46 47))
+                 (when (and (null no-convert)
+                            (memq external-char '(44 46 47))
                             (/= (sniem-keypad--convert-prefix
                                  sniem-minibuffer-keypad-prefix)
                                 external-char))
@@ -295,32 +297,26 @@ But when it's recording kmacro and there're region, deactivate mark."
       (if (and (= (char-before) 32)
                (not (= (point) (line-beginning-position))))
           (progn
-            (setq-local sniem-minibuffer-keypad-on
-                        (if sniem-minibuffer-keypad-on
-                            nil
-                          t))
+            (sniem-minibuffer-keypad-mode)
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
         (self-insert-command 1 32))
     (self-insert-command 1 32)
     (let ((char (read-char)))
       (if (= 32 char)
           (progn
-            (setq-local sniem-minibuffer-keypad-on
-                        (if sniem-minibuffer-keypad-on
-                            nil
-                          t))
+            (sniem-minibuffer-keypad-mode)
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
-        (if (and sniem-minibuffer-keypad-on
+        (if (and sniem-minibuffer-keypad-mode
                  (memq char '(44 46 47)))
             (progn
               (call-interactively (key-binding (read-kbd-macro (char-to-string 127))))
-              (sniem-keypad char))
+              (sniem-keypad char t))
           (sniem-minibuffer-keypad))))))
 
 (defun sniem-minibuffer-keypad ()
   "The function to insert the input key or execute the function."
   (interactive)
-  (if sniem-minibuffer-keypad-on
+  (if sniem-minibuffer-keypad-mode
       (sniem-keypad last-input-event)
     (if (or (symbolp last-input-event)
             (< last-input-event 33)
@@ -628,7 +624,7 @@ Optional argument HIDE is t, the last point will be show."
                  (setq-local sniem-object-catch-prefix-string-p nil))))
     (funcall fn 'minibuffer-setup-hook
              (lambda ()
-               (sniem-minibuffer-keypad-mode t)))))
+               (define-key (current-local-map) (kbd "SPC") #'sniem-minibuffer-keypad-start-or-stop)))))
 
 (defun sniem-init-advice ()
   "The init function for advice."
