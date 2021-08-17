@@ -613,7 +613,7 @@ Optional argument HIDE is t, the last point will be show."
 ;;; Third-Party Settings
 (defun sniem-init-hook ()
   "The inin functions."
-  (let ((fn (if sniem-mode
+  (let ((fn (if sniem-initialized
                 'add-hook
               'remove-hook)))
     (funcall fn 'deactivate-mark-hook
@@ -630,7 +630,7 @@ Optional argument HIDE is t, the last point will be show."
 
 (defun sniem-init-advice ()
   "The init function for advice."
-  (if sniem-mode
+  (if sniem-initialized
       (progn
         (advice-add 'keyboard-quit :before
                     (lambda ()
