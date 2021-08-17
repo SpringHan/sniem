@@ -172,6 +172,7 @@ THING can be `symbol' or `word'."
           (funcall move-command)
           (while t
             (setq current-char (following-char))
+
             (when (sniem-pair--pair-p current-char)
               (if (and (eq thing 'symbol)
                        (memq current-char symbol-attachments))
@@ -183,6 +184,18 @@ THING can be `symbol' or `word'."
                       (goto-char enter-point))
                   (setq start-point (1+ (point)))
                   (throw 'stop t))))
+
+            (when (and (eobp)
+                       (eq move-command 'forward-char))
+              (setq move-command 'backward-char
+                    end-point (point))
+              (goto-char enter-point))
+
+            (when (and (bobp)
+                       (eq move-command 'backward-char))
+              (setq start-point (point))
+              (throw 'stop t))
+
             (funcall move-command)))))
     (when (and start-point end-point)
       (cons start-point end-point))))
