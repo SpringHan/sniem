@@ -297,14 +297,18 @@ But when it's recording kmacro and there're region, deactivate mark."
       (if (and (= (char-before) 32)
                (not (= (point) (line-beginning-position))))
           (progn
-            (sniem-minibuffer-keypad-mode)
+            (sniem-minibuffer-keypad-mode (if sniem-minibuffer-keypad-mode
+                                              -1
+                                            t))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
         (self-insert-command 1 32))
     (self-insert-command 1 32)
     (let ((char (read-char)))
       (if (= 32 char)
           (progn
-            (sniem-minibuffer-keypad-mode)
+            (sniem-minibuffer-keypad-mode (if sniem-minibuffer-keypad-mode
+                                              -1
+                                            t))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
         (if (and sniem-minibuffer-keypad-mode
                  (memq char '(44 46 47)))
@@ -322,7 +326,6 @@ But when it's recording kmacro and there're region, deactivate mark."
             (< last-input-event 33)
             (> last-input-event 126))
         (progn
-          (sniem-minibuffer-keypad-mode -1)
           (let (command)
             (if (commandp (setq command
                                 (key-binding
@@ -330,8 +333,7 @@ But when it's recording kmacro and there're region, deactivate mark."
                 (let ((last-command-event last-input-event))
                   (ignore-errors
                     (call-interactively command)))
-              (execute-kbd-macro (vector last-input-event))))
-          (sniem-minibuffer-keypad-mode t))
+              (execute-kbd-macro (vector last-input-event)))))
       (let ((last-command-event last-input-event))
         (call-interactively #'self-insert-command)))))
 
