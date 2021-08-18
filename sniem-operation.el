@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'kmacro)
 (require 'sniem-var)
 (require 'sniem-macro)
 (require 'sniem-common)
@@ -144,7 +145,7 @@
 (defun sniem-mark--bounds-of-thing-at-point (thing)
   "Get the bounds of theg THING a point.
 THING can be `symbol' or `word'."
-  (let ((symbol-attachments '(95 45 43 33 64 35 36 37 94 38 42 63 47 92 124))
+  (let ((symbol-attachments '(95 45 43 33 64 35 36 37 94 38 42 63 47 92 124 58))
         (move-command 'forward-char)
         (enter-point (point))
         (current-char (following-char))
@@ -687,7 +688,7 @@ Optional Argument ADD means forced to add the pair."
 Argument CHAR-STRING is the string to compair."
   (let ((not-alpha-list '(33 64 35 36 37 94 38 42 40 41 45 95 61 43
                              91 123 93 125 96 126 39 34 92 124 44 46
-                             60 62 47 63 32 10 9)))
+                             60 62 47 63 59 58 32 10 9)))
     ;; Write like this because `memq' and others can not work well.
     (memq (if (stringp char-string)
               (string-to-char char-string)
