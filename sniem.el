@@ -614,8 +614,8 @@ Optional argument HIDE is t, the last point will be show."
 (defun sniem-init-hook ()
   "The inin functions."
   (let ((fn (if sniem-initialized
-                'add-hook
-              'remove-hook)))
+                'remove-hook
+              'add-hook)))
     (funcall fn 'deactivate-mark-hook
              (lambda ()
                (when sniem-mark-line
@@ -632,20 +632,20 @@ Optional argument HIDE is t, the last point will be show."
   "The init function for advice."
   (if sniem-initialized
       (progn
-        (advice-add 'keyboard-quit :before
-                    (lambda ()
-                      (when sniem-kmacro-mark-content
-                        (setq-local sniem-kmacro-mark-content nil))
-                      (sniem-search--cancel-selection)))
-        (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
-        (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode))
-    (advice-remove 'keyboard-quit
-                   (lambda ()
-                     (when sniem-kmacro-mark-content
-                       (setq-local sniem-kmacro-mark-content nil))
-                     (sniem-search--cancel-selection)))
-    (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
-    (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)))
+        (advice-remove 'keyboard-quit
+                       (lambda ()
+                         (when sniem-kmacro-mark-content
+                           (setq-local sniem-kmacro-mark-content nil))
+                         (sniem-search--cancel-selection)))
+        (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
+        (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode))
+    (advice-add 'keyboard-quit :before
+                (lambda ()
+                  (when sniem-kmacro-mark-content
+                    (setq-local sniem-kmacro-mark-content nil))
+                  (sniem-search--cancel-selection)))
+    (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
+    (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)))
 
 (defun sniem-keypad--convert-prefix (prefix)
   "Convert PREFIX from string to char or from char to string."
