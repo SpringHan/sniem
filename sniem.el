@@ -207,18 +207,20 @@
 EXTERNAL-CHAR is the entrance for minibuffer-keypad mode.
 NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
   (interactive)
-  (let ((key (if external-char
-                 (when (and (null no-convert)
-                            (memq external-char '(44 46 47))
-                            (/= (sniem-keypad--convert-prefix
-                                 sniem-minibuffer-keypad-prefix)
-                                external-char))
-                   (setq-local sniem-minibuffer-keypad-prefix
-                               (sniem-keypad--convert-prefix external-char))
-                   (setq external-char t))
-               (pcase last-input-event
-                 (109 "M-") (98 "C-M-") (118 "C-"))))
-        tmp command prefix-used-p)
+  (let* ((prefix-used-p nil)
+         (key (if external-char
+                  (when (and (null no-convert)
+                             (memq external-char '(44 46 47))
+                             (/= (sniem-keypad--convert-prefix
+                                  sniem-minibuffer-keypad-prefix)
+                                 external-char))
+                    (setq-local sniem-minibuffer-keypad-prefix
+                                (sniem-keypad--convert-prefix external-char))
+                    (setq external-char t
+                          prefix-used-p t))
+                (pcase last-input-event
+                  (109 "M-") (98 "C-M-") (118 "C-"))))
+         tmp command)
     (unless (stringp key)
       (setq key (if external-char
                     (concat sniem-minibuffer-keypad-prefix
