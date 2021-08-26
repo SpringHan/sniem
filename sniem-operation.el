@@ -702,19 +702,14 @@ Argument CHAR-STRING is the string to compair."
   "Search the CONTENT."
   (interactive (list (completing-read "Enter the search content: "
                                       regexp-search-ring)))
-  (sniem-next-word nil nil content)
   (unless (ignore-errors
-            (sniem--string-equal
-             (buffer-substring-no-properties (region-beginning) (region-end))
-             content))
-    (sniem-prev-word nil nil content)
+            (sniem-next-word nil nil content))
+    (deactivate-mark)
+    (sniem-search--cancel-selection)
     (unless (ignore-errors
-              (sniem--string-equal
-               (buffer-substring-no-properties (region-beginning) (region-end))
-               content))
-      (when sniem-search-result-tip
-        (delete-overlay sniem-search-result-tip)
-        (setq-local sniem-search-result-tip nil))
+              (sniem-prev-word nil nil content))
+      (deactivate-mark)
+      (sniem-search--cancel-selection)
       (message "[Sniem]: The content %S is not exsits in current buffer." content))))
 
 (defun sniem--string-equal (string1 string2)
@@ -891,23 +886,23 @@ Argument DIRECT is the direction for find."
                          (sniem-kmacro-mark-content
                           (prog1 sniem-kmacro-mark-content
                             (setq-local sniem-kmacro-mark-content nil)))
-                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
-                                                                            (region-end)))
                          ((consp sniem-search-result-overlays)
-                          (car sniem-search-result-overlays))))
-             (word-length (length word))
-             tmp region-end symbol-points)
-
-        (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
-        (setq word (format (if (and symbol-points
-                                    (region-active-p)
-                                    (= (- (cdr symbol-points) (car symbol-points))
-                                       word-length))
-                               "\\_<%s\\_>"
-                             "\\<%s\\>")
-                           word))
+                          (car sniem-search-result-overlays))
+                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                            (region-end)))))
+             tmp region-end symbol-points ov)
         
         (when (region-active-p)
+          (unless sniem-search-result-overlays
+            (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
+            (setq word (format (if (and symbol-points
+                                        (region-active-p)
+                                        (= (- (cdr symbol-points) (car symbol-points))
+                                           (length word)))
+                                   "\\_<%s\\_>"
+                                 "\\<%s\\>")
+                               word)))
+          
           (goto-char (region-beginning))
           (setq region-end (region-end)))
         (if (and sniem-search-result-overlays
@@ -918,8 +913,9 @@ Argument DIRECT is the direction for find."
                                              'index)))
             (ignore-errors
               (goto-char (overlay-start
-                          (nth (1+ tmp) sniem-search-result-overlays)))
-              (push-mark (+ (point) word-length) t t)
+                          (setq ov
+                                (nth (1+ tmp) sniem-search-result-overlays))))
+              (push-mark (overlay-end ov) t t)
               (sniem-search--check-result (1+ tmp)))
           (when region-end
             (goto-char region-end))
@@ -929,7 +925,7 @@ Argument DIRECT is the direction for find."
                 (when (region-active-p)
                   (deactivate-mark))
                 (setq tmp (point))
-                (goto-char (- tmp word-length))
+                (search-backward-regexp word)
                 (push-mark tmp t t)
                 (sniem-add-to-history word)
                 (when (or (null sniem-search-result-overlays)
@@ -940,9 +936,8 @@ Argument DIRECT is the direction for find."
                   (setq-local sniem-search-timer
                               (run-with-timer
                                0 10 #'sniem-search--highlight-results
-                               word word-length (current-buffer)))))
-            (when (= (point) (region-end))
-              (push-mark (- (point) word-length) t t)))))
+                               word (current-buffer)))))
+            (user-error "[Sniem]: Cannot find the content!"))))
     (forward-word n)
     (unless no-hint
       (sniem-motion-hint `(lambda () (interactive)
@@ -956,25 +951,25 @@ Argument DIRECT is the direction for find."
                          (sniem-kmacro-mark-content
                           (prog1 sniem-kmacro-mark-content
                             (setq-local sniem-kmacro-mark-content nil)))
-                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
-                                                                            (region-end)))
                          ((consp sniem-search-result-overlays)
-                          (car sniem-search-result-overlays))))
-             (word-length (length word))
-             tmp symbol-points)
+                          (car sniem-search-result-overlays))
+                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                            (region-end)))))
+             tmp symbol-points ov)
 
-        (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
-        (setq word (format (if (and symbol-points
-                                    (region-active-p)
-                                    (= (- (cdr symbol-points) (car symbol-points))
-                                       word-length))
-                               "\\_<%s\\_>"
-                             "\\<%s\\>")
-                           word))
+        (when (region-active-p)
+          (unless sniem-search-result-overlays
+            (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
+            (setq word (format (if (and symbol-points
+                                        (region-active-p)
+                                        (= (- (cdr symbol-points) (car symbol-points))
+                                           (length word)))
+                                   "\\_<%s\\_>"
+                                 "\\<%s\\>")
+                               word)))
 
-        (when (and (region-active-p)
-                   (not (= (point) (region-beginning))))
-          (goto-char (region-beginning)))
+          (when (not (= (point) (region-beginning)))
+            (goto-char (region-beginning))))
         (if (and sniem-search-result-overlays
                  (string= (car sniem-search-result-overlays)
                           word)
@@ -983,24 +978,29 @@ Argument DIRECT is the direction for find."
                                              'index)))
             (ignore-errors
               (goto-char (overlay-start
-                          (nth (1- tmp) sniem-search-result-overlays)))
-              (push-mark (+ (point) word-length) t t)
+                          (setq ov
+                                (nth (1- tmp) sniem-search-result-overlays))))
+              (push-mark (overlay-end ov) t t)
               (sniem-search--check-result (1- tmp)))
           (setq tmp (search-backward-regexp word nil t))
-          (when tmp
-            (when (region-active-p)
-              (deactivate-mark))
-            (push-mark (+ (point) word-length) t t)
-            (sniem-add-to-history word)
-            (when (or (null sniem-search-result-overlays)
-                      (not (string= (car sniem-search-result-overlays)
-                                    word)))
-              (when (timerp sniem-search-timer)
-                (cancel-timer sniem-search-timer))
-              (setq-local sniem-search-timer
-                          (run-with-timer
-                           0 10 #'sniem-search--highlight-results
-                           word word-length (current-buffer)))))))
+          (if tmp
+              (progn
+                (when (region-active-p)
+                  (deactivate-mark))
+                (setq tmp (point))
+                (push-mark (search-forward-regexp word) t t)
+                (goto-char tmp)
+                (sniem-add-to-history word)
+                (when (or (null sniem-search-result-overlays)
+                          (not (string= (car sniem-search-result-overlays)
+                                        word)))
+                  (when (timerp sniem-search-timer)
+                    (cancel-timer sniem-search-timer))
+                  (setq-local sniem-search-timer
+                              (run-with-timer
+                               0 10 #'sniem-search--highlight-results
+                               word (current-buffer)))))
+            (user-error "[Sniem]: Cannot find the content!"))))
     (backward-word n)
     (unless no-hint
       (sniem-motion-hint `(lambda () (interactive)
@@ -1044,9 +1044,8 @@ Else if it's the last, print last, or it's the only one, print only."
         (add-to-history 'regexp-search-ring search regexp-search-ring-max))
     (add-to-history 'regexp-search-ring search regexp-search-ring-max)))
 
-(defun sniem-search--highlight-results (content content-length buffer)
-  "Refresh the result for CONTENT in BUFFER.
-CONTENT-LENGTH is the length of the CONTENT."
+(defun sniem-search--highlight-results (content buffer)
+  "Refresh the result for CONTENT in BUFFER."
   (let ((lint (when (or (null sniem-search-result-overlays)
                         (sniem-search--delete-search-overlays))
                 t)))
@@ -1057,8 +1056,9 @@ CONTENT-LENGTH is the length of the CONTENT."
         (let (point ov)
           (while (search-forward-regexp content nil t)
             (setq point (point))
-            (setq ov (make-overlay (- point content-length) point))
+            (setq ov (make-overlay (search-backward-regexp content nil) point))
             (overlay-put ov 'face 'region)
+            (goto-char point)
             (setq-local sniem-search-result-overlays
                         (append sniem-search-result-overlays
                                 (list ov))))
