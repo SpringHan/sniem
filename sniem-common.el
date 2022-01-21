@@ -1,4 +1,4 @@
-;;; sniem-common.el --- Simple united editing method -*- lexical-binding: t -*-
+;;; sniem-common.el --- Hands-eased united editing method -*- lexical-binding: t -*-
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Simple united editing method
+;; Hands-eased united editing method
 
 ;;; Code:
 

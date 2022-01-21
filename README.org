@@ -14,7 +14,7 @@
       (sniem-set-keyboard-layout 'qwerty))
    #+end_src
 ** What is sniem
-   Sniem means Simple United Editing Method，it's a new editing method for Emacs.
+   Sniem means Hands-eased United Editing Method，it's a new editing method for Emacs.
 ** Features
    - ~last-point~
 

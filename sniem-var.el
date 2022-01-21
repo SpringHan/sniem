@@ -1,4 +1,4 @@
-;;; sniem-var.el --- Simple united editing method -*- lexical-binding: t -*-
+;;; sniem-var.el --- Hands-eased united editing method -*- lexical-binding: t -*-
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Simple united editing method.
+;; Hands-eased united editing method.
 
 ;;; Code:
 
@@ -182,6 +182,7 @@
     (define-key map "?" 'sniem-cheatsheet)
     (define-key map (kbd "SPC") 'sniem-digit-argument-or-fn)
     (define-key map (kbd "RET") 'sniem-expand-with-catch)
+    (define-key map (kbd "TAB") 'sniem-shift)
     (define-key map (kbd "(") 'sniem-object-catch-char)
     (define-key map (kbd "[") 'sniem-object-catch-char)
     (define-key map (kbd "{") 'sniem-object-catch-char)
@@ -216,6 +217,7 @@
 (defcustom sniem-expand-state-keymap
   (let ((map (make-sparse-keymap)))
     (define-key map [remap self-insert-command] 'sniem-expand-enter-or-quit)
+    (define-key map (kbd "TAB") 'sniem-shift)
     (define-key map (kbd "RET") 'sniem-object-catch)
     (define-key map "p" 'sniem-object-catch-parent)
     (define-key map "r" 'sniem-object-catch-repeat)
@@ -297,6 +299,26 @@
 (defcustom sniem-minibuffer-keypad-prefix "C-"
   "The prefix for minibuffer-keypad."
   :type 'string
+  :group 'sniem)
+
+(defcustom sniem-shift-binding-key 9
+  "The key for `sniem-shift'. It's char."
+  :type 'number
+  :group 'sniem)
+
+(defcustom sniem-shift-times 1
+  "The times pressing shift in one interaction."
+  :type 'number
+  :group 'sniem)
+
+(defcustom sniem-shift-lock nil
+  "If it is t, you can use Caps_Lock in insert-state."
+  :type 'boolean
+  :group 'sniem)
+
+(defcustom sniem-shift-motion-lock nil
+  "If it is t, it will execute shift motion of the current."
+  :type 'boolean
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist

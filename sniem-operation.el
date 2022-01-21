@@ -1,4 +1,4 @@
-;;; sniem-operation.el --- Simple united editing method -*- lexical-binding: t -*-
+;;; sniem-operation.el --- Hands-eased united editing method -*- lexical-binding: t -*-
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
@@ -21,7 +21,7 @@
 
 ;;; Commentary:
 
-;; Simple united editing method
+;; Hands-eased united editing method
 
 ;;; Code:
 
@@ -328,7 +328,7 @@ THING can be `symbol' or `word'."
                                   (1+ (line-end-position)))))
          (when (eobp)
            (beginning-of-line)))
-    (68 (sniem-delete-region (line-beginning-position) (line-end-position)))
+    (9 (sniem-delete-region (line-beginning-position) (line-end-position)))
     (112 (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
            (sniem-lock-unlock-last-point)))
@@ -732,22 +732,35 @@ STRING1 and STRING2 are the strings to compair."
 
 (sniem-define-motion sniem-beginning-of-line ()
   "Beginning of line."
-  (beginning-of-line))
+  (if (bolp)
+      (call-interactively #'indent-for-tab-command)
+    (beginning-of-line)))
 
 (sniem-define-motion sniem-end-of-line ()
   "End of line."
   (end-of-line))
 
+(defmacro sniem-shift-lock-motion (shift-action &rest body)
+  "When `sniem-shift-motion-lock' is t, execute SHIFT-ACTION.
+BODY is the motion's body."
+  (declare (debug t)
+           (indent 1))
+  `(progn
+     (when sniem-shift-motion-lock
+       ,shift-action)
+     ,@body))
+
 (sniem-define-motion sniem-forward-char (&optional n)
   "Forward char."
   (interactive "P")
-  (setq n (or n 1))
-  (catch 'end
-    (while (/= n 0)
-      (if (eolp)
-          (throw 'end t)
-        (forward-char)
-        (setq n (1- n))))))
+  (sniem-shift-lock-motion (setq n 5)
+    (setq n (or n 1))
+    (catch 'end
+      (while (/= n 0)
+        (if (eolp)
+            (throw 'end t)
+          (forward-char)
+          (setq n (1- n)))))))
 
 (sniem-define-motion sniem-5-forward-char ()
   "Eval `sniem-forward-char' 5 times."
@@ -756,13 +769,14 @@ STRING1 and STRING2 are the strings to compair."
 (sniem-define-motion sniem-backward-char (&optional n)
   "Backward char."
   (interactive "P")
-  (setq n (or n 1))
-  (catch 'beg
-    (while (/= n 0)
-      (if (bolp)
-          (throw 'beg t)
-        (backward-char)
-        (setq n (1- n))))))
+  (sniem-shift-lock-motion (setq n 5)
+    (setq n (or n 1))
+    (catch 'beg
+      (while (/= n 0)
+        (if (bolp)
+            (throw 'beg t)
+          (backward-char)
+          (setq n (1- n)))))))
 
 (sniem-define-motion sniem-5-backward-char ()
   "Eval `sniem-backward-char' 5 times."
@@ -771,16 +785,17 @@ STRING1 and STRING2 are the strings to compair."
 (sniem-define-motion sniem-prev-line (&optional n)
   "Previous line."
   (interactive "P")
-  (let ((line (line-number-at-pos)))
-    (setq n (or n 1))
-    (unless (bobp)
-      (line-move (- n)))
-    (when (and (region-active-p) sniem-mark-line)
-      (when (= (line-number-at-pos) line)
-        (line-move -1))
-      (if (= (region-beginning) (point))
-          (beginning-of-line)
-        (end-of-line)))))
+  (sniem-shift-lock-motion (setq n 5)
+    (let ((line (line-number-at-pos)))
+      (setq n (or n 1))
+      (unless (bobp)
+        (line-move (- n)))
+      (when (and (region-active-p) sniem-mark-line)
+        (while (= (line-number-at-pos) line)
+          (line-move -1))
+        (if (= (region-beginning) (point))
+            (beginning-of-line)
+          (end-of-line))))))
 
 (sniem-define-motion sniem-5-prev-line ()
   "Eval `sniem-prev-line' 5 times."
@@ -789,16 +804,17 @@ STRING1 and STRING2 are the strings to compair."
 (sniem-define-motion sniem-next-line (&optional n)
   "Next line."
   (interactive "P")
-  (let ((line (line-number-at-pos)))
-    (setq n (or n 1))
-    (unless (eobp)
-      (line-move n))
-    (when (and (region-active-p) sniem-mark-line)
-      (when (= (line-number-at-pos) line)
-        (line-move 1))
-      (if (= (region-beginning) (point))
-          (beginning-of-line)
-        (end-of-line)))))
+  (sniem-shift-lock-motion (setq n 5)
+    (let ((line (line-number-at-pos)))
+      (setq n (or n 1))
+      (unless (eobp)
+        (line-move n))
+      (when (and (region-active-p) sniem-mark-line)
+        (while (= (line-number-at-pos) line)
+          (line-move 1))
+        (if (= (region-beginning) (point))
+            (beginning-of-line)
+          (end-of-line))))))
 
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."

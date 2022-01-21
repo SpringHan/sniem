@@ -14,7 +14,7 @@
        (sniem-set-keyboard-layout 'qwerty))
    #+end_src
 ** 什么是 sniem
-   Sniem 全称 Simple United Editing Method，是一款新的编辑模式
+   Sniem 全称 Hands-eased United Editing Method，是一款新的编辑模式
 ** 特性
    - ~last-point~
 

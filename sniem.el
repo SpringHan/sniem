@@ -1,4 +1,4 @@
-;;; sniem.el --- Simple united editing method -*- lexical-binding: t -*-
+;;; sniem.el --- Hands-eased united editing method -*- lexical-binding: t -*-
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; Simple united editing method.
+;; Hands-eased united editing method.
 
 ;;; Code:
 
@@ -46,7 +46,7 @@
 
 
 (define-minor-mode sniem-mode
-  "Simple united editing method mode."
+  "Hands-eased united editing method mode."
   nil nil sniem-mode-keymap
   (if sniem-mode
       (sniem--enable)
@@ -530,18 +530,21 @@ Argument STRING is the string get from the input."
        (97 "1") (114 "2") (115 "3") (116 "4") (100 "5")
        (104 "6") (110 "7") (101 "8") (105 "9") (111 "0")
        (39 "-") (13 "over") (127 "delete") (59 nil)
+       (9 (char-to-string (sniem-shift-convert (read-char) sniem-shift-binding-key)))
        (x (char-to-string x))))
     ('qwerty
      (pcase (read-char)
        (97 "1") (115 "2") (100 "3") (102 "4") (103 "5")
        (104 "6") (106 "7") (107 "8") (108 "9") (59 "0")
        (39 "-") (13 "over") (127 "delete") (92 nil)
+       (9 (char-to-string (sniem-shift-convert (read-char) sniem-shift-binding-key)))
        (x (char-to-string x))))
     ('dvorak
      (pcase (read-char)
        (97 "1") (111 "2") (101 "3") (117 "4") (105 "5")
        (100 "6") (104 "7") (116 "8") (110 "9") (115 "0")
        (45 "-") (13 "over") (127 "delete") (59 nil)
+       (9 (char-to-string (sniem-shift-convert (read-char) sniem-shift-binding-key)))
        (x (char-to-string x))))))
 
 (defun sniem-mark-content (&optional mark)
@@ -608,6 +611,81 @@ Optional argument HIDE is t, the last point will be show."
   (define-key sniem-insert-state-keymap (kbd sniem-insert-quit-key) 'nil)
   (define-key sniem-insert-state-keymap (kbd key) 'sniem-quit-insert)
   (setq sniem-insert-quit-key key))
+
+(defun sniem-shift (&optional arg)
+  "The function to replace shift key.
+ARG is the prefix-arg."
+  (interactive "P")
+  (let (char)
+    (while (not (setq char (sniem-shift-convert (read-char)
+                                                sniem-shift-binding-key))))
+    (when (numberp char)
+      (when arg
+        (sniem-digit-argument-or-fn arg))
+      (call-interactively (key-binding (vector char))))))
+
+(defun sniem-shift-convert (char shift-key)
+  "Convert the char if it has shift-key.
+CHAR is the last input char.
+SHIFT-KEY is the shift key bound by user."
+  (pcase sniem-shift-times
+    (2 (setq sniem-shift-times 1)
+       (pcase char
+         ((pred (= shift-key))
+          (setq-local sniem-shift-lock
+                      (if sniem-shift-lock
+                          (progn
+                            (remove-hook 'pre-command-hook #'sniem-shift-lock-convert t)
+                            nil)
+                        (add-hook 'pre-command-hook #'sniem-shift-lock-convert nil t)
+                        t))
+          (message "[Sniem]: Shift Lock %s in current buffer."
+                   (if sniem-shift-lock
+                       "opened"
+                     "closed"))
+          t)
+         (32 t)
+         (_ (when sniem-normal-mode
+              (setq-local sniem-shift-motion-lock
+                          (if sniem-shift-motion-lock
+                              nil
+                            t))
+              (message "[Sniem]: Shift Motion Lock %s in current buffer."
+                       (if sniem-shift-motion-lock
+                           "opened"
+                         "closed"))
+              char))))
+    (1 (pcase char
+         ((pred (= shift-key))
+          (setq sniem-shift-times 2)
+          nil)
+         (32 t)
+         (_ (if (sniem-pair--pair-p char)
+                (if (eq sniem-keyboard-layout 'dvp)
+                    (pcase char
+                      (?$ ?~) (?& ?%) (91 ?7) (123 ?5) (125 ?3) (40 ?1) (?= ?9)
+                      (?* ?0) (41 ?2) (?+ ?4) (93 ?6) (?! ?8) (?# ?~) (59 ?:)
+                      (?, 60) (?. 62) (?/ ??) (?@ ?^) (124 ?|) (?- ?_) (39 34))
+                  (pcase char
+                    (?` ?~) (?1 ?!) (?2 ?@) (?3 ?#) (?4 ?$) (?5 ?%) (?6 ?^) 
+                    (?7 ?&) (?8 ?*) (?9 40) (?0 41) (?- ?_) (?= ?+) (59 ?:)
+                    (91 123) (93 125) (39 34) (92 124) (?, 60) (?. 62) (?/ ??)))
+              (upcase char)))))
+    (_ (user-error "[Sniem]: The sniem-shift-times is error!"))))
+
+(defun sniem-shift-lock-convert ()
+  "The function to play caps_lock's role."
+  (when (and sniem-insert-mode
+             (characterp last-command-event)
+             (or (memq this-command '(self-insert-command isearch-printing-char))
+                 (eq this-command (key-binding [remap self-insert-command]))))
+    (setq last-command-event
+          (condition-case nil
+              (let ((char (upcase last-command-event)))
+                (if (eq char last-command-event)
+                    (downcase char)
+                  char))
+            (error last-command-event)))))
 
 ;;; Initialize
 (sniem-set-leader-key ",")
