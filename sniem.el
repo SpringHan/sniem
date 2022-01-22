@@ -806,14 +806,11 @@ SHIFT-KEY is the shift key bound by user."
 (defun sniem-state ()
   "The function to show the current sniem state."
   (pcase (sniem-current-mode)
-    ('normal (format "[N:%s%s%s%s]"
+    ('normal (format "[N:%s%s%s]"
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
                      (if sniem-mark-content-overlay
                          (format ":%d" (length sniem-mark-content-overlay))
-                       "")
-                     (if sniem-shift-motion-lock
-                         ":M"
                        "")))
     ('insert (format "[I:%s]"
                      (if sniem-shift-lock

@@ -742,7 +742,7 @@ STRING1 and STRING2 are the strings to compair."
   (end-of-line))
 
 (defmacro sniem-shift-lock-motion (shift-action addition &rest body)
-  "When `sniem-shift-motion-lock' is t, execute SHIFT-ACTION.
+  "If the motion is in locked motion list, execute SHIFT-ACTION.
 When ADDITION is t, BODY will be execute in any case.
 BODY is the motion's body."
   (declare (debug t)
