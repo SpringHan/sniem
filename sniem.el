@@ -220,7 +220,7 @@ NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
                           prefix-used-p t))
                 (pcase last-input-event
                   (109 "M-") (98 "C-M-") (118 "C-"))))
-         tmp command)
+         tmp command shift)
     (unless (stringp key)
       (setq key (if external-char
                     (concat sniem-minibuffer-keypad-prefix
@@ -233,7 +233,13 @@ NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
       (when (and (numberp external-char)
                  (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1))))))
         (throw 'stop nil))
-      (while (setq tmp (read-char))
+      (while t
+        (setq tmp (if shift
+                      (progn
+                        (setq shift nil)
+                        (sniem-shift-convert (read-char)
+                                             sniem-shift-binding-key))
+                    (read-char)))
         (if (= tmp 127)
             (setq key (substring key 0 -2))
           (when (= tmp 59)
@@ -254,7 +260,10 @@ NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
                                   ((= tmp 32)
                                    (setq prefix-used-p t)
                                    "")
-                                  (t
+                                  ((= tmp 9)
+                                   (setq shift t)
+                                   "")
+                                  ((/= tmp 0)
                                    (when prefix-used-p
                                      (setq prefix-used-p nil))
                                    (concat (char-to-string tmp) " "))))))
@@ -268,6 +277,18 @@ NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
   (interactive)
   (setq-local sniem-last-point (point))
   (sniem-lock-unlock-last-point))
+
+(defun sniem-lock-unlock-last-point (&optional lock)
+  "LOCK or unlock `sniem-last-point'."
+  (interactive)
+  (sniem-shift-lock-motion (sniem-goto-last-point) nil
+    (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
+                                            nil
+                                          t))
+    (sniem-show-last-point (not sniem-last-point-locked))
+    (message "[Sniem]: Last point %s." (if sniem-last-point-locked
+                                           "locked"
+                                         "unlocked"))))
 
 (defun sniem-keyboard-quit ()
   "Like `keyboard-quit'.
@@ -384,6 +405,16 @@ Optional argument KEYS are the keys you want to add."
     (while keys
       (setq key (pop keys)
             func (pop keys))
+      (when (and sniem-shift-default-lock-motions
+                 (memq func '(sniem-forward-char
+                              sniem-backward-char
+                              sniem-prev-line
+                              sniem-next-line)))
+        (let ((original-key (aref (car (where-is-internal func)) 0)))
+          (setq sniem-shift-default-lock-motions
+                (append
+                 (remq original-key sniem-shift-default-lock-motions)
+                 (list (string-to-char key))))))
       (define-key sniem-normal-state-keymap (kbd key) func))))
 
 (defun sniem-expand-set-key (&rest keys)
@@ -502,6 +533,7 @@ Argument STRING is the string get from the input."
   (pcase string
     ("." 'sniem-mark-content)
     ("k" 'sniem-unmark-content-select-it)
+    ("K" 'sniem-mark-content-pop)
     (" " 'sniem-move-with-hint-num)
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
@@ -592,6 +624,11 @@ Optional Argument POINTS is the points of the content to mark."
       (goto-char (car points))
       (push-mark (cdr points) t t))))
 
+(defun sniem-mark-content-pop ()
+  "Remove the first marked content from list."
+  (interactive)
+  (pop sniem-mark-content-overlay))
+
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
 Optional argument HIDE is t, the last point will be show."
@@ -616,13 +653,18 @@ Optional argument HIDE is t, the last point will be show."
   "The function to replace shift key.
 ARG is the prefix-arg."
   (interactive "P")
-  (let (char)
+  (let (char result)
     (while (not (setq char (sniem-shift-convert (read-char)
                                                 sniem-shift-binding-key))))
     (when (numberp char)
       (when arg
         (sniem-digit-argument-or-fn arg))
-      (call-interactively (key-binding (vector char))))))
+      (setq result (key-binding (vector char)))
+      (if (keymapp result)
+          (set-transient-map result)
+        (setq last-command-event char
+              last-command result)
+        (call-interactively result)))))
 
 (defun sniem-shift-convert (char shift-key)
   "Convert the char if it has shift-key.
@@ -646,14 +688,23 @@ SHIFT-KEY is the shift key bound by user."
           t)
          (32 t)
          (_ (when sniem-normal-mode
-              (setq-local sniem-shift-motion-lock
-                          (if sniem-shift-motion-lock
-                              nil
-                            t))
-              (message "[Sniem]: Shift Motion Lock %s in current buffer."
-                       (if sniem-shift-motion-lock
-                           "opened"
-                         "closed"))
+              (let (locked)
+                (setq-local sniem-shift-lock-motions
+                            (if (car sniem-shift-lock-motions)
+                                '(nil)
+                              (setq locked t)
+                              (if sniem-shift-default-lock-motions
+                                  sniem-shift-default-lock-motions
+                                (setq sniem-shift-default-lock-motions
+                                      (list t
+                                            (aref (car (where-is-internal 'sniem-forward-char)) 0)
+                                            (aref (car (where-is-internal 'sniem-backward-char)) 0)
+                                            (aref (car (where-is-internal 'sniem-prev-line)) 0)
+                                            (aref (car (where-is-internal 'sniem-next-line)) 0))))))
+                (message "[Sniem]: Shift Motion Lock %s in current buffer."
+                         (if locked
+                             "opened"
+                           "closed")))
               char))))
     (1 (pcase char
          ((pred (= shift-key))
@@ -670,7 +721,16 @@ SHIFT-KEY is the shift key bound by user."
                     (?` ?~) (?1 ?!) (?2 ?@) (?3 ?#) (?4 ?$) (?5 ?%) (?6 ?^) 
                     (?7 ?&) (?8 ?*) (?9 40) (?0 41) (?- ?_) (?= ?+) (59 ?:)
                     (91 123) (93 125) (39 34) (92 124) (?, 60) (?. 62) (?/ ??)))
-              (upcase char)))))
+              (let ((result (upcase char)))
+                (when (and (not (car sniem-shift-lock-motions))
+                           (= result char)
+                           (setq result (downcase char)))
+                  (setq sniem-shift-lock-motions
+                        (if (memq result sniem-shift-lock-motions)
+                            (delete result sniem-shift-lock-motions)
+                          (append sniem-shift-lock-motions
+                                  (list result)))))
+                result)))))
     (_ (user-error "[Sniem]: The sniem-shift-times is error!"))))
 
 (defun sniem-shift-lock-convert ()
@@ -746,13 +806,19 @@ SHIFT-KEY is the shift key bound by user."
 (defun sniem-state ()
   "The function to show the current sniem state."
   (pcase (sniem-current-mode)
-    ('normal (format "[N:%s%s%s]"
+    ('normal (format "[N:%s%s%s%s]"
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
                      (if sniem-mark-content-overlay
                          (format ":%d" (length sniem-mark-content-overlay))
+                       "")
+                     (if sniem-shift-motion-lock
+                         ":M"
                        "")))
-    ('insert "[I]")
+    ('insert (format "[I:%s]"
+                     (if sniem-shift-lock
+                         "A"
+                       "a")))
     ('motion "[M]")
     ('expand (format "[E:%s]"
                      (if sniem-object-catch-forward-p ">" "<")))))

@@ -118,6 +118,7 @@
     (define-key map "c" 'sniem-keypad)
     (define-key map "d" 'sniem-digit-argument)
     (define-key map (kbd "SPC") 'sniem-execute-space-command)
+    (define-key map (kbd "TAB") 'sniem-shift)
     map)
   "Leader keymap."
   :type 'keymap
@@ -316,9 +317,14 @@
   :type 'boolean
   :group 'sniem)
 
-(defcustom sniem-shift-motion-lock nil
-  "If it is t, it will execute shift motion of the current."
-  :type 'boolean
+(defcustom sniem-shift-lock-motions '(nil)
+  "The locked motions."
+  :type 'list
+  :group 'sniem)
+
+(defcustom sniem-shift-default-lock-motions nil
+  "The default locked motions."
+  :type 'list
   :group 'sniem)
 
 (defvar sniem-normal-mode-alist

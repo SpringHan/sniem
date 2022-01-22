@@ -27,20 +27,8 @@
 
 (require 'sniem-var)
 
-(declare-function sniem-show-last-point "sniem")
 (declare-function sniem-digit-argument-read-char "sniem")
 (declare-function sniem-digit-argument-fn-get "sniem")
-
-(defun sniem-lock-unlock-last-point (&optional lock)
-  "LOCK or unlock `sniem-last-point'."
-  (interactive)
-  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
-                                          nil
-                                        t))
-  (sniem-show-last-point (not sniem-last-point-locked))
-  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
-                                         "locked"
-                                       "unlocked")))
 
 (defun sniem-motion-hint (motion)
   "Hint after MOTION."
