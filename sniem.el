@@ -778,14 +778,37 @@ SHIFT-KEY is the shift key bound by user."
                            (setq-local sniem-kmacro-mark-content nil))
                          (sniem-search--cancel-selection)))
         (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
-        (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode))
+        (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)
+        (when (and (featurep 'yasnippet)
+                   (sniem-yas--tab-used-p))
+          (advice-remove 'yas-expand-from-trigger-key #'sniem-yasnippet-advice-1)))
     (advice-add 'keyboard-quit :before
                 (lambda ()
                   (when sniem-kmacro-mark-content
                     (setq-local sniem-kmacro-mark-content nil))
                   (sniem-search--cancel-selection)))
     (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
-    (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)))
+    (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)
+    (when (and (featurep 'yasnippet)
+               (sniem-yas--tab-used-p))
+      (advice-add 'yas-expand-from-trigger-key :around #'sniem-yasnippet-advice-1))))
+
+;;; Support for yasnippet
+(unless (featurep 'yasnippet)
+  (defun yas-expand-from-trigger-key ())
+  (defvar yas-keymap))
+
+(defun sniem-yasnippet-advice-1 (orig &optional field)
+  "The yasnippet advice for `yas-expand-from-trigger-key'."
+  (pcase (sniem-current-mode)
+    ('insert (apply orig field))
+    ('nil nil)
+    (_ (call-interactively #'sniem-shift))))
+
+(defun sniem-yas--tab-used-p ()
+  "Check if yasnippet used tab."
+  (eq (nth 2 (alist-get 9 yas-keymap))
+      'yas-next-field-or-maybe-expand))
 
 (defun sniem-keypad--convert-prefix (prefix)
   "Convert PREFIX from string to char or from char to string."
