@@ -506,14 +506,17 @@ LAYOUT can be qwerty, colemak or dvorak."
 
 (defun sniem-change-mode (mode)
   "Change editing MODE."
-  (unless (eq (sniem-current-mode) mode)
-    (pcase mode
-      ('normal (sniem-normal-mode t))
-      ('insert (sniem-insert-mode t))
-      ('motion (sniem-motion-mode t))
-      ('expand (sniem-expand-mode t))
-      ('minibuffer-keypad (sniem-minibuffer-keypad-mode t)))
-    (sniem-cursor-change)))
+  (let ((current-mode (sniem-current-mode)))
+    (unless (eq current-mode mode)
+      (pcase mode
+        ('normal (sniem-normal-mode t)
+                 (when (eq current-mode 'insert)
+                   (run-hooks 'sniem-insert-to-normal-hook)))
+        ('insert (sniem-insert-mode t))
+        ('motion (sniem-motion-mode t))
+        ('expand (sniem-expand-mode t))
+        ('minibuffer-keypad (sniem-minibuffer-keypad-mode t)))
+      (sniem-cursor-change))))
 
 (defun sniem-digit-argument-or-fn (arg)
   "The digit argument function.

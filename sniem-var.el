@@ -97,6 +97,11 @@
   :type 'boolean
   :group 'sniem)
 
+(defcustom sniem-insert-to-normal-hook nil
+  "The hook running when changing insert to normal."
+  :type 'hook
+  :group 'sniem)
+
 (defvar sniem-normal-mode-cursor t
   "Cursor type for normal mode.")
 
