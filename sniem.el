@@ -782,6 +782,7 @@ SHIFT-KEY is the shift key bound by user."
                          (sniem-search--cancel-selection)))
         (advice-remove 'wdired-change-to-wdired-mode #'sniem-normal-mode)
         (advice-remove 'wdired-change-to-dired-mode #'sniem-motion-mode)
+        (advice-remove 'org-cycle #'sniem-org-cycle-advice)
         (when (and (featurep 'yasnippet)
                    (sniem-yas--tab-used-p))
           (advice-remove 'yas-expand-from-trigger-key #'sniem-yasnippet-advice-1)))
@@ -792,6 +793,7 @@ SHIFT-KEY is the shift key bound by user."
                   (sniem-search--cancel-selection)))
     (advice-add 'wdired-change-to-wdired-mode :after #'sniem-normal-mode)
     (advice-add 'wdired-change-to-dired-mode :after #'sniem-motion-mode)
+    (advice-add 'org-cycle :around #'sniem-org-cycle-advice)
     (when (and (featurep 'yasnippet)
                (sniem-yas--tab-used-p))
       (advice-add 'yas-expand-from-trigger-key :around #'sniem-yasnippet-advice-1))))
@@ -807,6 +809,12 @@ SHIFT-KEY is the shift key bound by user."
     ('insert (apply orig field))
     ('nil nil)
     (_ (call-interactively #'sniem-shift))))
+
+(defun sniem-org-cycle-advice (orig &optional arg)
+  "The advice for `org-cycle'."
+  (if (bolp)
+      (apply orig arg)
+    (call-interactively #'sniem-shift)))
 
 (defun sniem-yas--tab-used-p ()
   "Check if yasnippet used tab."
