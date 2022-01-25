@@ -71,6 +71,7 @@ Optional argument MSG is the message which will be outputed."
   (interactive)
   (let ((number "")
         (arg "")
+        (universal-times 0)
         fn)
     (while (not (string= number "over"))
       (setq number (sniem-digit-argument-read-char))
@@ -79,6 +80,9 @@ Optional argument MSG is the message which will be outputed."
                (setq arg (substring arg 0 -1)))
               ((setq fn (sniem-digit-argument-fn-get number))
                (setq number "over"))
+              ((string= number "U")     ;For C-u
+               (setq universal-times (1+ universal-times))
+               (setq arg (concat arg "C-u ")))
               ((null number)
                (error nil))
               (t (setq arg (concat arg number)))))
@@ -88,7 +92,9 @@ Optional argument MSG is the message which will be outputed."
                arg))
     (setq arg (if (string= "" arg)
                   nil
-                (string-to-number arg)))
+                (if (/= universal-times 0)
+                    (list (expt 4 (1+ universal-times)))
+                  (string-to-number arg))))
     (if fn
         (if arg
             `(funcall-interactively ',fn ,arg)

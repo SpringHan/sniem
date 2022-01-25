@@ -202,11 +202,12 @@
   (interactive)
   (sniem-change-mode 'normal))
 
-(defun sniem-keypad (&optional external-char no-convert)
+(defun sniem-keypad (&optional external-char no-convert pre-arg)
   "Execute the keypad command.
 EXTERNAL-CHAR is the entrance for minibuffer-keypad mode.
-NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
-  (interactive)
+NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix.
+PRE-ARG is the prefix arg."
+  (interactive (list nil nil current-prefix-arg))
   (let* ((prefix-used-p nil)
          (key (if external-char
                   (when (and (null no-convert)
@@ -270,7 +271,11 @@ NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix."
         (message key)
         (when (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1)))))
           (throw 'stop nil))))
-    (call-interactively command)))
+    (when pre-arg
+      (setq prefix-arg pre-arg)
+      (setq this-command command)
+      (setq real-this-command command))
+    (command-execute command 'record)))
 
 (defun sniem-move-last-point ()
   "Move the last point to current point."
@@ -524,13 +529,14 @@ LAYOUT can be qwerty, colemak or dvorak."
   "The digit argument function.
 Argument ARG is the `digit-argument' result."
   (interactive (list (ignore-errors (sniem-digit-argument-get))))
-  (if arg
-      (if (listp arg)
-          (eval arg)
-        (prefix-command-preserve-state)
-        (setq prefix-arg arg)
-        (universal-argument--mode))
-    (message "Quited digit argument")))
+  (unless arg
+    (setq arg '(4)))
+  (if (and (listp arg)
+           (> (length arg) 1))
+      (eval arg)
+    (prefix-command-preserve-state)
+    (setq prefix-arg arg)
+    (universal-argument--mode)))
 
 (defun sniem-digit-argument-fn-get (string)
   "Read the fn for `sniem-digit-argument-or-fn'.
@@ -730,11 +736,11 @@ SHIFT-KEY is the shift key bound by user."
                 (when (and (not (car sniem-shift-lock-motions))
                            (= result char)
                            (setq result (downcase char)))
-                  (setq sniem-shift-lock-motions
-                        (if (memq result sniem-shift-lock-motions)
-                            (delete result sniem-shift-lock-motions)
-                          (append sniem-shift-lock-motions
-                                  (list result)))))
+                  (setq-local sniem-shift-lock-motions
+                              (if (memq result sniem-shift-lock-motions)
+                                  (delete result sniem-shift-lock-motions)
+                                (append sniem-shift-lock-motions
+                                        (list result)))))
                 result)))))
     (_ (user-error "[Sniem]: The sniem-shift-times is error!"))))
 
