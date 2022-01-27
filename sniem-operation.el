@@ -687,17 +687,22 @@ Optional Argument ADD means forced to add the pair."
           (unless (= prefix 32)
             (insert second)))))))
 
-(defun sniem-pair--pair-p (char-string)
+(defun sniem-pair--pair-p (char-string &optional not-number)
   "Check if the CHAR belongs to pair.
-Argument CHAR-STRING is the string to compair."
+Argument CHAR-STRING is the string to compair.
+When not-number is non-nil and the char is a number, regard
+it as a pair."
   (let ((alpha-list '(?a ?A ?b ?B ?c ?C ?d ?D ?e ?E ?f ?F ?g ?G ?h ?H ?i ?I
-                             ?j ?J ?k ?K ?l ?L ?m ?M ?n ?N ?o ?O ?p ?P ?q ?Q ?r ?R
-                             ?s ?S ?t ?T ?u ?U ?v ?V ?w ?W ?x ?X ?y ?Y ?z ?Z)))
-    ;; Write like this because `memq' and others can not work well.
+                         ?j ?J ?k ?K ?l ?L ?m ?M ?n ?N ?o ?O ?p ?P ?q ?Q ?r ?R
+                         ?s ?S ?t ?T ?u ?U ?v ?V ?w ?W ?x ?X ?y ?Y ?z ?Z))
+        (number-list '(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9 ?0))
+        check-list)
     (not (memq (if (stringp char-string)
                    (string-to-char char-string)
                  char-string)
-               alpha-list))))
+               (if not-number
+                   alpha-list
+                 (append alpha-list number-list))))))
 
 (defun sniem-search (content)
   "Search the CONTENT."

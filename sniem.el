@@ -722,7 +722,7 @@ SHIFT-KEY is the shift key bound by user."
           (setq sniem-shift-times 2)
           nil)
          (32 t)
-         (_ (if (sniem-pair--pair-p char)
+         (_ (if (sniem-pair--pair-p char t)
                 (if (eq sniem-keyboard-layout 'dvp)
                     (pcase char
                       (?$ ?~) (?& ?%) (91 ?7) (123 ?5) (125 ?3) (40 ?1) (?= ?9)
