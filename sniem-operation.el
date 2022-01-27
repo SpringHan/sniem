@@ -365,7 +365,7 @@ Argument ACTION is the action of change."
                          (read-char sniem-change-message)))))
   (pcase action
     ((pred symbolp) (sniem-delete t) (sniem-insert))
-    (99 (sniem-delete 68) (indent-according-to-mode) (sniem-insert))
+    (99 (sniem-delete 9) (indent-according-to-mode) (sniem-insert))
     (112 (sniem-delete 112) (sniem-insert))
     (101 (setq-local sniem-change-edit t)
          (sniem-lock-unlock-last-point t))))
