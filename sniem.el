@@ -820,7 +820,8 @@ SHIFT-KEY is the shift key bound by user."
 
 (defun sniem-org-cycle-advice (orig &optional arg)
   "The advice for `org-cycle'."
-  (if (bolp)
+  (if (or (bolp)
+          sniem-insert-mode)
       (apply orig arg)
     (call-interactively #'sniem-shift)))
 
