@@ -703,10 +703,14 @@ it as a pair."
                    alpha-list
                  (append alpha-list number-list))))))
 
-(defun sniem-search (content)
-  "Search the CONTENT."
+(defun sniem-search (content &optional regexp-search)
+  "Search the CONTENT.
+When REGEXP-SEARCH is non-nil, add regexp for content automatically."
   (interactive (list (completing-read "Enter the search content: "
-                                      regexp-search-ring)))
+                                      regexp-search-ring)
+                     current-prefix-arg))
+  (when regexp-search
+    (setq content (sniem-search--regexp-content content t)))
   (unless (ignore-errors
             (sniem-next-word nil nil content))
     (deactivate-mark)
@@ -948,18 +952,11 @@ Argument DIRECT is the direction for find."
                             (car sniem-search-result-overlays))
                            ((region-active-p) (buffer-substring-no-properties (region-beginning)
                                                                               (region-end)))))
-               tmp region-end symbol-points ov)
+               tmp region-end ov)
           
           (when (region-active-p)
             (unless sniem-search-result-overlays
-              (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
-              (setq word (format (if (and symbol-points
-                                          (region-active-p)
-                                          (= (- (cdr symbol-points) (car symbol-points))
-                                             (length word)))
-                                     "\\_<%s\\_>"
-                                   "\\<%s\\>")
-                                 word)))
+              (setq word (sniem-search--regexp-content word)))
             
             (goto-char (region-beginning))
             (setq region-end (region-end)))
@@ -1014,18 +1011,11 @@ Argument DIRECT is the direction for find."
                             (car sniem-search-result-overlays))
                            ((region-active-p) (buffer-substring-no-properties (region-beginning)
                                                                               (region-end)))))
-               tmp symbol-points ov)
+               tmp ov)
 
           (when (region-active-p)
             (unless sniem-search-result-overlays
-              (setq symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol))
-              (setq word (format (if (and symbol-points
-                                          (region-active-p)
-                                          (= (- (cdr symbol-points) (car symbol-points))
-                                             (length word)))
-                                     "\\_<%s\\_>"
-                                   "\\<%s\\>")
-                                 word)))
+              (setq word (sniem-search--regexp-content word)))
 
             (when (not (= (point) (region-beginning)))
               (goto-char (region-beginning))))
@@ -1197,6 +1187,23 @@ If FORCE is non-nil, forcely delete the current overlay."
                                  (car sniem-search-result-overlays)))
                    force))
       (sniem-search--delete-search-overlays tmp))))
+
+(defun sniem-search--regexp-content (content &optional force)
+  "Add symbol regexp for CONTENT with conditions.
+If force is non-nil, add regexp for content however condition 
+is true."
+  (if (and (string-prefix-p "\\" content)
+           (string-suffix-p ">" content))
+      content
+    (let ((symbol-points (sniem-mark--bounds-of-thing-at-point 'symbol)))
+      (format (if (or force
+                      (and symbol-points
+                           (region-active-p)
+                           (= (- (cdr symbol-points) (car symbol-points))
+                              (length content))))
+                  "\\_<%s\\_>"
+                "\\<%s\\>")
+              content))))
 
 (sniem-define-motion sniem-next-symbol (&optional n)
   "Move to next symbol."
