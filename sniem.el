@@ -272,9 +272,9 @@ PRE-ARG is the prefix arg."
         (when (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1)))))
           (throw 'stop nil))))
     (when pre-arg
-      (setq prefix-arg pre-arg)
-      (setq this-command command)
-      (setq real-this-command command))
+      (setq prefix-arg pre-arg))
+    (setq this-command command)
+    (setq real-this-command command)
     (command-execute command 'record)))
 
 (defun sniem-move-last-point ()
