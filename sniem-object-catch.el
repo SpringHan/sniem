@@ -444,17 +444,12 @@ LIST is the list for operating."
   "Define ALIST for major mode.
 Argument MODENAME if the mode name."
   (declare (indent 1))
-  `(let ((mode-pairs (alist-get ',modename sniem-object-catch-global-symbol-alist))
-         final)
-     (if mode-pairs
-         (setq final (sniem-object-catch--append ',alist mode-pairs))
-       (setq final ',alist))
-     (if mode-pairs
-         (setf (nth (sniem-object-catch--index ',modename sniem-object-catch-global-symbol-alist)
-                    sniem-object-catch-global-symbol-alist)
-               (cons ',modename final))
+  `(let ((index (sniem-object-catch--index ',modename sniem-object-catch-global-symbol-alist)))
+     (if index
+         (setf (nth index sniem-object-catch-global-symbol-alist)
+               (cons ',modename ',alist))
        (setq sniem-object-catch-global-symbol-alist
-             (append (list (cons ',modename final)) sniem-object-catch-global-symbol-alist)))))
+             (append (list (cons ',modename ',alist)) sniem-object-catch-global-symbol-alist)))))
 
 (provide 'sniem-object-catch)
 

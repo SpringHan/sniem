@@ -646,10 +646,14 @@ If SPECIAL is non-nil, yank it to the special clipboard."
   "Modify the region's pair.
 Argument PREFIX is the prefix of the pair.
 Optional Argument ADD means forced to add the pair."
-  (interactive (list (let ((var (read-char)))
-                       (cond ((= var 97)
-                              (cons (read-char) t))
-                             ((= var 115)
+  (interactive (list (let ((var (read-char sniem-pair-message)))
+                       (cond ((= var 97) ;Forcely add mode
+                              (cons (read-char
+                                     (if sniem-pair-message
+                                         "Enter the pair:"
+                                       nil))
+                                    t))
+                             ((= var 115) ;Add or delete space mode
                               (cons t 's))
                              (t var)))))
   (sniem-search--cancel-selection)

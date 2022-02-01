@@ -370,24 +370,28 @@
 (defvar sniem-close-mode-alist nil
   "The modes alist for close sniem.")
 
-(defvar sniem-center-message "[z] for center, [t] for top, [b] for buttom:"
+(defvar sniem-center-message "[z]Center, [t]op, [b]uttom:"
   "The message for `sniem-center'.")
 
-(defvar sniem-mark-message "[m] for normal, [p] for From last point, [l] for line:"
+(defvar sniem-mark-message "[m]Normal mark, [p]Mark to last point, [l]ine, [w]ord, [s]ymbol, [SPC]Mark with space around:"
   "The message for `sniem-mark'.")
 
-(defvar sniem-delete-message "[d] for line, [p] for From last point, [D] for Clear line contents:"
+(defvar sniem-delete-message "[d]Line, [p]Delete from last point, [D]Clear line contents:"
   "The message for `sniem-delete'.")
 
-(defvar sniem-change-message "[c] for line, [p] for From last point:"
+(defvar sniem-change-message "[c]Line, [p]From last point:"
   "The message for `sniem-delete'.")
 
-(defvar sniem-yank-message "[y] for line, [p] for From last point:"
+(defvar sniem-yank-message "[y]Line, [p]From last point:"
   "The message for `sniem-yank'.")
 
 (defvar sniem-macro-message
-  "[q] for record, [e] for Eval last kbd macro, [n] for Name for it, [l] for lock or unlock macro, [.] for forcely lock macro, [c] for call macro:"
+  "[q]Record, [e]val kmacro, [n]ame for kmacro, [l]ock or unlock kmacro, [.]Forcely lock kmacro, [c]all kmacro:"
   "The message for `sniem-macro'.")
+
+(defvar sniem-pair-message
+  "[a]Forcely add pair, [s]Add or delete space around, other keys means pair(like '['):"
+  "The message for `sniem-pair'.")
 
 (defface sniem-motion-hint-face
   `((t (:foreground ,(frame-parameter nil 'background-color)

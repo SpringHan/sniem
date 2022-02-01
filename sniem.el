@@ -433,16 +433,13 @@ Optional argument KEYS are the keys you want to add."
             func (pop keys))
       (define-key sniem-expand-state-keymap (kbd key) func))))
 
-(defun sniem-mark-set-attachment (mode attachment)
+(defun sniem-mark-set-attachment (mode &rest attachment)
   "Set special ATTACHMENT pair for MODE to mark symbol
 more accurately."
-  (let ((current-attachments (alist-get mode sniem-mark-special-attachment-pair))
-        index)
-    (if current-attachments
-        (progn
-          (setq index (sniem-object-catch--index mode sniem-mark-special-attachment-pair))
-          (setf (nth index sniem-mark-special-attachment-pair)
-                (append current-attachments attachment)))
+  (let ((index (sniem-object-catch--index mode sniem-mark-special-attachment-pair)))
+    (if index
+        (setf (nth index sniem-mark-special-attachment-pair)
+              (append (list mode) attachment))
       (add-to-list 'sniem-mark-special-attachment-pair
                    (append (list mode) attachment)))))
 
@@ -562,7 +559,6 @@ Argument STRING is the string get from the input."
     ("/" 'sniem-object-catch-direction-reverse)
     ("," 'sniem-object-catch-repeat)
     ("p" 'sniem-pair)
-
     ("m" 'sniem-mark-jump-insert-with-name)
     ("<" 'sniem-mark-jump-prev)
     (">" 'sniem-mark-jump-next)

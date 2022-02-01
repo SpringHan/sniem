@@ -19,7 +19,7 @@
    - ~last-point~
 
      ~last-point~ 是 sniem 中贯穿所有动作和几乎所有操作的概念，如其名，当执行任意动作时，一般情况下执行前的那个位置会被设置为 ~last-point~
-     
+
    - ~leader-key~
 
      Sniem 自带 leader key，leader map 的按键可通过 ~(sniem-leader-set-key)~ 来设置。也可通过 ~(sniem-set-leader-key)~ 来设置 leader 的按键。
@@ -36,11 +36,11 @@
      - ~NORMAL~
 
        一般情况下的模式，此模式下绑定了许多按键，可通过 ~(sniem-cheatsheet)~ 或者 ~?~ 键来查看绑定的按键。可通过 ~(sniem-normal-set-key)~ 来绑定按键，用法与 ~(sniem-leader-set-key)~ 相同。
-       
+
      - ~INSERT~
 
        此模式下 ~<ESC>~ (可通过 ~(sniem-set-quit-insert-key)~ 设置) 按键会被绑定为 ~(sniem-quit-insert)~ 以退出此模式 ，其它按键都是 ~global-map~ 里的按键
-       
+
      - ~MOTION~
 
        与 ~INSERT~ 模式相同，除了 ~<SPC>~ 键被绑定为 leader，其它按键都是原本的按键。(原来的空格键被绑定为了 ~<SPC> <SPC>~)
@@ -48,11 +48,12 @@
      - ~EXPAND~
 
        这个模式使扩展选中区域更舒适。
-       
+
        可通过 ~(sniem-expand-set-key)~ 来绑定按键，用法与 ~(sniem-leader-set-key)~ 相同。
-       
+
        | Key                | Function                                   |
        | ~RET~              | 调用 object-catch                          |
+       | ~TAB~              | sniem-shift                                |
        | ~r~                | 重复上一次的 object-catch                  |
        | ~p~                | 抓取当前选中内容的父级 pair                |
        | ~b~                | 获取 pair 通过其前缀字符                   |
@@ -99,6 +100,7 @@
      | ,   | 重复 object-catch                   |
      | .   | 标记当前光标下内容或区域            |
      | k   | 解除当前光标下内容的标记并选中      |
+     | K   | 解除最新标记内容                    |
      | SPC | 执行 motion-hint                    |
      | /   | 反转 object-catch 方向              |
      | p   | 添加，更改或删除当前选中内容的 pair |
@@ -106,22 +108,48 @@
      | >   | 跳转到上一个 comment mark           |
      | m   | 插入新的 comment mark               |
      | c   | 清空特殊剪贴板                      |
-     | x   | 删除特殊剪贴板最后一个内容          |
+     | x   | 删除特殊剪贴板最新的内容            |
      | P   | 从特殊剪贴板粘贴                    |
      | y   | 复制内容至特殊剪贴板                |
      | Y   | 以 in-region 方式复制内容至剪贴板   |
+
+   - ~(sniem-shift)~
+
+     这个函数默认被绑定于 ~TAB~ 。
+     它提供了一个行为列表（下面称为 ~shift-motion-list~ ），它包括: ~sniem-forward-char~, ~sniem-backward-char~, ~sniem-next-line~, ~sniem-prev-line~, ~sniem-next-word~, ~sniem-prev-word~, ~sniem-scroll-up-command~.
+     你执行它的时候有三种情况。
+
+     1. 按 ~TAB~ (绑定了该函数的键) 一次
+
+        当你只按下一次，这个函数就为 shift 键的代替。
+        例如：你可以使用 ~TAB k~ 执行 ~K~ 键的命令。
+        但如果你按下后又按下了一个大写字母的键，且该字母的小写字母所绑定的命令属于 ~shift-motion-list~ ，这个行为会被加入或删除于 motion-shift-locked 按键列表。
+
+     2. 按两次
+
+        当你按下两次，就会进入 motion-shift-locked mode。这样，当你按下属于 ~shift-motion-list~ 的键时，将会执行其大写键所绑定的行为。
+        一般的，只有 ~shift-motion-list~ 前四个会被自动加入 motion-shift-locked 按键列表中。如果你想把 motion 加入或从中删除，按其大写键即可。
+        你可以通过再次按两下 ~TAB~ 退出 motion-shift-locked mode。
+
+     3. 按三下
+
+        这样会在 ~sniem-insert-mode~ 进入大写锁定模式。效果与 ~caps-lock~ 这个包相同。再按三下退出该模式。
 ** 一些特殊操作
 
    - 移动
 
      - ~(sniem-goto-prev)~ & ~(sniem-goto-next)~
        使用 ~middle-keyboard~ 来获取前进或后退的行数，并执行
-       
+
      - ~(sniem-next-word)~ & ~(sniem-prev-word)~
        一般情况下，跳转到下一个词或者上一个词。如果有内容被选中，则跳转到下一个或上一个与选中内容相同的位置
 
      - ~(sniem-goto-last-point)~
        一般情况下，跳转到 ~last-point~ 的位置。如果有内容被记录，则跳转到其第一个字符。
+
+     - ~(sniem-beginning-of-line)~
+
+       一般情况下，跳转到行首。如果光标已经在行首，则对当前行缩进。
 
    - 编辑操作
 
@@ -175,13 +203,18 @@
 
          - 在选中多行的情况下录制，在录制完之后会对所选的每一行执行一遍
          - 在选中同行的内容后录制，在录制完之后会记录下内容，此时执行 ~(sniem-next-word)~ 或者 ~(sniem-prev-word)~ 即跳转到此内容，按下 ~C-g~ 可取消内容锁定
-           
+
+     - ~(sniem-search)~
+
+       一般情况下，搜索你输入的原生内容。
+       当你给其 prefix argument 时，它将给你自动添加匹配 symbol 的正则表达式。
+
      - sniem-mark-jump
 
        sniem-mark-jump 提供了两个 motions，即 ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~ 。
        一般情况下，执行它们会跳转到上一个或者下一个 comment mark。但如果你使用了 ~digit-argument~ ，它们将跳转到上一个或下一个指定类型的 comment mark，此类型是以你所使用的 ~digit-argument~ 为索引向类型列表里获取到的结果。
 ** 自定义
-   - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
+   - ~sniem-center-message~ & ~sniem-mark-message~ , etc.
 
      这些变量是其操作的帮助信息。如果你不想要它们，可以执行一下语句:
      #+begin_src emacs-lisp
@@ -190,7 +223,8 @@
              sniem-delete-message nil
              sniem-change-message nil
              sniem-yank-message nil
-             sniem-macro-message nil)
+             sniem-macro-message nil
+             sniem-pair-message nil)
      #+end_src
 
    - ~sniem-xxx-mode-cursor~
@@ -202,7 +236,7 @@
      这是动作提示的显示时间，默认为 ~1~
 
    - 模式提示
-     
+
      如果你使用 [[https://github.com/manateelazycat/awesome-tray][awesome-tray]], sniem 将自动把 ~(sniem-state)~ 添加到指定列表，供你使用。
      或者，你可以根据你的 modeline 来设置模式提醒。
 
@@ -221,3 +255,27 @@
      - ~sniem-mark-jump-author-name-enable~
 
        这是当前人名的启用状态。
+
+   - ~sniem-mark-special-attachment-pair~
+
+     当你选择 symbol 的时候，它会尝试从该变量中获取当前 mode 的特殊的起连接作用的 pair 。如果光标下的 pair 处于这个变量中，它将会被视为 symbol 的一部分。
+     你可以使用 ~(sniem-mark-set-attachment)~ 来设置该变量。
+     实例:
+     #+begin_src emacs-lisp
+       (sniem-mark-set-attachment 'emacs-lisp-mode "<" ">")
+     #+end_src
+
+   - ~sniem-object-catch-global-symbol-alist~
+
+     这个变量包含能够被“抓取”的 pair ，它也为 ~(sniem-mark)~ & ~(sniem-pair)~ 提供 pair 信息。
+     该变量包括全局 pair 和一些具体 mode 的 pair 。
+
+     你可以使用 ~(add-to-list)~ 来设置全局 pair ，或者使用 ~(sniem-object-catch-mode-defalist)~ 设置具体 mode 的 pair 。
+     实例:
+     #+begin_src emacs-lisp
+       (add-to-list 'sniem-object-catch-global-symbol-alist '("^" . "^"))
+
+       (sniem-object-catch-mode-defalist emacs-lisp-mode
+         ("`" . "'")
+         ("'" . ""))                           ;Set the back-pair to empty string, means to remove it from pair-list
+     #+end_src

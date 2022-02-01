@@ -19,7 +19,7 @@
    - ~last-point~
 
      ~last-point~ is a thing that through all motions and most of operations. Like its name, when execute any motions, the last position will be set to ~last-point~.
-     
+
    - ~leader-key~
 
      Sniem has leader key，the key of leader map can be set by ~(sniem-leader-set-key)~. And you can use ~(sniem-set-leader-key)~ to set the key of leader.
@@ -34,7 +34,7 @@
 
      Sniem has 5 modes.
      - ~NORMAL~: This mode is the default mode for the editing buffers.
-       
+
        You can use ~(sniem-normal-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
 
      - ~INSERT~: This mode will be used when you executed ~sniem-insert~ in ~NORMAL~ mode. It's used to edit. In this mode, there's only one binding for ~sniem~, that is ~<ESC>~ which will make you exit ~INSERT~ mode back to ~NORMAL~ mode.
@@ -42,11 +42,12 @@
      - ~MOTION~: This mode is used in special modes, there's only has one binding for ~sniem~, that is ~<SPC>~ which can let you use leader keys.
 
      - ~EXPAND~: This mode is used to expand region more comfortablely.
-       
+
        You can use ~(sniem-expand-set-key)~ to set keys for normal mode. Its usage is same as ~(sniem-leader-set-key)~.
-       
+
        | Key              | Function                                                         |
        | ~RET~            | Call the object-catch function                                   |
+       | ~TAB~            | sniem-shift                                                      |
        | ~r~              | Repeat the object-catch                                          |
        | ~p~              | Catch the parent pair of the content selected                    |
        | ~b~              | Catch pair by its prefix char                                    |
@@ -88,28 +89,53 @@
      - middle-keyboard-digit-argument-or-function
 
        This function is defaultly bound on ~<SPC>~. After you execute it, the middle keys of the keyboard can be instead of numbers and ~-~, the record will be over after you pressed ~<SPC>~. You can also use the keys in the table to do the special operations:
-       | Key | Function                                  |
-       | ,   | Repeat object-catch                       |
-       | .   | Mark the content at point or a region     |
-       | k   | Unmark the content and select it          |
-       | SPC | Execute function in motion-hint           |
-       | /   | Reverse the direction of object-catch     |
-       | p   | Add, change or delete the pair of region  |
-       | <   | Jump to prev comment mark                 |
-       | >   | Jump to next comment mark                 |
-       | m   | Insert new comment mark                   |
-       | c   | Clear the special clipboard               |
-       | x   | Pop the last content in special clipboard |
-       | P   | Paste from special clipboard              |
-       | y   | Yank for special clipboard                |
-       | Y   | Yank in region for special clipboard      |
+       | Key | Function                                    |
+       | ,   | Repeat object-catch                         |
+       | .   | Mark the content at point or a region       |
+       | k   | Unmark the content and select it            |
+       | K   | Pop the newest marked-content               |
+       | SPC | Execute function in motion-hint             |
+       | /   | Reverse the direction of object-catch       |
+       | p   | Add, change or delete the pair of region    |
+       | <   | Jump to prev comment mark                   |
+       | >   | Jump to next comment mark                   |
+       | m   | Insert new comment mark                     |
+       | c   | Clear the special clipboard                 |
+       | x   | Pop the newest content in special clipboard |
+       | P   | Paste from special clipboard                |
+       | y   | Yank for special clipboard                  |
+       | Y   | Yank in region for special clipboard        |
+
+     - ~(sniem-shift)~
+
+       This function normally be binded to ~TAB~ .
+       And there's a motion list (called ~shift-motion-list~ at below) which be linked to this function, it's: ~sniem-forward-char~, ~sniem-backward-char~, ~sniem-next-line~, ~sniem-prev-line~, ~sniem-next-word~, ~sniem-prev-word~, ~sniem-scroll-up-command~.
+       Then, there're three conditions you execute this function.
+
+       1. Press ~TAB~ (The key which binds ~sniem-shift~ ) once
+
+          When you just press once, this function is a replacement of shift.
+          e.g.: You can execute the command of ~K~ by execute ~sniem-shift~ & ~k~ .
+          Defaultly, it can be ~TAB k~ .
+
+          But when you pressed a capital letter key after executing the function, in addition, the command of its lower case letter is a motion in ~shift-motion-list~ , the motion will be added or deleted from the motion-shift-locked key list.
+
+       2. Press twice
+
+          When you execute it twice, it'll enter the motion-shift-locked mode. In this case, when you press the key of motions included in ~shift-motion-list~ , it will execute the motion of its capital letter key.
+          And normally, only the first four motions of ~shift-motion-list~ are the in the motion-shift-locked mode key list. If you want to add or delete a motion from this mode, you just need to press its capital letter key.
+          You can exit motion-shift-locked mode by press it twice.
+
+       3. Press three times
+
+          In this case, it will enter the Caps_Lock mode only in sniem insert mode. The effect is just like ~caps-lock~ (another package). You can press 3 times to exit this mode.
 ** Some special operations
    - Motions
 
      - ~(sniem-goto-prev)~ & ~(sniem-goto-next)~
 
        Use ~middle-keyboard~ to get the lines to forward or backward, then execute it.
-       
+
      - ~(sniem-next-word)~ & ~(sniem-prev-word)~
 
        Normally, goto the next or previous word. If there is a content selected, goto the next or previous content same as it.
@@ -117,6 +143,10 @@
      - ~(sniem-goto-last-point)~
 
        Normally, goto the ~last-point~. If the ~sniem-mark-content~ is exists, goto the ~mark-content~.
+
+     - ~(sniem-beginning-of-line)~
+
+       Normally, goto the beginning of current line. If the cursor is at beginning now, execute indentation function.
 
    - Editing operations
 
@@ -171,12 +201,17 @@
          - When you record after selecting some lines, the kmacro will be executed to all the lines you selected after recording.
          - If you record after selecting content in the same line, the content will be recorded. Then you can execute ~(sniem-next-word)~ or ~(sniem-prev-word)~ to goto the next or previous content same as it. Execute ~(keyboard-quit)~ can cancel the content record.
 
+     - ~(sniem-search)~
+
+       Normally, searching the original content you input.
+       When you give it prefix argument, the content will be packed with regexp for finding symbol automatically.
+
      - sniem-mark-jump
 
        sniem-mark-jump provides two motions. They are ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~.
        Normally, execute them can goto the next or previous comment mark. But if you use them with ~digit-argument~, they'll find the next or previous comment mark with type which is the number you input of the mark type alist.
 ** Custom
-   - ~sniem-center-message~ & ~sniem-mark-message~ & ~sniem-delete-message~ & ~sniem-change-message~ & ~sniem-yank-message~ & ~sniem-macro-message~
+   - ~sniem-center-message~ & ~sniem-mark-message~ , etc.
 
      Theses variables are the help message for their operations. If you don't want them, you can execute this function:
      #+begin_src emacs-lisp
@@ -185,7 +220,8 @@
              sniem-delete-message nil
              sniem-change-message nil
              sniem-yank-message nil
-             sniem-macro-message nil)
+             sniem-macro-message nil
+             sniem-pair-message nil)
      #+end_src
 
    - ~sniem-xxx-mode-cursor~
@@ -197,7 +233,7 @@
      This is the sit time for motion hint. Default is ~1~.
 
    - State Hint
-     
+
      If you use [[https://github.com/manateelazycat/awesome-tray][awesome-tray]], sniem will automaticly set ~(sniem-state)~ to the alist, so you can use it.
      Otherwise, you can set the state hint accroding to your modeline.
 
@@ -216,3 +252,27 @@
      - ~sniem-mark-jump-author-name-enable~
 
        This variable is the status of the author name's enablement.
+
+   - ~sniem-mark-special-attachment-pair~
+
+     When marking symbol, sniem will try getting special attachment pair of current mode from this variable. If the pair under cursor is in this variable, it will be regarded as a part of symbol.
+     To set this variable, you can use function ~(sniem-mark-set-attachment)~ .
+     e.g.:
+     #+begin_src emacs-lisp
+       (sniem-mark-set-attachment 'emacs-lisp-mode "<" ">")
+     #+end_src
+
+   - ~sniem-object-catch-global-symbol-alist~
+
+     This variable is the list of pairs which can be catched. And this variable can also provide pair info to ~(sniem-mark)~ & ~(sniem-pair)~ .
+     This variable includes some global pairs and some pairs for specific modes.
+
+     You can set this by ~(add-to-list)~ to add global pairs or ~(sniem-object-catch-mode-defalist)~ to set for certain mode.
+     e.g.:
+     #+begin_src emacs-lisp
+       (add-to-list 'sniem-object-catch-global-symbol-alist '("^" . "^"))
+
+       (sniem-object-catch-mode-defalist emacs-lisp-mode
+         ("`" . "'")
+         ("'" . ""))                           ;Set the back-pair to empty string, means to remove it from pair-list
+     #+end_src
