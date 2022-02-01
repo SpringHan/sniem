@@ -151,7 +151,6 @@ THING can be `symbol' or `word'."
         (move-command 'forward-char)
         (enter-point (point))
         (current-char (following-char))
-        (prev-char (char-before))
         (split-char-p (lambda (c) (memq c '(32 9 10))))
         start-point end-point can-enter)
     (save-mark-and-excursion
