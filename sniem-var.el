@@ -337,6 +337,24 @@
   :type 'list
   :group 'sniem)
 
+(defcustom sniem-object-catch-global-symbol-alist
+  '((emacs-lisp-mode . (("'" . "") ("`" . "'")))
+    ("\"" . "\"")
+    ("'" . "'")
+    ("[" . "]")
+    ("<" . ">")
+    ("(" . ")")
+    ("{" . "}"))
+  "The global symbol alist."
+  :type 'list
+  :group 'sniem)
+
+(defcustom sniem-mark-special-attachment-pair
+  '((emacs-lisp-mode "<" ">"))
+  "The attachment pair for each mode when marking symbol."
+  :type 'list
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
     json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode

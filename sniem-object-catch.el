@@ -33,18 +33,6 @@
   "The group of `sniem-object-catch'."
   :group 'sniem)
 
-(defcustom sniem-object-catch-global-symbol-alist
-  '((emacs-lisp-mode . (("'" . "")))
-    ("\"" . "\"")
-    ("'" . "'")
-    ("[" . "]")
-    ("<" . ">")
-    ("(" . ")")
-    ("{" . "}"))
-  "The global symbol alist."
-  :type 'list
-  :group 'sniem-object-catch)
-
 (defcustom sniem-object-catch-last-points nil
   "The last point cons."
   :type 'cons

@@ -433,6 +433,19 @@ Optional argument KEYS are the keys you want to add."
             func (pop keys))
       (define-key sniem-expand-state-keymap (kbd key) func))))
 
+(defun sniem-mark-set-attachment (mode attachment)
+  "Set special ATTACHMENT pair for MODE to mark symbol
+more accurately."
+  (let ((current-attachments (alist-get mode sniem-mark-special-attachment-pair))
+        index)
+    (if current-attachments
+        (progn
+          (setq index (sniem-object-catch--index mode sniem-mark-special-attachment-pair))
+          (setf (nth index sniem-mark-special-attachment-pair)
+                (append current-attachments attachment)))
+      (add-to-list 'sniem-mark-special-attachment-pair
+                   (append (list mode) attachment)))))
+
 (defun sniem-set-keyboard-layout (layout)
   "Set the keyboard layout, then you can use the default keymap for your layout.
 
@@ -722,7 +735,7 @@ SHIFT-KEY is the shift key bound by user."
           (setq sniem-shift-times 2)
           nil)
          (32 t)
-         (_ (if (sniem-pair--pair-p char t)
+         (_ (if (sniem-shift--not-alpha-p char)
                 (if (eq sniem-keyboard-layout 'dvp)
                     (pcase char
                       (?$ ?~) (?& ?%) (91 ?7) (123 ?5) (125 ?3) (40 ?1) (?= ?9)
@@ -757,6 +770,17 @@ SHIFT-KEY is the shift key bound by user."
                     (downcase char)
                   char))
             (error last-command-event)))))
+
+(defun sniem-shift--not-alpha-p (char-string)
+  "Check if the CHAR belongs to pair.
+Argument CHAR-STRING is the string to compair."
+  (let ((alpha-list '(?a ?A ?b ?B ?c ?C ?d ?D ?e ?E ?f ?F ?g ?G ?h ?H ?i ?I
+                         ?j ?J ?k ?K ?l ?L ?m ?M ?n ?N ?o ?O ?p ?P ?q ?Q ?r ?R
+                         ?s ?S ?t ?T ?u ?U ?v ?V ?w ?W ?x ?X ?y ?Y ?z ?Z)))
+    (not (memq (if (stringp char-string)
+                   (string-to-char char-string)
+                 char-string)
+               alpha-list))))
 
 ;;; Initialize
 (sniem-set-leader-key ",")
