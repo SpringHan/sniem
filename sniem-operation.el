@@ -146,6 +146,7 @@
 (defun sniem-mark--bounds-of-thing-at-point (thing)
   "Get the bounds of theg THING a point.
 THING can be `symbol' or `word'."
+  ;; TODO: Add symbol expand function
   (let ((symbol-attachments '(?_ ?- ?+ ?! ?@ ?# ?$ ?% ?^ ?& ?* ?? ?/ 92 ?| ?:
                                  ?. ?,))
         (move-command 'forward-char)
@@ -155,12 +156,10 @@ THING can be `symbol' or `word'."
         start-point end-point can-enter)
     (save-mark-and-excursion
       (when (if (eq thing 'word)
-                (not (or (sniem-pair--pair-p current-char)
-                         (funcall split-char-p current-char)
-                         (memq current-char symbol-attachments)))
+                (not (or (sniem-pair--pair-p current-char t t)
+                         (funcall split-char-p current-char)))
               (and (not (funcall split-char-p current-char))
-                   (or (not (sniem-pair--pair-p current-char))
-                       (memq current-char symbol-attachments))))
+                   (not (sniem-pair--pair-p current-char t))))
         (setq can-enter t))
 
       (when can-enter
@@ -169,20 +168,15 @@ THING can be `symbol' or `word'."
           (while t
             (setq current-char (following-char))
 
-            (when (or (sniem-pair--pair-p current-char (eq thing 'symbol))
-                      (funcall split-char-p current-char)
-                      (and (eq thing 'word) ;If get word and reached the symbol-attachments
-                           (memq current-char symbol-attachments)))
-              ;; If the cursor reached a border, and the bounds needed is not symbol
-              (unless (and (eq thing 'symbol)
-                           (memq current-char symbol-attachments))
-                (if (eq move-command 'forward-char)
-                    (progn
-                      (setq move-command 'backward-char
-                            end-point (point))
-                      (goto-char enter-point))
-                  (setq start-point (1+ (point)))
-                  (throw 'stop t))))
+            (when (or (sniem-pair--pair-p current-char t (eq thing 'word))
+                      (funcall split-char-p current-char))
+              (if (eq move-command 'forward-char)
+                  (progn
+                    (setq move-command 'backward-char
+                          end-point (point))
+                    (goto-char enter-point))
+                (setq start-point (1+ (point)))
+                (throw 'stop t)))
 
             (when (and (eobp)
                        (eq move-command 'forward-char))
@@ -688,31 +682,34 @@ Optional Argument ADD means forced to add the pair."
           (unless (= prefix 32)
             (insert second)))))))
 
-(defun sniem-pair--pair-p (char-string &optional attachment-check)
+(defun sniem-pair--pair-p (char-string &optional attachment-check wordp)
   "Check if CHAR-STRING is pair.
 When ATTACHMENT-CHECK is non-nil, check if the pair is special
-attachment pair of current mode after check pair-p."
+attachment pair of current mode after check pair-p.
+When WORDP is non-nil, attachments will be regarded as pair."
   (when (characterp char-string)
     (setq char-string (char-to-string char-string)))
-  (catch 'result
-    (dolist (pair sniem-object-catch-global-symbol-alist)
-      (when (and (stringp (car pair))
-                 (or (string= (car pair) char-string)
-                     (string= (cdr pair) char-string)))
-        (let (attachment)
-          (when (or (and attachment-check
-                         (if (setq attachment
-                                   (alist-get major-mode
-                                              sniem-mark-special-attachment-pair))
-                             (not (sniem--mems char-string attachment))
-                           t))
-                    (null attachment-check))
-            (throw 'result t)))))
-    (dolist (mode-pair (alist-get major-mode
-                                  sniem-object-catch-global-symbol-alist))
-      (when (or (equal (car mode-pair) char-string)
-                (equal (cdr mode-pair) char-string))
-        (throw 'result t)))))
+  (let (pairp attachmentp attachments)
+    (catch 'result
+      (dolist (pair sniem-object-catch-global-symbol-alist)
+        (when (and (stringp (car pair))
+                   (or (string= (car pair) char-string)
+                       (string= (cdr pair) char-string)))
+          (throw 'result (setq pairp t))))
+      (dolist (mode-pair (alist-get major-mode
+                                    sniem-object-catch-global-symbol-alist))
+        (when (or (equal (car mode-pair) char-string)
+                  (equal (cdr mode-pair) char-string))
+          (throw 'result (setq pairp t)))))
+    (when attachment-check
+      (setq attachments (append (alist-get 'global sniem-mark-attachments)
+                                (alist-get major-mode sniem-mark-attachments)))
+      (setq attachmentp (sniem--mems char-string attachments)))
+    (if wordp
+        (or pairp attachmentp)
+      (or (and pairp (null attachmentp))
+          (and (null attachmentp)
+               (sniem-shift--not-alpha-p char-string t))))))
 
 (defun sniem-search (content &optional regexp-search)
   "Search the CONTENT.

@@ -108,7 +108,8 @@ Argument LIST is the list to check."
   (let (result)
     (catch 'stop
       (dolist (item list)
-        (when (string-equal item ele)
+        (when (and (stringp item)
+                   (string-equal item ele))
           (setq result t)
           (throw 'stop nil))))
     result))

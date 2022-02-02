@@ -349,9 +349,11 @@
   :type 'list
   :group 'sniem)
 
-(defcustom sniem-mark-special-attachment-pair
-  '((emacs-lisp-mode "<" ">"))
-  "The attachment pair for each mode when marking symbol."
+(defcustom sniem-mark-attachments
+  '((emacs-lisp-mode "<" ">" "!" "@" "#" "$" "%" "^" "&" "*" "-"
+                     "_" "=" "+" "\\" "|" "," ".")
+    (global "_"))
+  "The attachments when marking symbol."
   :type 'list
   :group 'sniem)
 
