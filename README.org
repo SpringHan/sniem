@@ -206,6 +206,12 @@
        Normally, searching the original content you input.
        When you give it prefix argument, the content will be packed with regexp for finding symbol automatically.
 
+     - ~(sniem-mark) Expand~
+
+       When you use this function to mark symbol, if there're some ~expand~ attachment of current mode in ~sniem-mark-attachments~ (*custom* part will introduce it) around current selection, you can execute mark function again to expand selection.
+
+       For example, when you writing Python, you can execute mark function (mark symbol) twice to select ~self.test~ .
+
      - sniem-mark-jump
 
        sniem-mark-jump provides two motions. They are ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~.
@@ -253,13 +259,18 @@
 
        This variable is the status of the author name's enablement.
 
-   - ~sniem-mark-special-attachment-pair~
+   - ~sniem-mark-attachments~
 
-     When marking symbol, sniem will try getting special attachment pair of current mode from this variable. If the pair under cursor is in this variable, it will be regarded as a part of symbol.
+     When marking symbol, sniem will try getting attachment from this variable. If the pair under cursor is in this variable, it will be regarded as a part of symbol.
      To set this variable, you can use function ~(sniem-mark-set-attachment)~ .
      e.g.:
      #+begin_src emacs-lisp
+       (sniem-mark-set-attachment 'global "_")
        (sniem-mark-set-attachment 'emacs-lisp-mode "<" ">")
+       (sniem-mark-set-attachment
+        'python-mode
+        :expand '(".")                         ;For expand
+        )
      #+end_src
 
    - ~sniem-object-catch-global-symbol-alist~

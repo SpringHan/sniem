@@ -209,6 +209,12 @@
        一般情况下，搜索你输入的原生内容。
        当你给其 prefix argument 时，它将给你自动添加匹配 symbol 的正则表达式。
 
+     - ~(sniem-mark) Expand~
+
+       当你使用该函数来选择 symbol 时，如果当前选择周围有属于 ~sniem-mark-attachments~ expand 的字符，你就可以再次执行选择命令来扩展你的选择。
+
+       例如，当你编辑 Python 文件时，你可以通过连续执行两次选择命令(mark symbol)来选择 ~self.test~ 。
+
      - sniem-mark-jump
 
        sniem-mark-jump 提供了两个 motions，即 ~(sniem-mark-jump-next)~ & ~(sniem-mark-jump-prev)~ 。
@@ -256,13 +262,18 @@
 
        这是当前人名的启用状态。
 
-   - ~sniem-mark-special-attachment-pair~
+   - ~sniem-mark-attachments~
 
-     当你选择 symbol 的时候，它会尝试从该变量中获取当前 mode 的特殊的起连接作用的 pair 。如果光标下的 pair 处于这个变量中，它将会被视为 symbol 的一部分。
+     当你选择 symbol 的时候，它会尝试从该变量中获取连接符 。如果光标下的字符处于这个变量中，它将会被视为 symbol 的一部分。
      你可以使用 ~(sniem-mark-set-attachment)~ 来设置该变量。
      实例:
      #+begin_src emacs-lisp
+       (sniem-mark-set-attachment 'global "_")
        (sniem-mark-set-attachment 'emacs-lisp-mode "<" ">")
+       (sniem-mark-set-attachment
+        'python-mode
+        :expand '(".")                         ;For expand
+        )
      #+end_src
 
    - ~sniem-object-catch-global-symbol-alist~
