@@ -436,11 +436,11 @@ Optional argument KEYS are the keys you want to add."
 (defun sniem-mark-set-attachment (mode &rest attachment)
   "Set special ATTACHMENT pair for MODE to mark symbol
 more accurately."
-  (let ((index (sniem-object-catch--index mode sniem-mark-special-attachment-pair)))
+  (let ((index (sniem-object-catch--index mode sniem-mark-attachments)))
     (if index
-        (setf (nth index sniem-mark-special-attachment-pair)
+        (setf (nth index sniem-mark-attachments)
               (append (list mode) attachment))
-      (add-to-list 'sniem-mark-special-attachment-pair
+      (add-to-list 'sniem-mark-attachments
                    (append (list mode) attachment)))))
 
 (defun sniem-set-keyboard-layout (layout)

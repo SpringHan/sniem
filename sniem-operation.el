@@ -151,10 +151,7 @@
 THING can be `symbol' or `word'.
 When EXPAND is non-nil, means expand the current selection.
 And its format is like: (start-point . end-point)."
-  ;; TODO: Maybe `symbol-attachments' needs to be removed.
-  (let ((symbol-attachments '(?_ ?- ?+ ?! ?@ ?# ?$ ?% ?^ ?& ?* ?? ?/ 92 ?| ?:
-                                 ?. ?,))
-        (move-command 'forward-char)
+  (let ((move-command 'forward-char)
         (enter-point (point))
         (current-char (following-char))
         (split-char-p (lambda (c) (memq c '(32 9 10))))
