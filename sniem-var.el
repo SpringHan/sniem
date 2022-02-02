@@ -352,6 +352,7 @@
 (defcustom sniem-mark-attachments
   '((emacs-lisp-mode "<" ">" "!" "@" "#" "$" "%" "^" "&" "*" "-"
                      "_" "=" "+" "\\" "|" "," ".")
+    (python-mode :expand ("."))
     (global "_"))
   "The attachments when marking symbol."
   :type 'list

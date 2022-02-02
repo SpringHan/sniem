@@ -767,10 +767,10 @@ SHIFT-KEY is the shift key bound by user."
                   char))
             (error last-command-event)))))
 
-(defun sniem-shift--not-alpha-p (char-string &optional number-list)
+(defun sniem-shift--not-alpha-p (char-string &optional add-number)
   "Check if the CHAR belongs to pair.
 Argument CHAR-STRING is the string to compair.
-When NUMBER-LIST is non-nil, numbers will be regarded as alpha."
+When ADD-NUMBER is non-nil, numbers will be regarded as alpha."
   (let ((alpha-list '(?a ?A ?b ?B ?c ?C ?d ?D ?e ?E ?f ?F ?g ?G ?h ?H ?i ?I
                          ?j ?J ?k ?K ?l ?L ?m ?M ?n ?N ?o ?O ?p ?P ?q ?Q ?r ?R
                          ?s ?S ?t ?T ?u ?U ?v ?V ?w ?W ?x ?X ?y ?Y ?z ?Z))
@@ -778,7 +778,7 @@ When NUMBER-LIST is non-nil, numbers will be regarded as alpha."
     (not (memq (if (stringp char-string)
                    (string-to-char char-string)
                  char-string)
-               (if number-list
+               (if add-number
                    (append number-list alpha-list)
                  alpha-list)))))
 

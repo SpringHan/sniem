@@ -105,14 +105,13 @@ Optional argument MSG is the message which will be outputed."
   "Like memq, but use `string-equal'.
 Argument ELE is the element to check.
 Argument LIST is the list to check."
-  (let (result)
+  (if (stringp list)
+      (string= ele list)
     (catch 'stop
       (dolist (item list)
         (when (and (stringp item)
                    (string-equal item ele))
-          (setq result t)
-          (throw 'stop nil))))
-    result))
+          (throw 'stop t))))))
 
 (defun sniem--list-memq (list1 list2 &optional return-type)
   "Check if there are ele of LIST1 which are also in LIST2.

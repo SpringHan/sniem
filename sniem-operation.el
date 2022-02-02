@@ -127,7 +127,10 @@
                      (115 'symbol)
                      (119 'word)
                      (_ (user-error "[Sniem]: The %s type is error!" type))))
-            (points (sniem-mark--bounds-of-thing-at-point thing)))
+            (points (sniem-mark--bounds-of-thing-at-point
+                     thing (when (region-active-p)
+                             (deactivate-mark)
+                             (cons (region-beginning) (region-end))))))
        (when (and points space-mode
                   (save-mark-and-excursion
                     (let (l r)
@@ -143,10 +146,12 @@
          (goto-char (car points))
          (push-mark (cdr points) t t))))))
 
-(defun sniem-mark--bounds-of-thing-at-point (thing)
+(defun sniem-mark--bounds-of-thing-at-point (thing &optional expand)
   "Get the bounds of theg THING a point.
-THING can be `symbol' or `word'."
-  ;; TODO: Add symbol expand function
+THING can be `symbol' or `word'.
+When EXPAND is non-nil, means expand the current selection.
+And its format is like: (start-point . end-point)."
+  ;; TODO: Maybe `symbol-attachments' needs to be removed.
   (let ((symbol-attachments '(?_ ?- ?+ ?! ?@ ?# ?$ ?% ?^ ?& ?* ?? ?/ 92 ?| ?:
                                  ?. ?,))
         (move-command 'forward-char)
@@ -154,7 +159,10 @@ THING can be `symbol' or `word'."
         (current-char (following-char))
         (split-char-p (lambda (c) (memq c '(32 9 10))))
         start-point end-point can-enter)
-    (save-mark-and-excursion
+    (save-excursion
+      (when expand
+        (setq start-point (car expand)
+              end-point (cdr expand)))
       (when (if (eq thing 'word)
                 (not (or (sniem-pair--pair-p current-char t t)
                          (funcall split-char-p current-char)))
@@ -164,17 +172,26 @@ THING can be `symbol' or `word'."
 
       (when can-enter
         (catch 'stop
-          (funcall move-command)
+          ;; When expanding, firstly goto the end-point to expand forward
+          (if expand
+              (goto-char end-point)
+            (funcall move-command))
           (while t
             (setq current-char (following-char))
 
-            (when (or (sniem-pair--pair-p current-char t (eq thing 'word))
+            (when (or (sniem-pair--pair-p
+                       current-char (if expand
+                                        (gv-ref expand)
+                                      t)
+                       (eq thing 'word))
                       (funcall split-char-p current-char))
               (if (eq move-command 'forward-char)
                   (progn
                     (setq move-command 'backward-char
                           end-point (point))
-                    (goto-char enter-point))
+                    (goto-char (if expand
+                                   start-point
+                                 enter-point)))
                 (setq start-point (1+ (point)))
                 (throw 'stop t)))
 
@@ -248,7 +265,7 @@ THING can be `symbol' or `word'."
                                                       (buffer-substring-no-properties
                                                        (overlay-start ov) (overlay-end ov)))))))
                                marked-contents))))
-    
+
     (if (and (not (string= "nil" replace-region-p))
              (null replace-word))
         (progn
@@ -537,7 +554,7 @@ If SPECIAL is non-nil, yank it to the special clipboard."
                                            sniem-locked-macro)
               (delete-overlay sniem-kmacro-range)
               (setq-local sniem-kmacro-range nil))))
-      
+
       (when (region-active-p)
         (sniem-search--cancel-selection)
         (if (= action 113)
@@ -569,7 +586,7 @@ If SPECIAL is non-nil, yank it to the special clipboard."
                                            (line-end-position))
                                          sniem-locked-macro)
             (throw 'stop t))))
-      
+
       (pcase action
         (113 (call-interactively #'start-kbd-macro))
         (101 (if sniem-locked-macro
@@ -684,29 +701,42 @@ Optional Argument ADD means forced to add the pair."
 
 (defun sniem-pair--pair-p (char-string &optional attachment-check wordp)
   "Check if CHAR-STRING is pair.
-When ATTACHMENT-CHECK is non-nil, check if the pair is special
+When ATTACHMENT-CHECK is t, check if the pair is special
 attachment pair of current mode after check pair-p.
+When ATTACHMENT-CHECK is a list (pointer), 
+check if CHAR-STRING is expansion attachment
+ after normal check failed.
+
 When WORDP is non-nil, attachments will be regarded as pair."
-  (when (characterp char-string)
-    (setq char-string (char-to-string char-string)))
-  (let (pairp attachmentp attachments)
-    (catch 'result
-      (dolist (pair sniem-object-catch-global-symbol-alist)
-        (when (and (stringp (car pair))
-                   (or (string= (car pair) char-string)
-                       (string= (cdr pair) char-string)))
-          (throw 'result (setq pairp t))))
-      (dolist (mode-pair (alist-get major-mode
-                                    sniem-object-catch-global-symbol-alist))
-        (when (or (equal (car mode-pair) char-string)
-                  (equal (cdr mode-pair) char-string))
-          (throw 'result (setq pairp t)))))
-    (when attachment-check
-      (setq attachments (append (alist-get 'global sniem-mark-attachments)
-                                (alist-get major-mode sniem-mark-attachments)))
-      (setq attachmentp (sniem--mems char-string attachments)))
-    (if wordp
-        (or pairp attachmentp)
+  (if wordp
+      (sniem-shift--not-alpha-p char-string t)
+    (when (characterp char-string)
+      (setq char-string (char-to-string char-string)))
+    (let (pairp attachmentp attachments)
+      (catch 'result
+        (dolist (pair sniem-object-catch-global-symbol-alist)
+          (when (and (stringp (car pair))
+                     (or (string= (car pair) char-string)
+                         (string= (cdr pair) char-string)))
+            (throw 'result (setq pairp t))))
+        (dolist (mode-pair (alist-get major-mode
+                                      sniem-object-catch-global-symbol-alist))
+          (when (or (equal (car mode-pair) char-string)
+                    (equal (cdr mode-pair) char-string))
+            (throw 'result (setq pairp t)))))
+      (when attachment-check
+        (setq attachments (alist-get major-mode sniem-mark-attachments))
+        (setq attachmentp (sniem--mems char-string
+                                       (append (alist-get 'global sniem-mark-attachments)
+                                               attachments)))
+        (when (and (null attachmentp)
+                   (consp attachment-check))
+          (setq attachmentp (sniem--mems char-string
+                                         (plist-get attachments :expand)))
+          (when attachmentp
+            ;; Set the `expand' variable in `sniem-mark--bounds-of-thing-at-point'
+            ;; to nil
+            (setf (gv-deref attachment-check) nil))))
       (or (and pairp (null attachmentp))
           (and (null attachmentp)
                (sniem-shift--not-alpha-p char-string t))))))
@@ -961,11 +991,11 @@ Argument DIRECT is the direction for find."
                            ((region-active-p) (buffer-substring-no-properties (region-beginning)
                                                                               (region-end)))))
                tmp region-end ov)
-          
+
           (when (region-active-p)
             (unless sniem-search-result-overlays
               (setq word (sniem-search--regexp-content word)))
-            
+
             (goto-char (region-beginning))
             (setq region-end (region-end)))
           (if (and sniem-search-result-overlays
@@ -1270,7 +1300,7 @@ Optional argument NON-POINT-SET means not change the last-point."
         (goto-char
          (if (= 1 (length sniem-mark-content-overlay))
              (overlay-start (car sniem-mark-content-overlay)) ;Goto the first marked-content if there's only one overlay.
-           
+
            (let ((current-ov (sniem--list-memq sniem-mark-content-overlay
                                                (overlays-at (point)) 'index))
                  (notice (lambda (n)
