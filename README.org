@@ -108,7 +108,7 @@
 
      - ~(sniem-shift)~
 
-       This function normally be binded to ~TAB~ .
+       This function normally be binded to ~TAB~ in some mode's keymaps. (Expect the insert mode keymap)
        And there's a motion list (called ~shift-motion-list~ at below) which be linked to this function, it's: ~sniem-forward-char~, ~sniem-backward-char~, ~sniem-next-line~, ~sniem-prev-line~, ~sniem-next-word~, ~sniem-prev-word~, ~sniem-scroll-up-command~.
        Then, there're three conditions you execute this function.
 

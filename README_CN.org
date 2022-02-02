@@ -115,7 +115,7 @@
 
    - ~(sniem-shift)~
 
-     这个函数默认被绑定于 ~TAB~ 。
+     这个函数默认在各个模式中被绑定于 ~TAB~ 。（除了 insert mode keymap）
      它提供了一个行为列表（下面称为 ~shift-motion-list~ ），它包括: ~sniem-forward-char~, ~sniem-backward-char~, ~sniem-next-line~, ~sniem-prev-line~, ~sniem-next-word~, ~sniem-prev-word~, ~sniem-scroll-up-command~.
      你执行它的时候有三种情况。
 
