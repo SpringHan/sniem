@@ -722,7 +722,7 @@ When WORDP is non-nil, attachments will be regarded as pair."
                     (equal (cdr mode-pair) char-string))
             (throw 'result (setq pairp t)))))
       (when attachment-check
-        (setq attachments (alist-get major-mode sniem-mark-attachments))
+        (setq attachments (sniem-mark--mode-alist-get))
         (setq attachmentp (sniem--mems char-string
                                        (append (alist-get 'global sniem-mark-attachments)
                                                attachments)))
@@ -737,6 +737,13 @@ When WORDP is non-nil, attachments will be regarded as pair."
       (or (and pairp (null attachmentp))
           (and (null attachmentp)
                (sniem-shift--not-alpha-p char-string t))))))
+
+(defun sniem-mark--mode-alist-get ()
+  "Try getting the attachments of current mode."
+  (catch 'attatchments
+    (dolist (item sniem-mark-attachments)
+      (when (derived-mode-p (car item))
+        (throw 'attatchments (cdr item))))))
 
 (defun sniem-search (content &optional regexp-search)
   "Search the CONTENT.
