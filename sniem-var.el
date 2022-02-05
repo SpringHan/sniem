@@ -351,7 +351,7 @@
 
 (defcustom sniem-mark-attachments
   '((emacs-lisp-mode "<" ">" "!" "@" "#" "$" "%" "^" "&" "*" "-"
-                     "_" "=" "+" "\\" "|" "," ".")
+                     "_" "=" "+" "\\" "|" "," "." "/")
     (c-mode :expand ("&" "*"))
     (c++-mode :expand ("&" "*"))
     (python-mode :expand ("."))
