@@ -35,6 +35,7 @@
 (declare-function sniem-change-mode "sniem")
 (declare-function sniem-mark-content "sniem")
 (declare-function sniem-lock-unlock-last-point "sniem")
+(declare-function sniem-shift--not-alpha-p "sniem")
 
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
@@ -729,8 +730,9 @@ When WORDP is non-nil, attachments will be regarded as pair."
         (when (and (null attachmentp)
                    (consp attachment-check))
           (setq attachmentp (sniem--mems char-string
-                                         (plist-get attachments :expand)))
-          (when attachmentp
+                                         (plist-get attachments :expand)
+                                         t))
+          (when (eq attachmentp t)
             ;; Set the `expand' variable in `sniem-mark--bounds-of-thing-at-point'
             ;; to nil
             (setf (gv-deref attachment-check) nil))))

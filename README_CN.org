@@ -271,6 +271,12 @@
        (sniem-mark-set-attachment 'global "_")
        (sniem-mark-set-attachment 'emacs-lisp-mode "<" ">")
        (sniem-mark-set-attachment
+        'c-mode
+        :expand '("::")
+        ;; Normally, if the expand attachment is one char, it will only work for once.
+        ;; But if you set it to more chars, the attachment will work like a normal attachment.
+        )
+       (sniem-mark-set-attachment
         'python-mode
         :expand '(".")                         ;For expand
         )

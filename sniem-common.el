@@ -101,17 +101,21 @@ Optional argument MSG is the message which will be outputed."
           `(call-interactively ',fn))
       arg)))
 
-(defun sniem--mems (ele list)
+(defun sniem--mems (ele list &optional prefix)
   "Like memq, but use `string-equal'.
 Argument ELE is the element to check.
-Argument LIST is the list to check."
+Argument LIST is the list to check.
+When PREFIX is non-nil, check if ELE is the prefix."
   (if (stringp list)
       (string= ele list)
     (catch 'stop
       (dolist (item list)
-        (when (and (stringp item)
-                   (string-equal item ele))
-          (throw 'stop t))))))
+        (when (stringp item)
+          (if (string-equal item ele)
+              (throw 'stop t)
+            (when (and prefix
+                       (string-prefix-p ele item))
+              (throw 'stop (list t)))))))))
 
 (defun sniem--list-memq (list1 list2 &optional return-type)
   "Check if there are ele of LIST1 which are also in LIST2.
