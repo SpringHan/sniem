@@ -678,7 +678,7 @@ ARG is the prefix-arg."
                                                 sniem-shift-binding-key))))
     (when (numberp char)
       (when arg
-        (sniem-digit-argument-or-fn arg))
+        (setq current-prefix-arg arg))
       (setq result (key-binding (vector char)))
       (if (keymapp result)
           (set-transient-map result)
