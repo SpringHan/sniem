@@ -356,6 +356,7 @@
     (c++-mode :expand ("&" "*" "::"))
     (python-mode :expand ("."))
     (makefile-mode "-")
+    (rust-mode :expand ("." "::" "&"))
     (global "_"))
   "The attachments when marking symbol."
   :type 'list
