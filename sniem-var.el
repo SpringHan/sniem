@@ -338,7 +338,7 @@
   :group 'sniem)
 
 (defcustom sniem-object-catch-global-symbol-alist
-  '((emacs-lisp-mode . (("'" . "") ("`" . "'")))
+  '((emacs-lisp-mode . (("'" . "") ("`" . "'") ("<" . "")))
     ("\"" . "\"")
     ("'" . "'")
     ("[" . "]")

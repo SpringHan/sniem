@@ -1283,13 +1283,17 @@ is true."
 
 (sniem-define-motion sniem-goto-prev ()
   "Goto prev lines with `sniem-digit-argument-get'."
-  (sniem-prev-line (sniem-digit-argument-get "Move up: ") t)
+  (sniem-goto-line (- (line-number-at-pos)
+                      (sniem-digit-argument-get "Move up: "))
+                   t)
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
 (sniem-define-motion sniem-goto-next ()
   "Goto next lines with `sniem-digit-argument-get'."
-  (sniem-next-line (sniem-digit-argument-get "Move down: ") t)
+  (sniem-goto-line (+ (line-number-at-pos)
+                      (sniem-digit-argument-get "Move down: "))
+                   t)
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
