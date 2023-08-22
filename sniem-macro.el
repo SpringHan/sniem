@@ -41,7 +41,7 @@ Optional argument BODY is the main body of motion function."
                    (pop `,body)
                  '(interactive))))
     (unless (memq '&optional `,arg)
-      (setq `,arg (append `,arg '(&optional))))
+      (setq arg (append `,arg '(&optional))))
     `(defun ,name (,@arg non-point-set)
        ,docstring
        ,inter
