@@ -313,7 +313,7 @@
   :group 'sniem)
 
 (defcustom sniem-shift-binding-key 9
-  "The key for `sniem-shift'. It's char."
+  "The key for `sniem-shift'.  It's char."
   :type 'number
   :group 'sniem)
 
@@ -399,6 +399,14 @@
 (defvar sniem-pair-message
   "[a]Forcely add pair, [s]Add or delete space around, other keys means pair(like '['):"
   "The message for `sniem-pair'.")
+
+(defvar sniem-paste-message
+  (propertize "[n]: next page, [p]: prev page or 1, [1-4]: insert content, [q]: cancel"
+              'face 'font-lock-comment-face)
+  "The message for `sniem-paste'.")
+
+(defvar sniem-linked-file-message "[r] for Root file, [l] for Linked file, [s] for Save, [o] for Open, [c] for Clean"
+  "The message for `sniem-linked-file'.")
 
 (defface sniem-motion-hint-face
   `((t (:foreground ,(frame-parameter nil 'background-color)

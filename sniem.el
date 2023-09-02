@@ -43,6 +43,7 @@
 (require 'sniem-object-catch)
 (require 'sniem-cheatsheet)
 (require 'sniem-mark-jump)
+(require 'sniem-linked-file)
 
 
 (define-minor-mode sniem-mode
@@ -434,8 +435,7 @@ Optional argument KEYS are the keys you want to add."
       (define-key sniem-expand-state-keymap (kbd key) func))))
 
 (defun sniem-mark-set-attachment (mode &rest attachment)
-  "Set special ATTACHMENT pair for MODE to mark symbol
-more accurately."
+  "Set special ATTACHMENT pair for MODE to mark symbol more accurately."
   (let ((index (sniem-object-catch--index mode sniem-mark-attachments)))
     (if index
         (setf (nth index sniem-mark-attachments)
@@ -564,6 +564,7 @@ Argument STRING is the string get from the input."
     (">" 'sniem-mark-jump-next)
     ("c" 'sniem-special-clipboard-clear)
     ("x" 'sniem-special-clipboard-pop)
+    ("f" 'sniem-linked-file-pannel)
     ("P" (lambda ()
            (interactive)
            (funcall-interactively #'sniem-paste nil t)))
@@ -671,7 +672,7 @@ Optional argument HIDE is t, the last point will be show."
 
 (defun sniem-shift (&optional arg)
   "The function to replace shift key.
-ARG is the prefix-arg."
+ARG is the `prefix-arg'."
   (interactive "P")
   (let (char result)
     (while (not (setq char (sniem-shift-convert (read-char)
@@ -738,7 +739,7 @@ SHIFT-KEY is the shift key bound by user."
                       (?* ?0) (41 ?2) (?+ ?4) (93 ?6) (?! ?8) (?# ?~) (59 ?:)
                       (?, 60) (?. 62) (?/ ??) (?@ ?^) (124 ?|) (?- ?_) (39 34))
                   (pcase char
-                    (?` ?~) (?1 ?!) (?2 ?@) (?3 ?#) (?4 ?$) (?5 ?%) (?6 ?^) 
+                    (?` ?~) (?1 ?!) (?2 ?@) (?3 ?#) (?4 ?$) (?5 ?%) (?6 ?^)
                     (?7 ?&) (?8 ?*) (?9 40) (?0 41) (?- ?_) (?= ?+) (59 ?:)
                     (91 123) (93 125) (39 34) (92 124) (?, 60) (?. 62) (?/ ??)))
               (let ((result (upcase char)))

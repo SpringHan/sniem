@@ -235,7 +235,8 @@ And its format is like: (start-point . end-point)."
   (sniem-search--modify-cancel-selection))
 
 (defun sniem-replace-word (&optional replace-word)
-  "Replace the word under cursor."
+  "Replace the word under cursor.
+When Optional REPLACE-WORD is non-nil, replace original one with it."
   (interactive)
   (sniem-search--cancel-selection)
   (let* ((word (if (region-active-p)
@@ -430,33 +431,32 @@ If SPECIAL is non-nil, yank it to the special clipboard."
 If SPECIAL is non-nil, paste from the special clipboard."
   (interactive "P")
   (let ((i 0)
+        ;; For region content replace
         (regionp (when (region-active-p)
                    (cons (region-beginning) (region-end))))
         (tmp (current-kill 0)))
+    ;; Append content copied from other applications into the kill-ring
     (unless (string-equal tmp (car kill-ring))
       (setq kill-ring (append (list tmp) kill-ring)))
+
     (unless n
-      (when
-          (catch 'n
-            (while (= 0
-                      (string-to-number
-                       (char-to-string
-                        (setq n (read-char (format "%s:%d%s"
-                                                   (sniem-paste--output-contents
-                                                    i
-                                                    special)
-                                                   (1+ (/ i 9))
-                                                   (propertize "[n]: next page, [p]: prev page or 1, [1-9]: insert content, [q]: cancel"
-                                                               'face 'font-lock-comment-face)))))))
-              (pcase n
-                (110 (setq i (+ i 9)))
-                (112 (if (>= i 9)
-                         (setq i (- i 9))
-                       (throw 'n t)))
-                (113 (keyboard-quit)))))
-        (setq n 49)))
-    (setq n (string-to-number (char-to-string n)))
-    (sniem-search--modify-cancel-selection t)
+      ;; Have a check for operation of page or the selection of target content.
+      (while (or (null n) (stringp n))
+        (setq n (char-to-string
+                 (read-char (format "%s:%d%s"
+                                    (sniem-paste--output-contents
+                                     i
+                                     special)
+                                    (1+ (/ i 4))
+                                    sniem-paste-message))))
+        (pcase n
+          ("n" (setq i (+ i 4)))
+          ("p" (if (>= i 4)
+                   (setq i (- i 4))
+                 (setq n 1)))
+          ("q" (keyboard-quit))
+          (_ (setq n (string-to-number n))))))
+    (sniem-search--modify-cancel-selection t) ;Exit search status
     (when regionp
       (goto-char (cdr regionp))
       (push-mark (car regionp) t t)
@@ -465,6 +465,7 @@ If SPECIAL is non-nil, paste from the special clipboard."
                           (null special))
                      (+ n i)
                    (1- (+ n i)))
+                 ;; Select the clipboard
                  (if special
                      sniem-special-clipboard
                    kill-ring)))))
@@ -474,31 +475,32 @@ If SPECIAL is non-nil, paste from the special clipboard."
 Argument N is the page of the contents.
 If SPECIAL is non-nil, yank it to the special clipboard."
   (let (content c tmp)
-    (dotimes (i 9)
+    (dotimes (i 4)
+      ;; `c' is a single content that will be show.
       (setq c (format "%d: %s"
                       (1+ i)
-                      (nth (+ i n)
-                           (if special
-                               sniem-special-clipboard
-                             kill-ring)))
-            content (concat content
-                            (progn
-                              (when (setq tmp (sniem-paste--include-ln-p c))
-                                (setq c tmp))
-                              (while (> (length c) (frame-width))
-                                (setq c (concat (substring c 0 (1- (- (length c) (frame-width)))) "...")))
-                              c)
-                            "\n")))
+                      (replace-regexp-in-string ;Replace `\n' to space
+                       "\n"
+                       "  "
+                       (sniem-paste--remove-ln
+                        (nth (+ i n)
+                             (if special
+                                 sniem-special-clipboard
+                               kill-ring))))))
+      ;; Limit the length of content that will be shown
+      (when (> (length c) (frame-width))
+        (setq c (concat
+                 (substring c 0 (- (frame-width) 4))
+                 "...")))
+      (setq content (concat content c "\n")))
     content))
 
-(defun sniem-paste--include-ln-p (string)
-  "Check if there has \n in STRING."
-  (let ((string-list (string-to-list string))
-        tmp)
-    (when (memq 10 string-list)
-      (setq tmp (delete 10 string-list)))
-    (when tmp
-      (eval `(string ,@tmp)))))
+(defun sniem-paste--remove-ln (string)
+  "Remove \n which is at the end of STRING.
+Of course, the precondition is that STRING includes it."
+  (if (string-suffix-p "\n" string)
+      (substring string 0 -1)
+    string))
 
 (defun sniem-paste-in-region ()
   "Paste the `kill-ring' content in region."
@@ -701,7 +703,7 @@ Optional Argument ADD means forced to add the pair."
   "Check if CHAR-STRING is pair.
 When ATTACHMENT-CHECK is t, check if the pair is special
 attachment pair of current mode after check pair-p.
-When ATTACHMENT-CHECK is a list (pointer), 
+When ATTACHMENT-CHECK is a list (pointer),
 check if CHAR-STRING is expansion attachment
  after normal check failed.
 
@@ -984,7 +986,7 @@ Argument DIRECT is the direction for find."
       (goto-char current-point))))
 
 (sniem-define-motion sniem-next-word (&optional n no-hint word)
-  "Move to next word. If the region is active, goto the next word which is same as it."
+  "Move to next word.  If the region is active, goto the next word which is same as it."
   (interactive "P")
   (sniem-shift-lock-motion (sniem-prev-word n no-hint word) nil
     (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
@@ -1043,7 +1045,7 @@ Argument DIRECT is the direction for find."
                               (sniem-next-word ,n t ,word t)))))))
 
 (sniem-define-motion sniem-prev-word (&optional n no-hint word)
-  "Move to prev word. If the region is active, goto the prev word which is same as it."
+  "Move to prev word.  If the region is active, goto the prev word which is same as it."
   (interactive "P")
   (sniem-shift-upcase-motion-convert sniem-next-word
     (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
@@ -1234,7 +1236,7 @@ If FORCE is non-nil, forcely delete the current overlay."
 
 (defun sniem-search--regexp-content (content &optional force)
   "Add symbol regexp for CONTENT with conditions.
-If force is non-nil, add regexp for content however condition 
+If FORCE is non-nil, add regexp for content however condition
 is true."
   (if (and (string-prefix-p "\\" content)
            (string-suffix-p ">" content))

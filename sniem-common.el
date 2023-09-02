@@ -120,12 +120,12 @@ When PREFIX is non-nil, check if ELE is the prefix."
 (defun sniem--list-memq (list1 list2 &optional return-type)
   "Check if there are ele of LIST1 which are also in LIST2.
 Optional Argument RETURN-TYPE is the type of the return value.
-It can be 'index or 'ele. Defaultly it's 'ele.
+It can be 'index or 'ele.  Defaultly it's 'ele.
 
 If it's true, return the value of the ele.
 Otherwise nil will be return."
   (let (result ele)
-    (when (and list1 list2) 
+    (when (and list1 list2)
       (catch 'stop
         (dotimes (i (length list1))
           (setq ele (nth i list1))
