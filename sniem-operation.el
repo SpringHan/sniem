@@ -479,14 +479,15 @@ If SPECIAL is non-nil, yank it to the special clipboard."
       ;; `c' is a single content that will be show.
       (setq c (format "%d: %s"
                       (1+ i)
-                      (replace-regexp-in-string ;Replace `\n' to space
-                       "\n"
-                       "  "
-                       (sniem-paste--remove-ln
-                        (nth (+ i n)
-                             (if special
-                                 sniem-special-clipboard
-                               kill-ring))))))
+                      (ignore-errors    ;For the condition when the result is nil
+                        (replace-regexp-in-string ;Replace `\n' to space
+                         "\n"
+                         "  "
+                         (sniem-paste--remove-ln
+                          (nth (+ i n)
+                               (if special
+                                   sniem-special-clipboard
+                                 kill-ring)))))))
       ;; Limit the length of content that will be shown
       (when (> (length c) (frame-width))
         (setq c (concat
