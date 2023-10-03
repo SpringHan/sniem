@@ -700,20 +700,20 @@ Optional Argument ADD means forced to add the pair."
           (unless (= prefix 32)
             (insert second)))))))
 
-(defun sniem-pair--pair-p (char-string &optional attachment-check wordp)
+(defun sniem-pair--pair-p (char-string &optional connector-check wordp)
   "Check if CHAR-STRING is pair.
-When ATTACHMENT-CHECK is t, check if the pair is special
-attachment pair of current mode after check pair-p.
-When ATTACHMENT-CHECK is a list (pointer),
-check if CHAR-STRING is expansion attachment
+When CONNECTOR-CHECK is t, check if the pair is a special
+connector of current mode after check pair.
+When CONNECTOR-CHECK is a list (pointer),
+check if CHAR-STRING is expansion connector
  after normal check failed.
 
-When WORDP is non-nil, attachments will be regarded as pair."
+When WORDP is non-nil, connectors will be regarded as pair."
   (if wordp
       (sniem-shift--not-alpha-p char-string t)
     (when (characterp char-string)
       (setq char-string (char-to-string char-string)))
-    (let (pairp attachmentp attachments)
+    (let (pairp connectorp connectors)
       (catch 'result
         (dolist (pair sniem-object-catch-global-symbol-alist)
           (when (and (stringp (car pair))
@@ -725,30 +725,30 @@ When WORDP is non-nil, attachments will be regarded as pair."
           (when (or (equal (car mode-pair) char-string)
                     (equal (cdr mode-pair) char-string))
             (throw 'result (setq pairp t)))))
-      (when attachment-check
-        (setq attachments (sniem-mark--mode-alist-get))
-        (setq attachmentp (sniem--mems char-string
-                                       (append (alist-get 'global sniem-mark-attachments)
-                                               attachments)))
-        (when (and (null attachmentp)
-                   (consp attachment-check))
-          (setq attachmentp (sniem--mems char-string
-                                         (plist-get attachments :expand)
-                                         t))
-          (when (eq attachmentp t)
+      (when connector-check
+        (setq connectors (sniem-mark--mode-alist-get))
+        (setq connectorp (sniem--mems char-string
+                                      (append (alist-get 'global sniem-mark-connectors)
+                                              connectors)))
+        (when (and (null connectorp)
+                   (consp connector-check))
+          (setq connectorp (sniem--mems char-string
+                                        (plist-get connectors :expand)
+                                        t))
+          (when (eq connectorp t)
             ;; Set the `expand' variable in `sniem-mark--bounds-of-thing-at-point'
             ;; to nil
-            (setf (gv-deref attachment-check) nil))))
-      (or (and pairp (null attachmentp))
-          (and (null attachmentp)
+            (setf (gv-deref connector-check) nil))))
+      (or (and pairp (null connectorp))
+          (and (null connectorp)
                (sniem-shift--not-alpha-p char-string t))))))
 
 (defun sniem-mark--mode-alist-get ()
-  "Try getting the attachments of current mode."
-  (catch 'attatchments
-    (dolist (item sniem-mark-attachments)
+  "Try getting the connectors of current mode."
+  (catch 'connectors
+    (dolist (item sniem-mark-connectors)
       (when (derived-mode-p (car item))
-        (throw 'attatchments (cdr item))))))
+        (throw 'connectors (cdr item))))))
 
 (defun sniem-search (content &optional regexp-search)
   "Search the CONTENT.
@@ -796,119 +796,71 @@ STRING1 and STRING2 are the strings to compair."
   "End of line."
   (end-of-line))
 
-(defmacro sniem-shift-lock-motion (shift-action addition &rest body)
-  "If the motion is in locked motion list, execute SHIFT-ACTION.
-When ADDITION is t, BODY will be execute in any case.
-BODY is the motion's body."
-  (declare (debug t)
-           (indent 2))
-  (if addition
-      `(progn
-         (when (memq last-command-event sniem-shift-lock-motions)
-           ,shift-action)
-         ,@body)
-    `(if (memq last-command-event sniem-shift-lock-motions)
-         ,shift-action
-       ,@body)))
-
-(defmacro sniem-shift-upcase-motion-convert (down-func &rest body)
-  "Add or delete current motion from `sniem-shift-lock-motions'.
-DOWN-FUNC is the downcase char of current motion.
-BODY is the motion body."
-  (declare (indent 1)
-           (debug t))
-  (let (char)
-    (if (and (car sniem-shift-lock-motions)
-             (/= (setq char (downcase last-command-event))
-                 last-command-event))
-        (if (memq char sniem-shift-lock-motions)
-            (progn
-              (setq-local sniem-shift-lock-motions
-                          (delete char
-                                  (copy-sequence sniem-shift-lock-motions)))
-              ;; Use `copy-sequence' to avoid side-effect
-              `(call-interactively #',down-func))
-          (setq-local sniem-shift-lock-motions
-                      (append sniem-shift-lock-motions
-                              (list char)))
-          `(progn
-             ,@body))
-      `(progn
-         ,@body))))
-
 (sniem-define-motion sniem-forward-char (&optional n)
   "Forward char."
   (interactive "P")
-  (sniem-shift-lock-motion (setq n 5) t
-    (setq n (or n 1))
-    (catch 'end
-      (while (/= n 0)
-        (if (eolp)
-            (throw 'end t)
-          (forward-char)
-          (setq n (1- n)))))))
+  (setq n (or n 1))
+  (catch 'end
+    (while (/= n 0)
+      (if (eolp)
+          (throw 'end t)
+        (forward-char)
+        (setq n (1- n))))))
 
 (sniem-define-motion sniem-5-forward-char ()
   "Eval `sniem-forward-char' 5 times."
-  (sniem-shift-upcase-motion-convert sniem-forward-char
-    (sniem-forward-char 5 t)))
+  (sniem-forward-char 5 t))
 
 (sniem-define-motion sniem-backward-char (&optional n)
   "Backward char."
   (interactive "P")
-  (sniem-shift-lock-motion (setq n 5) t
-    (setq n (or n 1))
-    (catch 'beg
-      (while (/= n 0)
-        (if (bolp)
-            (throw 'beg t)
-          (backward-char)
-          (setq n (1- n)))))))
+  (setq n (or n 1))
+  (catch 'beg
+    (while (/= n 0)
+      (if (bolp)
+          (throw 'beg t)
+        (backward-char)
+        (setq n (1- n))))))
 
 (sniem-define-motion sniem-5-backward-char ()
   "Eval `sniem-backward-char' 5 times."
-  (sniem-shift-upcase-motion-convert sniem-backward-char
-    (sniem-backward-char 5 t)))
+  (sniem-backward-char 5 t))
 
 (sniem-define-motion sniem-prev-line (&optional n)
   "Previous line."
   (interactive "P")
-  (sniem-shift-lock-motion (setq n 5) t
-    (let ((line (line-number-at-pos)))
-      (setq n (or n 1))
-      (unless (bobp)
-        (line-move (- n)))
-      (when (and (region-active-p) sniem-mark-line)
-        (while (= (line-number-at-pos) line)
-          (line-move -1))
-        (if (= (region-beginning) (point))
-            (beginning-of-line)
-          (end-of-line))))))
+  (let ((line (line-number-at-pos)))
+    (setq n (or n 1))
+    (unless (bobp)
+      (line-move (- n)))
+    (when (and (region-active-p) sniem-mark-line)
+      (while (= (line-number-at-pos) line)
+        (line-move -1))
+      (if (= (region-beginning) (point))
+          (beginning-of-line)
+        (end-of-line)))))
 
 (sniem-define-motion sniem-5-prev-line ()
   "Eval `sniem-prev-line' 5 times."
-  (sniem-shift-upcase-motion-convert sniem-prev-line
-    (sniem-prev-line 5 t)))
+  (sniem-prev-line 5 t))
 
 (sniem-define-motion sniem-next-line (&optional n)
   "Next line."
   (interactive "P")
-  (sniem-shift-lock-motion (setq n 5) t
-    (let ((line (line-number-at-pos)))
-      (setq n (or n 1))
-      (unless (eobp)
-        (line-move n))
-      (when (and (region-active-p) sniem-mark-line)
-        (while (= (line-number-at-pos) line)
-          (line-move 1))
-        (if (= (region-beginning) (point))
-            (beginning-of-line)
-          (end-of-line))))))
+  (let ((line (line-number-at-pos)))
+    (setq n (or n 1))
+    (unless (eobp)
+      (line-move n))
+    (when (and (region-active-p) sniem-mark-line)
+      (while (= (line-number-at-pos) line)
+        (line-move 1))
+      (if (= (region-beginning) (point))
+          (beginning-of-line)
+        (end-of-line)))))
 
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."
-  (sniem-shift-upcase-motion-convert sniem-next-line
-    (sniem-next-line 5 t)))
+  (sniem-next-line 5 t))
 
 (sniem-define-motion sniem-first-line ()
   "Goto beginning of buffer."
@@ -929,18 +881,16 @@ BODY is the motion body."
 (sniem-define-motion sniem-scroll-up-command (&optional n)
   "Scroll up."
   (interactive "P")
-  (sniem-shift-lock-motion (sniem-scroll-down-command n) nil
-    (scroll-up-command n)
-    (when (and (region-active-p) sniem-mark-line)
-      (end-of-line))))
+  (scroll-up-command n)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-scroll-down-command (&optional n)
   "Scroll down."
   (interactive "P")
-  (sniem-shift-upcase-motion-convert sniem-scroll-up-command
-    (scroll-down-command n)
-    (when (and (region-active-p) sniem-mark-line)
-      (end-of-line))))
+  (scroll-down-command n)
+  (when (and (region-active-p) sniem-mark-line)
+    (end-of-line)))
 
 (sniem-define-motion sniem-find-forward (&optional n c no-hint)
   "Find CHAR forward."
@@ -989,118 +939,116 @@ Argument DIRECT is the direction for find."
 (sniem-define-motion sniem-next-word (&optional n no-hint word)
   "Move to next word.  If the region is active, goto the next word which is same as it."
   (interactive "P")
-  (sniem-shift-lock-motion (sniem-prev-word n no-hint word) nil
-    (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
-        (let* ((word (cond (word word)
-                           (sniem-kmacro-mark-content
-                            (prog1 sniem-kmacro-mark-content
-                              (setq-local sniem-kmacro-mark-content nil)))
-                           ((consp sniem-search-result-overlays)
-                            (car sniem-search-result-overlays))
-                           ((region-active-p) (buffer-substring-no-properties (region-beginning)
-                                                                              (region-end)))))
-               tmp region-end ov)
+  (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
+      (let* ((word (cond (word word)
+                         (sniem-kmacro-mark-content
+                          (prog1 sniem-kmacro-mark-content
+                            (setq-local sniem-kmacro-mark-content nil)))
+                         ((consp sniem-search-result-overlays)
+                          (car sniem-search-result-overlays))
+                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                            (region-end)))))
+             tmp region-end ov)
 
-          (when (region-active-p)
-            (unless sniem-search-result-overlays
-              (setq word (sniem-search--regexp-content word)))
+        (when (region-active-p)
+          (unless sniem-search-result-overlays
+            (setq word (sniem-search--regexp-content word)))
 
-            (goto-char (region-beginning))
-            (setq region-end (region-end)))
-          (if (and sniem-search-result-overlays
-                   (string= (car sniem-search-result-overlays)
-                            word)
-                   (setq tmp (sniem--list-memq sniem-search-result-overlays
-                                               (overlays-at (point))
-                                               'index)))
-              (ignore-errors
-                (goto-char (overlay-start
-                            (setq ov
-                                  (nth (1+ tmp) sniem-search-result-overlays))))
-                (push-mark (overlay-end ov) t t)
-                (sniem-search--check-result (1+ tmp)))
-            (when region-end
-              (goto-char region-end))
-            (setq tmp (search-forward-regexp word nil t))
-            (if tmp
-                (progn
-                  (when (region-active-p)
-                    (deactivate-mark))
-                  (setq tmp (point))
-                  (search-backward-regexp word)
-                  (push-mark tmp t t)
-                  (sniem-add-to-history word)
-                  (when (or (null sniem-search-result-overlays)
-                            (not (string= (car sniem-search-result-overlays)
-                                          word)))
-                    (when (timerp sniem-search-timer)
-                      (cancel-timer sniem-search-timer))
-                    (setq-local sniem-search-timer
-                                (run-with-timer
-                                 0 10 #'sniem-search--highlight-results
-                                 word (current-buffer)))))
-              (user-error "[Sniem]: Cannot find the content!"))))
-      (forward-word n)
-      (unless no-hint
-        (sniem-motion-hint `(lambda () (interactive)
-                              (sniem-next-word ,n t ,word t)))))))
+          (goto-char (region-beginning))
+          (setq region-end (region-end)))
+        (if (and sniem-search-result-overlays
+                 (string= (car sniem-search-result-overlays)
+                          word)
+                 (setq tmp (sniem--list-memq sniem-search-result-overlays
+                                             (overlays-at (point))
+                                             'index)))
+            (ignore-errors
+              (goto-char (overlay-start
+                          (setq ov
+                                (nth (1+ tmp) sniem-search-result-overlays))))
+              (push-mark (overlay-end ov) t t)
+              (sniem-search--check-result (1+ tmp)))
+          (when region-end
+            (goto-char region-end))
+          (setq tmp (search-forward-regexp word nil t))
+          (if tmp
+              (progn
+                (when (region-active-p)
+                  (deactivate-mark))
+                (setq tmp (point))
+                (search-backward-regexp word)
+                (push-mark tmp t t)
+                (sniem-add-to-history word)
+                (when (or (null sniem-search-result-overlays)
+                          (not (string= (car sniem-search-result-overlays)
+                                        word)))
+                  (when (timerp sniem-search-timer)
+                    (cancel-timer sniem-search-timer))
+                  (setq-local sniem-search-timer
+                              (run-with-timer
+                               0 10 #'sniem-search--highlight-results
+                               word (current-buffer)))))
+            (user-error "[Sniem]: Cannot find the content!"))))
+    (forward-word n)
+    (unless no-hint
+      (sniem-motion-hint `(lambda () (interactive)
+                            (sniem-next-word ,n t ,word t))))))
 
 (sniem-define-motion sniem-prev-word (&optional n no-hint word)
   "Move to prev word.  If the region is active, goto the prev word which is same as it."
   (interactive "P")
-  (sniem-shift-upcase-motion-convert sniem-next-word
-    (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
-        (let* ((word (cond (word word)
-                           (sniem-kmacro-mark-content
-                            (prog1 sniem-kmacro-mark-content
-                              (setq-local sniem-kmacro-mark-content nil)))
-                           ((consp sniem-search-result-overlays)
-                            (car sniem-search-result-overlays))
-                           ((region-active-p) (buffer-substring-no-properties (region-beginning)
-                                                                              (region-end)))))
-               tmp ov)
+  (if (or (region-active-p) word sniem-kmacro-mark-content sniem-search-result-overlays)
+      (let* ((word (cond (word word)
+                         (sniem-kmacro-mark-content
+                          (prog1 sniem-kmacro-mark-content
+                            (setq-local sniem-kmacro-mark-content nil)))
+                         ((consp sniem-search-result-overlays)
+                          (car sniem-search-result-overlays))
+                         ((region-active-p) (buffer-substring-no-properties (region-beginning)
+                                                                            (region-end)))))
+             tmp ov)
 
-          (when (region-active-p)
-            (unless sniem-search-result-overlays
-              (setq word (sniem-search--regexp-content word)))
+        (when (region-active-p)
+          (unless sniem-search-result-overlays
+            (setq word (sniem-search--regexp-content word)))
 
-            (when (not (= (point) (region-beginning)))
-              (goto-char (region-beginning))))
-          (if (and sniem-search-result-overlays
-                   (string= (car sniem-search-result-overlays)
-                            word)
-                   (setq tmp (sniem--list-memq sniem-search-result-overlays
-                                               (overlays-at (point))
-                                               'index)))
-              (ignore-errors
-                (goto-char (overlay-start
-                            (setq ov
-                                  (nth (1- tmp) sniem-search-result-overlays))))
-                (push-mark (overlay-end ov) t t)
-                (sniem-search--check-result (1- tmp)))
-            (setq tmp (search-backward-regexp word nil t))
-            (if tmp
-                (progn
-                  (when (region-active-p)
-                    (deactivate-mark))
-                  (setq tmp (point))
-                  (push-mark (search-forward-regexp word) t t)
-                  (goto-char tmp)
-                  (sniem-add-to-history word)
-                  (when (or (null sniem-search-result-overlays)
-                            (not (string= (car sniem-search-result-overlays)
-                                          word)))
-                    (when (timerp sniem-search-timer)
-                      (cancel-timer sniem-search-timer))
-                    (setq-local sniem-search-timer
-                                (run-with-timer
-                                 0 10 #'sniem-search--highlight-results
-                                 word (current-buffer)))))
-              (user-error "[Sniem]: Cannot find the content!"))))
-      (backward-word n)
-      (unless no-hint
-        (sniem-motion-hint `(lambda () (interactive)
-                              (sniem-prev-word ,n t ,word t)))))))
+          (when (not (= (point) (region-beginning)))
+            (goto-char (region-beginning))))
+        (if (and sniem-search-result-overlays
+                 (string= (car sniem-search-result-overlays)
+                          word)
+                 (setq tmp (sniem--list-memq sniem-search-result-overlays
+                                             (overlays-at (point))
+                                             'index)))
+            (ignore-errors
+              (goto-char (overlay-start
+                          (setq ov
+                                (nth (1- tmp) sniem-search-result-overlays))))
+              (push-mark (overlay-end ov) t t)
+              (sniem-search--check-result (1- tmp)))
+          (setq tmp (search-backward-regexp word nil t))
+          (if tmp
+              (progn
+                (when (region-active-p)
+                  (deactivate-mark))
+                (setq tmp (point))
+                (push-mark (search-forward-regexp word) t t)
+                (goto-char tmp)
+                (sniem-add-to-history word)
+                (when (or (null sniem-search-result-overlays)
+                          (not (string= (car sniem-search-result-overlays)
+                                        word)))
+                  (when (timerp sniem-search-timer)
+                    (cancel-timer sniem-search-timer))
+                  (setq-local sniem-search-timer
+                              (run-with-timer
+                               0 10 #'sniem-search--highlight-results
+                               word (current-buffer)))))
+            (user-error "[Sniem]: Cannot find the content!"))))
+    (backward-word n)
+    (unless no-hint
+      (sniem-motion-hint `(lambda () (interactive)
+                            (sniem-prev-word ,n t ,word t))))))
 
 (defun sniem-search--check-result (&optional number)
   "Check the search result.
@@ -1305,44 +1253,43 @@ is true."
 Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
-  (sniem-shift-upcase-motion-convert sniem-lock-unlock-last-point
-    (let ((current-point (point)))
-      (if (or (eq 0 type) (null sniem-mark-content-overlay))
-          (goto-char sniem-last-point)
+  (let ((current-point (point)))
+    (if (or (eq 0 type) (null sniem-mark-content-overlay))
+        (goto-char sniem-last-point)
 
-        (goto-char
-         (if (= 1 (length sniem-mark-content-overlay))
-             (overlay-start (car sniem-mark-content-overlay)) ;Goto the first marked-content if there's only one overlay.
+      (goto-char
+       (if (= 1 (length sniem-mark-content-overlay))
+           (overlay-start (car sniem-mark-content-overlay)) ;Goto the first marked-content if there's only one overlay.
 
-           (let ((current-ov (sniem--list-memq sniem-mark-content-overlay
-                                               (overlays-at (point)) 'index))
-                 (notice (lambda (n)
-                           (message "[Sniem]: Jumped to: %d" n)))
-                 next-ov)
-             (cond ((and (numberp type)
-                         (<= type (length sniem-mark-content-overlay)))
-                    (funcall notice type)
-                    (overlay-start (nth (1- type) sniem-mark-content-overlay)))
+         (let ((current-ov (sniem--list-memq sniem-mark-content-overlay
+                                             (overlays-at (point)) 'index))
+               (notice (lambda (n)
+                         (message "[Sniem]: Jumped to: %d" n)))
+               next-ov)
+           (cond ((and (numberp type)
+                       (<= type (length sniem-mark-content-overlay)))
+                  (funcall notice type)
+                  (overlay-start (nth (1- type) sniem-mark-content-overlay)))
 
-                   ((null current-ov)
-                    (funcall notice 1)
-                    (overlay-start (car sniem-mark-content-overlay)))
+                 ((null current-ov)
+                  (funcall notice 1)
+                  (overlay-start (car sniem-mark-content-overlay)))
 
-                   ((and (numberp type)
-                         (> type (length sniem-mark-content-overlay)))
-                    (user-error "[Sniem]: The number %d of marked-content can't be found!"
-                                type))
+                 ((and (numberp type)
+                       (> type (length sniem-mark-content-overlay)))
+                  (user-error "[Sniem]: The number %d of marked-content can't be found!"
+                              type))
 
-                   (t (setq next-ov (nth (1+ current-ov) sniem-mark-content-overlay))
-                      (if (null next-ov)
-                          (progn
-                            (funcall notice 1)
-                            (overlay-start (car sniem-mark-content-overlay))) ;If the current overlay is the last, goto the first one.
-                        (funcall notice (+ 2 current-ov))
-                        (overlay-start next-ov))))))))
+                 (t (setq next-ov (nth (1+ current-ov) sniem-mark-content-overlay))
+                    (if (null next-ov)
+                        (progn
+                          (funcall notice 1)
+                          (overlay-start (car sniem-mark-content-overlay))) ;If the current overlay is the last, goto the first one.
+                      (funcall notice (+ 2 current-ov))
+                      (overlay-start next-ov))))))))
 
-      (unless (or sniem-last-point-locked non-point-set)
-        (setq-local sniem-last-point current-point)))))
+    (unless (or sniem-last-point-locked non-point-set)
+      (setq-local sniem-last-point current-point))))
 
 (provide 'sniem-operation)
 

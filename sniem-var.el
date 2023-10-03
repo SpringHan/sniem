@@ -323,18 +323,8 @@
   :group 'sniem)
 
 (defcustom sniem-shift-lock nil
-  "If it is t, you can use Caps_Lock in insert-state."
+  "If it is t, you can use upper case defaultly."
   :type 'boolean
-  :group 'sniem)
-
-(defcustom sniem-shift-lock-motions '(nil)
-  "The locked motions."
-  :type 'list
-  :group 'sniem)
-
-(defcustom sniem-shift-default-lock-motions nil
-  "The default locked motions."
-  :type 'list
   :group 'sniem)
 
 (defcustom sniem-object-catch-global-symbol-alist
@@ -349,7 +339,7 @@
   :type 'list
   :group 'sniem)
 
-(defcustom sniem-mark-attachments
+(defcustom sniem-mark-connectors
   '((emacs-lisp-mode "<" ">" "!" "@" "#" "$" "%" "^" "&" "*" "-"
                      "_" "=" "+" "\\" "|" "," "." "/" ":" "?")
     (c-mode :expand ("&" "*" "::"))
@@ -358,7 +348,7 @@
     (makefile-mode "-")
     (rust-mode :expand ("." "::" "&"))
     (global "_"))
-  "The attachments when marking symbol."
+  "The connectors when marking symbol."
   :type 'list
   :group 'sniem)
 

@@ -287,14 +287,13 @@ PRE-ARG is the prefix arg."
 (defun sniem-lock-unlock-last-point (&optional lock)
   "LOCK or unlock `sniem-last-point'."
   (interactive)
-  (sniem-shift-lock-motion (sniem-goto-last-point) nil
-    (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
-                                            nil
-                                          t))
-    (sniem-show-last-point (not sniem-last-point-locked))
-    (message "[Sniem]: Last point %s." (if sniem-last-point-locked
-                                           "locked"
-                                         "unlocked"))))
+  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
+                                          nil
+                                        t))
+  (sniem-show-last-point (not sniem-last-point-locked))
+  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
+                                         "locked"
+                                       "unlocked")))
 
 (defun sniem-keyboard-quit ()
   "Like `keyboard-quit'.
@@ -411,16 +410,6 @@ Optional argument KEYS are the keys you want to add."
     (while keys
       (setq key (pop keys)
             func (pop keys))
-      (when (and sniem-shift-default-lock-motions
-                 (memq func '(sniem-forward-char
-                              sniem-backward-char
-                              sniem-prev-line
-                              sniem-next-line)))
-        (let ((original-key (aref (car (where-is-internal func)) 0)))
-          (setq sniem-shift-default-lock-motions
-                (append
-                 (remq original-key sniem-shift-default-lock-motions)
-                 (list (string-to-char key))))))
       (define-key sniem-normal-state-keymap (kbd key) func))))
 
 (defun sniem-expand-set-key (&rest keys)
@@ -434,14 +423,14 @@ Optional argument KEYS are the keys you want to add."
             func (pop keys))
       (define-key sniem-expand-state-keymap (kbd key) func))))
 
-(defun sniem-mark-set-attachment (mode &rest attachment)
-  "Set special ATTACHMENT pair for MODE to mark symbol more accurately."
-  (let ((index (sniem-object-catch--index mode sniem-mark-attachments)))
+(defun sniem-mark-set-connector (mode &rest connector)
+  "Set special CONNECTOR pair for MODE to mark symbol more accurately."
+  (let ((index (sniem-object-catch--index mode sniem-mark-connectors)))
     (if index
-        (setf (nth index sniem-mark-attachments)
-              (append (list mode) attachment))
-      (add-to-list 'sniem-mark-attachments
-                   (append (list mode) attachment)))))
+        (setf (nth index sniem-mark-connectors)
+              (append (list mode) connector))
+      (add-to-list 'sniem-mark-connectors
+                   (append (list mode) connector)))))
 
 (defun sniem-set-keyboard-layout (layout)
   "Set the keyboard layout, then you can use the default keymap for your layout.
@@ -675,6 +664,7 @@ Optional argument HIDE is t, the last point will be show."
 ARG is the `prefix-arg'."
   (interactive "P")
   (let (char result)
+    ;; NOTE: To ensure the last key is the motion key.
     (while (not (setq char (sniem-shift-convert (read-char)
                                                 sniem-shift-binding-key))))
     (when (numberp char)
@@ -694,6 +684,7 @@ SHIFT-KEY is the shift key bound by user."
   (pcase sniem-shift-times
     (2 (setq sniem-shift-times 1)
        (pcase char
+         ;; Have pressed `shift-key' three times, so enable shift lock.
          ((pred (= shift-key))
           (setq-local sniem-shift-lock
                       (if sniem-shift-lock
@@ -707,29 +698,12 @@ SHIFT-KEY is the shift key bound by user."
                        "opened"
                      "closed"))
           t)
-         (32 t)
-         (_ (when sniem-normal-mode
-              (let (locked)
-                (setq-local sniem-shift-lock-motions
-                            (if (car sniem-shift-lock-motions)
-                                '(nil)
-                              (setq locked t)
-                              (if sniem-shift-default-lock-motions
-                                  sniem-shift-default-lock-motions
-                                (setq sniem-shift-default-lock-motions
-                                      (list t
-                                            (aref (car (where-is-internal 'sniem-forward-char)) 0)
-                                            (aref (car (where-is-internal 'sniem-backward-char)) 0)
-                                            (aref (car (where-is-internal 'sniem-prev-line)) 0)
-                                            (aref (car (where-is-internal 'sniem-next-line)) 0))))))
-                (message "[Sniem]: Shift Motion Lock %s in current buffer."
-                         (if locked
-                             "opened"
-                           "closed")))
-              char))))
+         ;; NOTE: Play the same role as `C-g'
+         (_ t)))
     (1 (pcase char
          ((pred (= shift-key))
           (setq sniem-shift-times 2)
+          ;; Return nil, tell `sniem-shift' continue.
           nil)
          (32 t)
          (_ (if (sniem-shift--not-alpha-p char)
@@ -742,16 +716,7 @@ SHIFT-KEY is the shift key bound by user."
                     (?` ?~) (?1 ?!) (?2 ?@) (?3 ?#) (?4 ?$) (?5 ?%) (?6 ?^)
                     (?7 ?&) (?8 ?*) (?9 40) (?0 41) (?- ?_) (?= ?+) (59 ?:)
                     (91 123) (93 125) (39 34) (92 124) (?, 60) (?. 62) (?/ ??)))
-              (let ((result (upcase char)))
-                (when (and (not (car sniem-shift-lock-motions))
-                           (= result char)
-                           (setq result (downcase char)))
-                  (setq-local sniem-shift-lock-motions
-                              (if (memq result sniem-shift-lock-motions)
-                                  (delete result sniem-shift-lock-motions)
-                                (append sniem-shift-lock-motions
-                                        (list result)))))
-                result)))))
+              (upcase char)))))
     (_ (user-error "[Sniem]: The sniem-shift-times is error!"))))
 
 (defun sniem-shift-lock-convert ()
