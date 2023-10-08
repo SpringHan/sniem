@@ -106,18 +106,18 @@
   "Mark the object with action TYPE."
   (interactive (list (read-char sniem-mark-message)))
   (pcase type
-    (108
+    (?l
      (beginning-of-line)
      (push-mark (point) t t)
      (end-of-line)
      (setq-local sniem-mark-line t))
-    (112
+    (?p
      (push-mark sniem-last-point t t)
      (when sniem-last-point-locked
        (sniem-lock-unlock-last-point)))
-    (109 (push-mark (point) t t))
-    (102 (mark-defun))
-    (98 (push-mark (point-min) t t)
+    (?m (push-mark (point) t t))
+    (?f (mark-defun))
+    (?b (push-mark (point-min) t t)
         (goto-char (point-max)))
     (_
      (let* ((space-mode (when (= type 32)
@@ -125,8 +125,8 @@
                             (setq type (read-char sniem-mark-message))
                             t)))
             (thing (pcase type
-                     (115 'symbol)
-                     (119 'word)
+                     (?s 'symbol)
+                     (?w 'word)
                      (_ (user-error "[Sniem]: The %s type is error!" type))))
             (points (sniem-mark--bounds-of-thing-at-point
                      thing (when (region-active-p)
@@ -307,7 +307,7 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
   (interactive (list (if sniem-delete-edit
                          (progn
                            (setq-local sniem-delete-edit nil)
-                           112)
+                           ?p)
                        (if (region-active-p)
                            t
                          (read-char sniem-delete-message)))))
@@ -526,10 +526,12 @@ Of course, the precondition is that STRING includes it."
           (backward-char))
       (backward-char)
       (unless (or (= 10 (following-char))
-                  (= 32 (following-char)))
+                  (= 32 (following-char))
+                  (= 9 (following-char)))
         (user-error "[Sniem]: The current position doesn't need join!")))
     (while (or (= 10 (following-char))
-               (= 32 (following-char)))
+               (= 32 (following-char))
+               (= 9 (following-char)))
       (backward-char))
     (forward-char)
     (push-mark last-point t t)))
