@@ -98,9 +98,9 @@
   "Center ACTION for sniem."
   (interactive (list (read-char sniem-center-message)))
   (pcase action
-    (122 (recenter nil t))
-    (116 (recenter-top-bottom 0))
-    (98 (recenter-top-bottom -1))))
+    (?z (recenter nil t))
+    (?t (recenter-top-bottom 0))
+    (?b (recenter-top-bottom -1))))
 
 (defun sniem-mark (type)
   "Mark the object with action TYPE."
@@ -661,7 +661,7 @@ Of course, the precondition is that STRING includes it."
 Argument PREFIX is the prefix of the pair.
 Optional Argument ADD means forced to add the pair."
   (interactive (list (let ((var (read-char sniem-pair-message)))
-                       (cond ((= var 97) ;Forcely add mode
+                       (cond ((= var 97) ;Forcibly add mode
                               (cons (read-char
                                      (if sniem-pair-message
                                          "Enter the pair:"
@@ -1172,7 +1172,7 @@ If OVERLAY is non-nil, only delete it."
 
 (defun sniem-search--modify-cancel-selection (&optional force)
   "Judge the modify for cancelling selection.
-If FORCE is non-nil, forcely delete the current overlay."
+If FORCE is non-nil, forcibly delete the current overlay."
   (let (tmp)
     (when (and sniem-search-result-overlays
                (setq tmp

@@ -179,7 +179,9 @@
   (sniem-expand-mode t))
 
 (defun sniem-expand-enter-or-quit ()
-  "Quit expand mode."
+  "Enter or Quit expand mode.
+Normally, if the function is called by user,
+quiting expand mode."
   (interactive)
   (if sniem-expand-mode
       (progn
@@ -189,8 +191,11 @@
                    sniem-object-catch-forward-p)
           (setq-local sniem-object-catch-forward-p nil))
         (sniem-change-mode 'normal)
+
+        ;; NOTE: Press any other unbounded keys to exit expand mode.
         (unless (eq last-input-event 32)
           (call-interactively (key-binding (read-kbd-macro (char-to-string last-input-event))))))
+
     (sniem-change-mode 'expand)))
 
 (defun sniem-execute-space-command ()
@@ -205,73 +210,78 @@
 
 (defun sniem-keypad (&optional external-char no-convert pre-arg)
   "Execute the keypad command.
-EXTERNAL-CHAR is the entrance for minibuffer-keypad mode.
+EXTERNAL-CHAR is the entrance from minibuffer-keypad mode.
 NO-CONVERT means not to convert the EXTERNAL-CHAR to prefix.
 PRE-ARG is the prefix arg."
   (interactive (list nil nil current-prefix-arg))
   (let* ((prefix-used-p nil)
+         ;; TODO: External-char -> Perhaps the char used to entrance.
+         ;; Key is the key binding of final result..
          (key (if external-char
-                  (when (and (null no-convert)
-                             (memq external-char '(44 46 47))
-                             (/= (sniem-keypad--convert-prefix
-                                  sniem-minibuffer-keypad-prefix)
-                                 external-char))
-                    (setq-local sniem-minibuffer-keypad-prefix
-                                (sniem-keypad--convert-prefix external-char))
-                    (setq external-char t
-                          prefix-used-p t))
-                (pcase last-input-event
-                  (109 "M-") (98 "C-M-") (118 "C-"))))
-         tmp command shift)
-    (unless (stringp key)
-      (setq key (if external-char
+                  (if (and (null no-convert)
+                           (memq external-char '(?, ?. ?/))
+                           (/= (sniem-keypad--convert-prefix
+                                sniem-minibuffer-keypad-prefix)
+                               external-char))
+                      (progn
+                        (setq-local sniem-minibuffer-keypad-prefix
+                                    (sniem-keypad--convert-prefix external-char))
+                        (setq external-char t
+                              prefix-used-p t)
+                        sniem-minibuffer-keypad-prefix)
+
+                    ;; Execute when in minibuffer-keypad-mode
                     (concat sniem-minibuffer-keypad-prefix
-                            (when (numberp external-char)
-                              (concat (char-to-string external-char) " ")))
-                  (concat "C-" (char-to-string last-input-event) " "))))
+                            (char-to-string external-char)
+                            " "))
+
+                ;; When the user entered keypad with sniem-leader:
+                (pcase last-input-event
+                  (?m "M-") (?b "C-M-") (?v "C-")
+                  (_ (concat "C-" (char-to-string last-input-event) " ")))))
+         tmp command shift)
 
     (message key)
     (catch 'stop
-      (when (and (numberp external-char)
-                 (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1))))))
-        (throw 'stop nil))
       (while t
+        (when (and (string-equal (substring key -1) " ")
+                   (commandp (setq command (key-binding
+                                            (read-kbd-macro (substring key 0 -1))))))
+          (throw 'stop nil))
         (setq tmp (if shift
                       (progn
                         (setq shift nil)
                         (sniem-shift-convert (read-char)
                                              sniem-shift-binding-key))
                     (read-char)))
-        (if (= tmp 127)
+        (if (= tmp 127)                 ;DEL
             (setq key (substring key 0 -2))
-          (when (= tmp 59)
+          (when (= tmp 59)              ; 59 is ;
             (keyboard-quit))
           (setq key (concat key
-                            (cond ((and (= tmp 44)
+                            (cond ((and (= tmp ?,)
                                         (null prefix-used-p))
                                    (setq prefix-used-p t)
                                    "C-")
-                                  ((and (= tmp 46)
+                                  ((and (= tmp ?.)
                                         (null prefix-used-p))
                                    (setq prefix-used-p t)
                                    "M-")
-                                  ((and (= tmp 47)
+                                  ((and (= tmp ?/)
                                         (null prefix-used-p))
                                    (setq prefix-used-p t)
                                    "C-M-")
                                   ((= tmp 32)
                                    (setq prefix-used-p t)
                                    "")
-                                  ((= tmp 9)
+                                  ((= tmp 9) ;Tab
                                    (setq shift t)
                                    "")
                                   ((/= tmp 0)
                                    (when prefix-used-p
                                      (setq prefix-used-p nil))
                                    (concat (char-to-string tmp) " "))))))
-        (message key)
-        (when (commandp (setq command (key-binding (read-kbd-macro (substring key 0 -1)))))
-          (throw 'stop nil))))
+        (message key)))
     (when pre-arg
       (setq prefix-arg pre-arg))
     (setq this-command command)
@@ -285,7 +295,8 @@ PRE-ARG is the prefix arg."
   (sniem-lock-unlock-last-point))
 
 (defun sniem-lock-unlock-last-point (&optional lock)
-  "LOCK or unlock `sniem-last-point'."
+  "Lock or unlock `sniem-last-point'.
+When LOCK is non-nil, forcibly lock the last point."
   (interactive)
   (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
                                           nil
@@ -321,6 +332,7 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-minibuffer-keypad-start-or-stop ()
   "Start or stop the minibuffer-keypad mode."
   (interactive)
+  ;; NOTE: Pressed space:
   (if current-input-method
       (if (and (= (char-before) 32)
                (not (= (point) (line-beginning-position))))
@@ -339,7 +351,7 @@ But when it's recording kmacro and there're region, deactivate mark."
                                             t))
             (call-interactively (key-binding (read-kbd-macro (char-to-string 127)))))
         (if (and sniem-minibuffer-keypad-mode
-                 (memq char '(44 46 47)))
+                 (memq char '(?, ?. ?/)))
             (progn
               (call-interactively (key-binding (read-kbd-macro (char-to-string 127))))
               (sniem-keypad char t))
@@ -350,9 +362,10 @@ But when it's recording kmacro and there're region, deactivate mark."
   (interactive)
   (if sniem-minibuffer-keypad-mode
       (sniem-keypad last-input-event)
+    ;; TODO: Symbolp ?
     (if (or (symbolp last-input-event)
-            (< last-input-event 33)
-            (> last-input-event 126))
+            (< last-input-event ?!)
+            (> last-input-event ?~))
         (progn
           (let (command)
             (if (commandp (setq command
@@ -371,12 +384,13 @@ But when it's recording kmacro and there're region, deactivate mark."
   "Initialize sniem."
   (sniem-mode t))
 
-(defun sniem--ele-exists-p (ele list)
-  "Check if ELE is belong to the LIST."
-  (catch 'exists
-    (dolist (item list)
-      (when (equal ele item)
-        (throw 'exists t)))))
+;; TODO: Delete function
+;; (defun sniem--ele-exists-p (ele list)
+;;   "Check if ELE is belong to the LIST."
+;;   (catch 'exists
+;;     (dolist (item list)
+;;       (when (equal ele item)
+;;         (throw 'exists t)))))
 
 (defun sniem-cursor-change ()
   "Change cursor type."
@@ -591,8 +605,7 @@ Argument STRING is the string get from the input."
 
 (defun sniem-mark-content (&optional mark)
   "Mark/unmark the content.
-Optional Argument MARK means mark forcibly.
-Optional Argument POINTS is the points of the content to mark."
+MARK means mark forcibly."
   (interactive "P")
   (let* ((add-ov (lambda (ov)
                    (setq-local sniem-mark-content-overlay
@@ -605,16 +618,20 @@ Optional Argument POINTS is the points of the content to mark."
                            (funcall add-ov (make-overlay (point) (1+ (point)))))
                          (overlay-put (car sniem-mark-content-overlay) 'face 'region))))
     
-    (cond ((and (listp sniem-mark-content-overlay) mark) ;Clear all the marked-contents
+    (cond ((and (listp sniem-mark-content-overlay) mark)
+
+           ;; Clear all the marked-contents
            (dolist (ov sniem-mark-content-overlay)
              (delete-overlay ov))
            (setq-local sniem-mark-content-overlay nil))
 
-          ((not (sniem--list-memq sniem-mark-content-overlay ;If the content under cursor hadn't been marked, mark it.
+          ;; If the content under cursor hadn't been marked, mark it.
+          ((not (sniem--list-memq sniem-mark-content-overlay
                                   (overlays-at (point))))
            (funcall mark-content))
           
-          (t (let ((ov (sniem--list-memq sniem-mark-content-overlay ;Remove the content under cursor from marked-content overlays.
+          ;; Remove the content under cursor from marked-content overlays.
+          (t (let ((ov (sniem--list-memq sniem-mark-content-overlay
                                          (overlays-at (point)))))
                (delete-overlay ov)
                (setq-local sniem-mark-content-overlay
@@ -748,6 +765,22 @@ When ADD-NUMBER is non-nil, numbers will be regarded as alpha."
                    (append number-list alpha-list)
                  alpha-list)))))
 
+(defun sniem-keypad--convert-prefix (prefix)
+  "Convert PREFIX from simple signary to specific prefix.
+Or convert in turn."
+  (let* ((prefix-string '("C-" "M-" "C-M-"))
+         (prefix-char '(44 46 47))
+         (from (if (stringp prefix)
+                   prefix-string
+                 prefix-char))
+         (to (if (stringp prefix)
+                 prefix-char
+               prefix-string))
+         index)
+    (setq index (sniem--index prefix from))
+    (when index
+      (nth index to))))
+
 ;;; Initialize
 (sniem-set-leader-key ",")
 
@@ -819,21 +852,6 @@ When ADD-NUMBER is non-nil, numbers will be regarded as alpha."
   "Check if yasnippet used tab."
   (eq (nth 2 (alist-get 9 yas-keymap))
       'yas-next-field-or-maybe-expand))
-
-(defun sniem-keypad--convert-prefix (prefix)
-  "Convert PREFIX from string to char or from char to string."
-  (let* ((prefix-string '("C-" "M-" "C-M-"))
-         (prefix-char '(44 46 47))
-         (from (if (stringp prefix)
-                   prefix-string
-                 prefix-char))
-         (to (if (stringp prefix)
-                 prefix-char
-               prefix-string))
-         index)
-    (setq index (sniem--index prefix from))
-    (when index
-      (nth index to))))
 
 ;;; State info print support
 (defun sniem-state ()

@@ -383,11 +383,11 @@
   "The message for `sniem-yank'.")
 
 (defvar sniem-macro-message
-  "[q]Record, [e]val kmacro, [n]ame for kmacro, [l]ock or unlock kmacro, [.]Forcely lock kmacro, [c]all kmacro:"
+  "[q]Record, [e]val kmacro, [n]ame for kmacro, [l]ock or unlock kmacro, [.]Forcibly lock kmacro, [c]all kmacro:"
   "The message for `sniem-macro'.")
 
 (defvar sniem-pair-message
-  "[a]Forcely add pair, [s]Add or delete space around, other keys means pair(like '['):"
+  "[a]Forcibly add pair, [s]Add or delete space around, other keys means pair(like '['):"
   "The message for `sniem-pair'.")
 
 (defvar sniem-paste-message
