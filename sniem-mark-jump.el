@@ -76,9 +76,9 @@ Optional argument NAME means enable the name."
               ""
             " ")
           type
-          (if (or name sniem-mark-jump-author-name-enable)
-              (format "(%s): " (sniem-mark-jump--get-author-name))
-            ": "))
+          (format "%s: " (if (or name sniem-mark-jump-author-name-enable)
+                             (sniem-mark-jump--get-author-name)
+                           "")))
   (when comment-end
     (save-mark-and-excursion
       (insert comment-end)))
@@ -123,9 +123,12 @@ Optional argument TYPE is the type of comment mark."
       (sniem-mark-jump--escape-comment (when next t)))
     (catch 'stop
       (while tmp
-        (if type
-            (setq tmp (funcall search-command (concat "\\(" comment-start "*\\)" "\\(?:.*\\)" type "\\(?:.*\\)") nil t))
-          (setq tmp (funcall search-command (concat "\\(" comment-start "*\\)" sniem-mark-jump-regexp) nil t)))
+        (setq tmp (funcall search-command
+                           (concat "\\(" comment-start "*\\)"
+                                   (if type
+                                       (concat "\\(?:.*\\)" type "\\(?:.*\\)")
+                                     sniem-mark-jump-regexp))
+                           nil t))
         (when (and tmp (numberp tmp))
           (goto-char (comment-beginning))
           (throw 'stop t)))
@@ -156,7 +159,13 @@ Argument FORWARD means search forward."
       sniem-mark-jump-author-name
     (unless sniem-mark-jump-author-name-enable
       (setq-local sniem-mark-jump-author-name-enable t))
-    (read-string "Enter your name: ")))
+    (let ((tmp (read-string "Enter your name: ")))
+      (if (string-equal tmp "")
+          ;; When the name string is empty, disabling to insert author name.
+          (progn
+            (setq-local sniem-mark-jump-author-name-enable nil)
+            "")
+        tmp))))
 
 (defun sniem-mark-jump-reset-regexp ()
   "Reset the regexp."
