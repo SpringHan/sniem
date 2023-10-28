@@ -834,10 +834,10 @@ STRING1 and STRING2 are the strings to compair."
   (let ((line (line-number-at-pos)))
     (setq n (or n 1))
     (unless (bobp)
-      (line-move (- n)))
+      (sniem-line-move (- n)))
     (when (and (region-active-p) sniem-mark-line)
       (while (= (line-number-at-pos) line)
-        (line-move -1))
+        (sniem-line-move -1))
       (if (= (region-beginning) (point))
           (beginning-of-line)
         (end-of-line)))))
@@ -852,10 +852,10 @@ STRING1 and STRING2 are the strings to compair."
   (let ((line (line-number-at-pos)))
     (setq n (or n 1))
     (unless (eobp)
-      (line-move n))
+      (sniem-line-move n))
     (when (and (region-active-p) sniem-mark-line)
       (while (= (line-number-at-pos) line)
-        (line-move 1))
+        (sniem-line-move 1))
       (if (= (region-beginning) (point))
           (beginning-of-line)
         (end-of-line)))))
@@ -863,6 +863,16 @@ STRING1 and STRING2 are the strings to compair."
 (sniem-define-motion sniem-5-next-line ()
   "Eval `sniem-next-line' 5 times."
   (sniem-next-line 5 t))
+
+(defun sniem-line-move (n)
+  "Line move N for sniem."
+  (let ((target-line (+ (line-number-at-pos) n))
+        (target-pos (- (point) (line-beginning-position)))
+        current-pos)
+    (setq current-pos (goto-line target-line))
+    (if (> target-pos (- (line-end-position) (line-beginning-position)))
+        (end-of-line)
+      (forward-char target-pos))))
 
 (sniem-define-motion sniem-first-line ()
   "Goto beginning of buffer."
