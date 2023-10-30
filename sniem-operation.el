@@ -600,7 +600,7 @@ Of course, the precondition is that STRING includes it."
                         "Set"
                       "Unset")))
       (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
-      (99 (call-interactively (sniem-macro--get-kbd-macros)))))))
+      (99 (call-interactively (sniem-macro--get-kbd-macros))))))
 
 (defun sniem-macro--more-line-execute (&optional overlay-p)
   "More line execute macro.
