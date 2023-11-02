@@ -869,9 +869,8 @@ STRING1 and STRING2 are the strings to compair."
 (defun sniem-line-move (n)
   "Line move N for sniem."
   (let ((target-line (+ (line-number-at-pos) n))
-        (target-pos (- (point) (line-beginning-position)))
-        current-pos)
-    (setq current-pos (goto-line target-line))
+        (target-pos (- (point) (line-beginning-position))))
+    (forward-line n)
     (if (> target-pos (- (line-end-position) (line-beginning-position)))
         (end-of-line)
       (forward-char target-pos))))
