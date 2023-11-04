@@ -568,6 +568,7 @@ Argument STRING is the string get from the input."
     ("c" 'sniem-special-clipboard-clear)
     ("x" 'sniem-special-clipboard-pop)
     ("f" 'sniem-linked-file-pannel)
+    ("R" 'sniem-edit-marked-content)
     ("P" (lambda ()
            (interactive)
            (funcall-interactively #'sniem-paste nil t)))
@@ -610,15 +611,16 @@ MARK means mark forcibly."
   (let* ((add-ov (lambda (ov)
                    (setq-local sniem-mark-content-overlay
                                (append (list ov) sniem-mark-content-overlay))))
-         (mark-content (lambda ()
+         (mark-content (lambda (mark)
                          (if (region-active-p)
                              (progn
                                (funcall add-ov (make-overlay (region-beginning) (region-end)))
-                               (deactivate-mark))
+                               (unless (numberp mark)
+                                 (deactivate-mark)))
                            (funcall add-ov (make-overlay (point) (1+ (point)))))
                          (overlay-put (car sniem-mark-content-overlay) 'face 'region))))
     
-    (cond ((and (listp sniem-mark-content-overlay) mark)
+    (cond ((and (listp sniem-mark-content-overlay) (eq mark 0))
 
            ;; Clear all the marked-contents
            (dolist (ov sniem-mark-content-overlay)
@@ -628,7 +630,7 @@ MARK means mark forcibly."
           ;; If the content under cursor hadn't been marked, mark it.
           ((not (sniem--list-memq sniem-mark-content-overlay
                                   (overlays-at (point))))
-           (funcall mark-content))
+           (funcall mark-content mark))
           
           ;; Remove the content under cursor from marked-content overlays.
           (t (let ((ov (sniem--list-memq sniem-mark-content-overlay
@@ -636,6 +638,19 @@ MARK means mark forcibly."
                (delete-overlay ov)
                (setq-local sniem-mark-content-overlay
                            (delete ov sniem-mark-content-overlay)))))))
+
+(defun sniem-edit-marked-content (content)
+  "Edit marked content with CONTENT."
+  (interactive "MEdit with:")
+  (let (start end)
+    (dolist (ov sniem-mark-content-overlay)
+      (setq start (overlay-start ov)
+            end (overlay-end ov))
+      (delete-overlay ov)
+      (goto-char start)
+      (delete-region start end)
+      (insert content))
+    (setq-local sniem-mark-content-overlay nil)))
 
 (defun sniem-unmark-content-select-it ()
   "Unmark the marked content under cursor and select it."
