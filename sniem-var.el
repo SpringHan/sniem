@@ -404,6 +404,12 @@
   "The face for motion hint."
   :group 'sniem)
 
+(defface sniem-edit-content-face
+  `((t (:foreground ,(frame-parameter nil 'foreground-color)
+                    :background "#FF0000")))
+  "The face of edit content."
+  :group 'sniem)
+
 (provide 'sniem-var)
 
 ;;; sniem-var.el ends here

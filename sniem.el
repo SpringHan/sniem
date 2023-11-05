@@ -298,13 +298,15 @@ PRE-ARG is the prefix arg."
   "Lock or unlock `sniem-last-point'.
 When LOCK is non-nil, forcibly lock the last point."
   (interactive)
-  (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
-                                          nil
-                                        t))
-  (sniem-show-last-point (not sniem-last-point-locked))
-  (message "[Sniem]: Last point %s." (if sniem-last-point-locked
-                                         "locked"
-                                       "unlocked")))
+  (if sniem-search-result-overlays
+      (sniem-mark-content t)
+    (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
+                                            nil
+                                          t))
+    (sniem-show-last-point (not sniem-last-point-locked))
+    (message "[Sniem]: Last point %s." (if sniem-last-point-locked
+                                           "locked"
+                                         "unlocked"))))
 
 (defun sniem-keyboard-quit ()
   "Like `keyboard-quit'.
@@ -606,7 +608,7 @@ Argument STRING is the string get from the input."
 
 (defun sniem-mark-content (&optional mark)
   "Mark/unmark the content.
-MARK means mark forcibly."
+MARK means mark forcibly. In the meanwhile, it means give it edit face."
   (interactive "P")
   (let* ((add-ov (lambda (ov)
                    (setq-local sniem-mark-content-overlay
@@ -615,10 +617,13 @@ MARK means mark forcibly."
                          (if (region-active-p)
                              (progn
                                (funcall add-ov (make-overlay (region-beginning) (region-end)))
-                               (unless (numberp mark)
+                               (unless mark
                                  (deactivate-mark)))
                            (funcall add-ov (make-overlay (point) (1+ (point)))))
-                         (overlay-put (car sniem-mark-content-overlay) 'face 'region))))
+                         (overlay-put (car sniem-mark-content-overlay)
+                                      'face (if mark
+                                                'sniem-edit-content-face
+                                              'region)))))
     
     (cond ((and (listp sniem-mark-content-overlay) (eq mark 0))
 
