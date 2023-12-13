@@ -571,6 +571,7 @@ Argument STRING is the string get from the input."
     ("x" 'sniem-special-clipboard-pop)
     ("f" 'sniem-linked-file-pannel)
     ("R" 'sniem-edit-marked-content)
+    ("I" 'sniem-ignore-or-enable-marked-content)
     ("P" (lambda ()
            (interactive)
            (funcall-interactively #'sniem-paste nil t)))
@@ -670,6 +671,16 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
                   (delete ov sniem-mark-content-overlay))
       (goto-char (car points))
       (push-mark (cdr points) t t))))
+
+(defun sniem-ignore-or-enable-marked-content ()
+  "Ignore or enable marked content."
+  (interactive)
+  (if sniem-ignore-marked-content
+      (progn
+        (message "[Sniem]: Enabled marked content.")
+        (setq sniem-ignore-marked-content nil))
+    (message "[Sniem]: Ignored marked content.")
+    (setq sniem-ignore-marked-content t)))
 
 (defun sniem-mark-content-pop ()
   "Remove the first marked content from list."
@@ -881,7 +892,11 @@ Or convert in turn."
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
                      (if sniem-mark-content-overlay
-                         (format ":%d" (length sniem-mark-content-overlay))
+                         (format ":%d%s"
+                                 (length sniem-mark-content-overlay)
+                                 (if sniem-ignore-marked-content
+                                     "X"
+                                   ""))
                        "")))
     ('insert (format "[I:%s]"
                      (if sniem-shift-lock

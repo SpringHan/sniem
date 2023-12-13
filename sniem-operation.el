@@ -1267,7 +1267,7 @@ Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
   (let ((current-point (point)))
-    (if (or (eq 0 type) (null sniem-mark-content-overlay))
+    (if (or (eq 0 type) sniem-ignore-marked-content (null sniem-mark-content-overlay))
         (goto-char sniem-last-point)
 
       (goto-char
