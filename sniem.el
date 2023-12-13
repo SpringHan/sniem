@@ -678,9 +678,9 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
   (if sniem-ignore-marked-content
       (progn
         (message "[Sniem]: Enabled marked content.")
-        (setq sniem-ignore-marked-content nil))
+        (setq-local sniem-ignore-marked-content nil))
     (message "[Sniem]: Ignored marked content.")
-    (setq sniem-ignore-marked-content t)))
+    (setq-local sniem-ignore-marked-content t)))
 
 (defun sniem-mark-content-pop ()
   "Remove the first marked content from list."
