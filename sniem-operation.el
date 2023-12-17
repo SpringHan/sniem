@@ -546,9 +546,7 @@ Of course, the precondition is that STRING includes it."
 
       ;; If the `sniem-kmacro-range' is exists, call the macro to the lines
       (when sniem-kmacro-range
-        (sniem-macro--more-line-execute t)
-        (delete-overlay sniem-kmacro-range)
-        (setq-local sniem-kmacro-range nil)))
+        (sniem-macro--more-line-execute t)))
 
     (when (region-active-p)
       (sniem-search--cancel-selection)
@@ -600,7 +598,12 @@ Of course, the precondition is that STRING includes it."
                         "Set"
                       "Unset")))
       (46 (setq sniem-locked-macro (sniem-macro--get-kbd-macros)))
-      (99 (call-interactively (sniem-macro--get-kbd-macros))))))
+      (99 (call-interactively (sniem-macro--get-kbd-macros)))
+      (59 (when sniem-kmacro-range
+            (delete-overlay sniem-kmacro-range)
+            (setq-local sniem-kmacro-range nil))
+          (when sniem-kmacro-mark-content
+            (setq-local sniem-kmacro-mark-content nil))))))
 
 (defun sniem-macro--more-line-execute (&optional overlay-p)
   "More line execute macro.
@@ -619,6 +622,9 @@ When OVERLAY-P is non-nil, use `sniem-macro-range'."
                                      (forward-line))
                                    (line-end-position)))
                                sniem-locked-macro)
+  (when overlay-p
+    (delete-overlay sniem-kmacro-range)
+    (setq-local sniem-kmacro-range nil))
   ;; To skip a unneccesary execution.
   (throw 'stop t))
 
