@@ -357,6 +357,11 @@
   :type 'boolean
   :group 'sniem)
 
+(defcustom sniem-enter-command nil
+  "The enter command of current buffer."
+  :type 'symbol
+  :group 'sniem)
+
 (defvar sniem-normal-mode-alist
   '(fundamental-mode text-mode prog-mode conf-mode cider-repl-mode
                      json-mode wdired-mode deft-mode pass-view-mode telega-chat-mode

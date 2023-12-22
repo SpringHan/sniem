@@ -79,20 +79,27 @@
   "Open new line."
   (interactive)
   (goto-char (line-end-position))
-  (insert "\n")
-  (indent-according-to-mode)
+  (unless sniem-enter-command
+    (sniem-open-line--init-command))
+  (call-interactively sniem-enter-command)
   (sniem-insert))
 
 (defun sniem-open-line-previous ()
   "Open new line."
   (interactive)
   (beginning-of-line)
-  (insert "\n")
+  (unless sniem-enter-command
+    (sniem-open-line--init-command))
+  (call-interactively sniem-enter-command)
   (if (bobp)
       (goto-char (point-min))
     (forward-line -1))
-  (indent-according-to-mode)
   (sniem-insert))
+
+(defun sniem-open-line--init-command ()
+  "Initialize open line command."
+  (sniem-change-mode 'insert)
+  (setq-local sniem-enter-command (key-binding (kbd "RET"))))
 
 (defun sniem-center (action)
   "Center ACTION for sniem."
