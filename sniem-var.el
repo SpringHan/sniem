@@ -347,6 +347,7 @@
     (python-mode :expand ("."))
     (makefile-mode "-")
     (rust-mode :expand ("." "::" "&"))
+    (haskell-mode :expand ("."))
     (global "_"))
   "The connectors when marking symbol."
   :type 'list
