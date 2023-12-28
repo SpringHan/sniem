@@ -87,13 +87,15 @@
 (defun sniem-open-line-previous ()
   "Open new line."
   (interactive)
-  (beginning-of-line)
-  (unless sniem-enter-command
-    (sniem-open-line--init-command))
-  (call-interactively sniem-enter-command)
   (if (bobp)
-      (goto-char (point-min))
-    (forward-line -1))
+      (progn
+        (insert "\n")
+        (goto-char (point-min)))
+    (forward-line -1)
+    (goto-char (line-end-position))
+    (unless sniem-enter-command
+      (sniem-open-line--init-command))
+    (call-interactively sniem-enter-command))
   (sniem-insert))
 
 (defun sniem-open-line--init-command ()
@@ -1244,20 +1246,6 @@ is true."
   (sniem-motion-hint `(lambda () (interactive)
                         (forward-symbol (- 0 ,n)))))
 
-(sniem-define-motion sniem-beg-of-mark ()
-  "Goto the beginning of mark."
-  (when (region-active-p)
-    (let ((end-point (region-end)))
-      (goto-char (region-beginning))
-      (push-mark end-point t t))))
-
-(sniem-define-motion sniem-end-of-mark ()
-  "Goto the end of mark."
-  (when (region-active-p)
-    (let ((beg-point (region-beginning)))
-      (goto-char (region-end))
-      (push-mark beg-point t t))))
-
 (sniem-define-motion sniem-goto-prev ()
   "Goto prev lines with `sniem-digit-argument-get'."
   (sniem-goto-line (- (line-number-at-pos)
@@ -1273,6 +1261,35 @@ is true."
                    t)
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
+
+(defun sniem-mark-motion ()
+  "Motion in range."
+  (interactive)
+  (when (region-active-p)
+    (let* ((beg-point (region-beginning))
+           (end-point (region-end))
+           (at-beg (= (point) beg-point))
+           motion)
+      (setq motion (read-char))
+      (pcase motion
+        (?' (if at-beg
+                (progn
+                  (goto-char end-point)
+                  (push-mark beg-point t t))
+              (goto-char beg-point)
+              (push-mark end-point t t)))
+        (?q (if at-beg
+                (progn
+                  (setq end-point (1- end-point))
+                  (push-mark end-point t t))
+              (setq beg-point (1- beg-point))
+              (push-mark beg-point t t)))
+        (59 (if at-beg
+                (progn
+                  (setq end-point (1+ end-point))
+                  (push-mark end-point t t))
+              (setq beg-point (1+ beg-point))
+              (push-mark beg-point t t)))))))
 
 (defun sniem-goto-last-point (&optional type non-point-set)
   "Goto `sniem-last-point'.
