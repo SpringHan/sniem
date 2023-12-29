@@ -173,7 +173,6 @@
     (define-key map "Q" 'save-buffers-kill-terminal)
     (define-key map ";" 'sniem-keyboard-quit)
     (define-key map "'" 'sniem-mark-motion)
-    (define-key map "\"" 'sniem-beg-of-mark)
     (define-key map "<" 'sniem-goto-prev)
     (define-key map ">" 'sniem-goto-next)
     (define-key map "`" 'sniem-up-down-case)

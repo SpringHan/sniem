@@ -326,7 +326,7 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
      (sniem-delete-region
       (region-beginning)
       (if (save-mark-and-excursion
-            (sniem-end-of-mark t)
+            (sniem-end-of-mark)
             (and (not (eobp))
                  (= (point) (line-end-position))
                  sniem-mark-line))
@@ -620,12 +620,12 @@ When OVERLAY-P is non-nil, use `sniem-macro-range'."
   (sniem-macro--apply-to-lines (if overlay-p
                                    (overlay-start sniem-kmacro-range)
                                  (save-mark-and-excursion
-                                   (sniem-beg-of-mark t)
+                                   (sniem-beg-of-mark)
                                    (line-beginning-position)))
                                (if overlay-p
                                    (overlay-end sniem-kmacro-range)
                                  (save-mark-and-excursion
-                                   (sniem-end-of-mark t)
+                                   (sniem-end-of-mark)
                                    (when (= (line-beginning-position)
                                             (line-end-position))
                                      (forward-line))
@@ -1262,6 +1262,22 @@ is true."
   (when (and (region-active-p) sniem-mark-line)
     (end-of-line)))
 
+(defun sniem-beg-of-mark (&optional beg end)
+  "Get to the beginning of mark."
+  (unless beg
+    (setq beg (region-beginning)
+          end (region-end)))
+  (goto-char beg)
+  (push-mark end t t))
+
+(defun sniem-end-of-mark (&optional beg end)
+  "Get to the end of mark."
+  (unless beg
+    (setq beg (region-beginning)
+          end (region-end)))
+  (goto-char end)
+  (push-mark beg t t))
+
 (defun sniem-mark-motion ()
   "Motion in range."
   (interactive)
@@ -1274,10 +1290,8 @@ is true."
       (pcase motion
         (?' (if at-beg
                 (progn
-                  (goto-char end-point)
-                  (push-mark beg-point t t))
-              (goto-char beg-point)
-              (push-mark end-point t t)))
+                  (sniem-end-of-mark beg-point end-point))
+              (sniem-beg-of-mark beg-point end-point)))
         (?q (if at-beg
                 (progn
                   (setq end-point (1- end-point))
