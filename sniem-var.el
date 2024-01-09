@@ -347,6 +347,7 @@
     (makefile-mode "-")
     (rust-mode :expand ("." "::" "&"))
     (haskell-mode :expand ("."))
+    (dart-mode :expand ("."))
     (global "_"))
   "The connectors when marking symbol."
   :type 'list
