@@ -217,6 +217,38 @@ And its format is like: (start-point . end-point)."
     (when (and start-point end-point)
       (cons start-point end-point))))
 
+(defun sniem-split-line ()
+  "Split marked content to three lines."
+  (interactive)
+  (when (region-active-p)
+    (let ((start-overlay (make-overlay (region-beginning) (1+ (region-beginning))))
+          (end-overlay (make-overlay (region-end) (1+ (region-end))))
+          final-overlay)
+      (unless sniem-enter-command
+        (sniem-open-line--init-command)
+        (sniem-change-mode 'normal))
+
+      ;; Operate the denotement firstly.
+      (deactivate-mark)
+      (goto-char (overlay-end start-overlay))
+      (call-interactively sniem-enter-command)
+      (delete-overlay start-overlay)
+
+      (goto-char (1- (overlay-start end-overlay)))
+      (call-interactively sniem-enter-command)
+      (delete-overlay end-overlay)
+
+      ;; Split the content line.
+      (forward-line -1)
+      (setq final-overlay (make-overlay (line-end-position) (1+ (line-end-position))))
+      (while (and (< (point) (overlay-start final-overlay))
+                  (search-forward "," nil t))
+        (call-interactively sniem-enter-command)
+        (forward-line))
+
+      (goto-char (overlay-start final-overlay))
+      (delete-overlay final-overlay))))
+
 (defun sniem-up-down-case ()
   "Up or down case."
   (interactive)
