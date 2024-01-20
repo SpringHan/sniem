@@ -241,8 +241,8 @@ And its format is like: (start-point . end-point)."
       ;; Split the content line.
       (forward-line -1)
       (setq final-overlay (make-overlay (line-end-position) (1+ (line-end-position))))
-      (while (and (< (point) (overlay-start final-overlay))
-                  (search-forward "," nil t))
+      (while (and (search-forward "," nil t)
+                  (< (point) (overlay-start final-overlay)))
         (call-interactively sniem-enter-command)
         (forward-line))
 
