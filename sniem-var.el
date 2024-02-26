@@ -395,7 +395,7 @@
   "The message for `sniem-yank'.")
 
 (defvar sniem-macro-message
-  "[q]Record, [e]val kmacro, [n]ame for kmacro, [l]ock or unlock kmacro, [.]Forcibly lock kmacro, [c]all kmacro, [;]Clear macro cache:"
+  "[q]Record, [e]val kmacro, [n]ame for kmacro, [l]ock or unlock kmacro, [.]Forcibly lock kmacro, [c]all kmacro, [i]nsert named kmacro, [;]Clear macro cache:"
   "The message for `sniem-macro'.")
 
 (defvar sniem-pair-message
