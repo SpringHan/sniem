@@ -87,8 +87,9 @@
 (defun sniem-open-line-previous ()
   "Open new line."
   (interactive)
-  (if (bobp)
+  (if (= (line-beginning-position) (point-min))
       (progn
+        (goto-char (point-min))
         (insert "\n")
         (goto-char (point-min)))
     (forward-line -1)
