@@ -224,31 +224,36 @@ And its format is like: (start-point . end-point)."
   (when (region-active-p)
     (let ((start-overlay (make-overlay (region-beginning) (1+ (region-beginning))))
           (end-overlay (make-overlay (region-end) (1+ (region-end))))
-          final-overlay)
+          target-depth temp)
       (unless sniem-enter-command
         (sniem-open-line--init-command)
         (sniem-change-mode 'normal))
 
-      ;; Operate the denotement firstly.
+      ;; Get the depth of target paren.
       (deactivate-mark)
-      (goto-char (overlay-end start-overlay))
+      (goto-char (overlay-start start-overlay))
+      (setq target-depth (1+ (car (syntax-ppss))))
+      (forward-char)
       (call-interactively sniem-enter-command)
-      (delete-overlay start-overlay)
 
       (goto-char (1- (overlay-start end-overlay)))
       (call-interactively sniem-enter-command)
-      (delete-overlay end-overlay)
 
       ;; Split the content line.
-      (forward-line -1)
-      (setq final-overlay (make-overlay (line-end-position) (1+ (line-end-position))))
-      (while (and (search-forward "," nil t)
-                  (< (point) (overlay-start final-overlay)))
-        (call-interactively sniem-enter-command)
-        (forward-line))
+      (goto-char (overlay-start start-overlay))
+      (catch 'find-se-stop
+        (while (search-forward "," nil t)
+          (unless (< (point) (overlay-start end-overlay))
+            (throw 'find-se-stop t))
+          (setq temp (syntax-ppss))
+          (when (and (= (car temp) target-depth)
+                     (not (nth 3 temp))
+                     (not (= (point) (line-end-position))))
+            (call-interactively sniem-enter-command))))
 
-      (goto-char (overlay-start final-overlay))
-      (delete-overlay final-overlay))))
+      (goto-char (overlay-start start-overlay))
+      (delete-overlay start-overlay)
+      (delete-overlay end-overlay))))
 
 (defun sniem-up-down-case ()
   "Up or down case."
