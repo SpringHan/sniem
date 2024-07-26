@@ -327,6 +327,15 @@
   :type 'boolean
   :group 'sniem)
 
+(defcustom sniem-mark-next-expanding nil
+  "A character list, which includes splitted expanding connectors.
+When the list is not empty, checking whether the next character
+is the firts element of list.
+
+It can be like: (length . (character1 character 2))."
+  :type 'list
+  :group 'sniem)
+
 (defcustom sniem-object-catch-global-symbol-alist
   '((emacs-lisp-mode . (("'" . "") ("`" . "'") ("<" . "")))
     ("\"" . "\"")
@@ -342,11 +351,11 @@
 (defcustom sniem-mark-connectors
   '((emacs-lisp-mode "<" ">" "!" "@" "#" "$" "%" "^" "&" "*" "-"
                      "_" "=" "+" "\\" "|" "," "." "/" ":" "?")
-    (c-mode :expand ("&" "*" "::"))
-    (c++-mode :expand ("&" "*" "::"))
+    (c-mode :expand ("&" "*" (":" ":") ("-" ">")))
+    (c++-mode :expand ("&" "*" (":" ":") ("-" ">")))
     (python-mode :expand ("."))
     (makefile-mode "-")
-    (rust-mode :expand ("." "::" "&"))
+    (rust-mode :expand ("." "&" (":" ":")))
     (haskell-mode :expand ("."))
     (dart-mode :expand ("."))
     (global "_"))
