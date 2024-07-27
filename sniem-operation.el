@@ -134,14 +134,19 @@
                           (progn
                             (setq type (read-char sniem-mark-message))
                             t)))
+            (expand-times (when (numberp current-prefix-arg)
+                            current-prefix-arg))
             (thing (pcase type
                      (?s 'symbol)
                      (?w 'word)
                      (_ (user-error "[Sniem]: The %s type is error!" type))))
             (points (sniem-mark--bounds-of-thing-at-point
-                     thing (when (region-active-p)
-                             (deactivate-mark)
-                             (cons (region-beginning) (region-end))))))
+                     thing
+                     (when (region-active-p)
+                       (deactivate-mark)
+                       (cons (region-beginning) (region-end)))
+                     (when expand-times
+                       expand-times))))
        (when (and points space-mode
                   (save-mark-and-excursion
                     (let (l r)
@@ -157,17 +162,23 @@
          (goto-char (car points))
          (push-mark (cdr points) t t))))))
 
-(defun sniem-mark--bounds-of-thing-at-point (thing &optional expand)
+(defun sniem-mark--bounds-of-thing-at-point (thing &optional expand expand-times)
   "Get the bounds of theg THING a point.
 THING can be `symbol' or `word'.
 When EXPAND is non-nil, means expand the current selection.
-And its format is like: (start-point . end-point)."
+And its format is like: (start-point . end-point).
+EXPAND-TIMES is the dominant parameter for expanding times."
   (let ((move-command 'forward-char)
         (enter-point (point))
         (current-char (following-char))
         (split-char-p (lambda (c) (memq c '(32 9 10))))
         start-point end-point can-enter stop-current-expanding)
     (save-excursion
+      (pcase expand-times
+        (0 (setq expand-times 'inf))
+        ;; Expand once defaultly when expanding
+        ('nil (when expand
+                (setq expand-times 1))))
       (when expand
         (setq start-point (car expand)
               end-point (cdr expand)))
@@ -190,10 +201,14 @@ And its format is like: (start-point . end-point)."
             ;; Check whether the expanding can still be executed.
             (if (not (null sniem-mark-next-expanding))
                 ;; Handle multi-character expanding connectors.
-                (let ((remain-characters (cdr sniem-mark-next-expanding)))
+                (let ((remain-characters (if (eq move-command 'forward-char)
+                                             (cdr sniem-mark-next-expanding)
+                                           (reverse (cdr sniem-mark-next-expanding)))))
                   (cond ((null remain-characters)
                          (setq sniem-mark-next-expanding nil
-                               stop-current-expanding nil))
+                               stop-current-expanding nil)
+                         (when (numberp expand-times)
+                           (setq expand-times (1- expand-times))))
 
                         ((string-equal (car remain-characters)
                                        (char-to-string current-char))
@@ -203,12 +218,11 @@ And its format is like: (start-point . end-point)."
                         (t
                          (sniem--goto-last-position move-command)
                          (setq sniem-mark-next-expanding nil
-                               stop-current-expanding t)
-                         )))
+                               stop-current-expanding t))))
 
               (setq stop-current-expanding (or (sniem-pair--pair-p
-                                                current-char (if expand
-                                                                 (gv-ref expand)
+                                                current-char (if expand-times
+                                                                 (gv-ref expand-times)
                                                                t)
                                                 (eq thing 'word))
                                                (funcall split-char-p current-char))))
@@ -224,7 +238,6 @@ And its format is like: (start-point . end-point)."
                 (setq start-point (1+ (point)))
                 (throw 'stop t)))
 
-            ;; TODO: Add special check for multi-character expanding connectors.
             (when (and (eobp)
                        (eq move-command 'forward-char))
               (unless (null sniem-mark-next-expanding)
@@ -843,36 +856,36 @@ When WORDP is non-nil, connectors will be regarded as pair."
           (when (or (equal (car mode-pair) char-string)
                     (equal (cdr mode-pair) char-string))
             (throw 'result (setq pairp t)))))
+
       (when connector-check
         (setq connectors (sniem-mark--mode-alist-get))
         (setq connectorp (sniem--mems char-string
                                       (append (alist-get 'global sniem-mark-connectors)
                                               connectors)))
         (when (and (null connectorp)
-                   (consp connector-check))
+                   (consp connector-check)
+                   (not (eq 0 (gv-deref connector-check))))
           (catch 'stop
             (dolist (c (plist-get connectors :expand))
               (if (stringp c)
                   (when (string-equal c char-string)
                     (setq connectorp t)
 
-                    ;; Set the `expand' variable in `sniem-mark--bounds-of-thing-at-point'
-                    ;; to nil
-                    (setf (gv-deref connector-check) nil)
-                    (throw 'stop t))
-                (when (string-equal (car c) char-string)
-                  (setq connectorp t
-                        sniem-mark-next-expanding (cons (length c) (cdr c)))
-                  (throw 'stop t)))))
+                    ;; Decrease the expanding times.
+                    (let ((expand-times (gv-deref connector-check)))
+                      (when (numberp expand-times)
+                        (setf (gv-deref connector-check) (1- expand-times))))
 
-          ;; (setq connectorp (sniem--mems char-string
-          ;;                               (plist-get connectors :expand)
-          ;;                               t))
-          ;; (when (eq connectorp t)
-          ;;   ;; Set the `expand' variable in `sniem-mark--bounds-of-thing-at-point'
-          ;;   ;; to nil
-          ;;   (setf (gv-deref connector-check) nil))
-          ))
+                    (throw 'stop t))
+                (cond ((string-equal (car c) char-string)
+                       (setq connectorp t
+                             sniem-mark-next-expanding (cons (length c) (cdr c)))
+                       (throw 'stop t))
+
+                      ((string-equal (car (last c)) char-string)
+                       (setq connectorp t
+                             sniem-mark-next-expanding (cons (length c) (butlast c)))
+                       (throw 'stop t))))))))
       (or (and pairp (null connectorp))
           (and (null connectorp)
                (sniem-shift--not-alpha-p char-string t))))))
