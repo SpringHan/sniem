@@ -267,8 +267,10 @@
   :type 'symbol
   :group 'sniem)
 
-(defcustom sniem-mark-content-overlay nil
-  "The mark content overlay."
+(defcustom sniem-mark-content-overlay '(nil nil)
+  "The mark content overlay.
+The first element stores untagged contents.
+The other one stores tagged contents."
   :type 'list
   :group 'sniem)
 
@@ -289,6 +291,11 @@
 
 (defcustom sniem-search-timer nil
   "The timer for searching."
+  :type 'timer
+  :group 'sniem)
+
+(defcustom sniem-mark-ov-check-timer nil
+  "The timer used to avoid disappearance of mark-content overlay."
   :type 'timer
   :group 'sniem)
 

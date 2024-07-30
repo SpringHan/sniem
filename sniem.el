@@ -144,6 +144,7 @@
            (sniem-change-mode 'insert))
           ((minibufferp))
           (t (sniem-change-mode 'motion)))
+    ;; TODO: Add mark content refresh timer.
     (unless sniem-initialized
       (add-to-ordered-list 'emulation-mode-map-alists
                            `((sniem-minibuffer-keypad-mode . ,sniem-minibuffer-keypad-state-keymap)))
@@ -611,66 +612,103 @@ Argument STRING is the string get from the input."
   "Mark/unmark the content.
 MARK means mark forcibly. In the meanwhile, it means give it edit face."
   (interactive "P")
+  (unless (local-variable-p 'sniem-mark-content-overlay)
+    (make-local-variable 'sniem-mark-content-overlay))
   (let* ((add-ov (lambda (ov)
-                   (setq-local sniem-mark-content-overlay
-                               (append (list ov) sniem-mark-content-overlay))))
+                   (setf (car sniem-mark-content-overlay)
+                         (append (list ov) (car sniem-mark-content-overlay)))))
          (mark-content (lambda (mark)
-                         (if (region-active-p)
-                             (progn
-                               (funcall add-ov (make-overlay (region-beginning) (region-end)))
-                               (unless mark
-                                 (deactivate-mark)))
-                           (funcall add-ov (make-overlay (point) (1+ (point)))))
-                         (overlay-put (car sniem-mark-content-overlay)
-                                      'face (if mark
-                                                'sniem-edit-content-face
-                                              'region)))))
+                         (let (ov)
+                           (if (region-active-p)
+                               (progn
+                                 (setq ov (make-overlay (region-beginning) (region-end)))
+                                 (funcall add-ov ov)
+                                 (unless mark
+                                   (deactivate-mark)))
+                             (setq ov (make-overlay (point) (1+ (point))))
+                             (funcall add-ov ov))
+                           (overlay-put ov
+                                        'face (if mark
+                                                  'sniem-edit-content-face
+                                                'region)))))
+         existed-ov existed-index)
     
-    (cond ((and (listp sniem-mark-content-overlay) (eq mark 0))
+    (if (eq mark 0)
+        ;; Clear marked-contents
+        (let ((target-contents (read-number "Clear [1]untagged, [2]tagged, [0]all:")))
+          (when (and (or (= target-contents 0)
+                         (= target-contents 1))
+                     (car sniem-mark-content-overlay))
+            (dolist (ov (car sniem-mark-content-overlay))
+              (delete-overlay ov))
+            (setf (car sniem-mark-content-overlay) nil))
+          (when (and (or (= target-contents 0)
+                         (= target-contents 2))
+                     (nth 1 sniem-mark-content-overlay))
+            (dolist (ov (nth 1 sniem-mark-content-overlay))
+              (delete-overlay (cdr ov)))
+            (setf (nth 1 sniem-mark-content-overlay) nil)))
 
-           ;; Clear all the marked-contents
-           (dolist (ov sniem-mark-content-overlay)
-             (delete-overlay ov))
-           (setq-local sniem-mark-content-overlay nil))
+      ;; Whether there's a marked-content overlay under cursor
+      (setq existed-ov (sniem--list-memq (car sniem-mark-content-overlay)
+                                         (overlays-at (point)))
+            existed-index 0)
+      (unless existed-ov
+        (setq existed-ov (sniem--assoc-with-list-value (overlays-at (point))
+                                                  (nth 1 sniem-mark-content-overlay))
+              existed-index 1))
 
-          ;; If the content under cursor hadn't been marked, mark it.
-          ((not (sniem--list-memq sniem-mark-content-overlay
-                                  (overlays-at (point))))
-           (funcall mark-content mark))
-          
+      (if existed-ov
           ;; Remove the content under cursor from marked-content overlays.
-          (t (let ((ov (sniem--list-memq sniem-mark-content-overlay
-                                         (overlays-at (point)))))
-               (delete-overlay ov)
-               (setq-local sniem-mark-content-overlay
-                           (delete ov sniem-mark-content-overlay)))))))
+          (progn
+            (delete-overlay (if (= existed-index 1)
+                                (cdr existed-ov)
+                              existed-ov))
+            (setf (nth existed-index sniem-mark-content-overlay)
+                  (delete existed-ov
+                          (nth existed-index sniem-mark-content-overlay))))
+        (funcall mark-content mark)))))
 
 (defun sniem-edit-marked-content (content)
   "Edit marked content with CONTENT."
   (interactive "MEdit with:")
-  (let (start end)
-    (dolist (ov sniem-mark-content-overlay)
-      (setq start (overlay-start ov)
-            end (overlay-end ov))
-      (delete-overlay ov)
-      (goto-char start)
-      (delete-region start end)
-      (insert content))
-    (setq-local sniem-mark-content-overlay nil)))
+  (when (car sniem-mark-content-overlay)
+    (let (start end)
+      (dolist (ov (car sniem-mark-content-overlay))
+        (setq start (overlay-start ov)
+              end (overlay-end ov))
+        (delete-overlay ov)
+        (goto-char start)
+        (delete-region start end)
+        (insert content))
+      (setf (car sniem-mark-content-overlay) nil))))
 
 (defun sniem-unmark-content-select-it ()
   "Unmark the marked content under cursor and select it."
   (interactive)
-  (let ((ov (sniem--list-memq sniem-mark-content-overlay
-                              (overlays-at (point))))
-        points)
+  (let* ((tagged-ov nil)
+         (ov (or (sniem--list-memq (car sniem-mark-content-overlay)
+                                   (overlays-at (point)))
+                 (prog1 (sniem--assoc-with-list-value
+                         (overlays-at (point))
+                         (nth 1 sniem-mark-content-overlay))
+                   (setq tagged-ov t))))
+         points)
     (when ov
-      (setq points (cons (overlay-start ov) (overlay-end ov)))
-      (delete-overlay ov)
-      (setq-local sniem-mark-content-overlay
-                  (delete ov sniem-mark-content-overlay))
-      (goto-char (car points))
-      (push-mark (cdr points) t t))))
+      (if tagged-ov
+          (progn
+            (setq points (cons (overlay-start (cdr ov))
+                               (overlay-end (cdr ov))))
+            (delete-overlay (cdr ov))
+            (setf (cdr sniem-mark-content-overlay)
+                  (delete ov (cdr sniem-mark-content-overlay))))
+
+        (setq points (cons (overlay-start ov) (overlay-end ov)))
+        (delete-overlay ov)
+        (setf (car sniem-mark-content-overlay)
+              (delete ov (car sniem-mark-content-overlay)))))
+    (goto-char (car points))
+    (push-mark (cdr points) t t)))
 
 (defun sniem-ignore-or-enable-marked-content ()
   "Ignore or enable marked content."
@@ -683,9 +721,31 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
     (setq-local sniem-ignore-marked-content t)))
 
 (defun sniem-mark-content-pop ()
-  "Remove the first marked content from list."
+  "Remove the first untagged marked content from list."
   (interactive)
-  (pop sniem-mark-content-overlay))
+  (pop (car sniem-mark-content-overlay)))
+
+(defun sniem--mark-refresh-timer ()
+  "The timer to refresh marked-content overlays with wrong range."
+  (when (car sniem-mark-content-overlay)
+    (dolist (ov (car sniem-mark-content-overlay))
+      (sniem--mark-overlay-refresh ov)))
+
+  (when (nth 1 sniem-mark-content-overlay)
+    (dolist (ov (nth 1 sniem-mark-content-overlay))
+      (sniem--mark-overlay-refresh (cdr ov)))))
+
+(defun sniem--mark-overlay-refresh (ov)
+  "Check whether the OV (overlay) has wrong range.
+Adjusting them if it's true."
+  (let (start end)
+    (setq start (overlay-start ov)
+          end (overlay-end ov))
+    (when (= start end)
+      (if (> (point-max) (1+ start))
+          (move-overlay ov start (1+ start))
+        (unless (= (point-min) start))
+        (move-overlay ov (1- start) start)))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
@@ -891,9 +951,9 @@ Or convert in turn."
     ('normal (format "[N:%s%s%s]"
                      (if sniem-object-catch-forward-p ">" "<")
                      (if sniem-last-point-locked ":l" "")
-                     (if sniem-mark-content-overlay
+                     (if (car sniem-mark-content-overlay)
                          (format ":%d%s"
-                                 (length sniem-mark-content-overlay)
+                                 (length (car sniem-mark-content-overlay))
                                  (if sniem-ignore-marked-content
                                      "X"
                                    ""))

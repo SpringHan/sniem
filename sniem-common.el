@@ -136,6 +136,15 @@ Otherwise nil will be return."
             (throw 'stop nil)))))
     result))
 
+(defun sniem--assoc-with-list-value (value alist)
+  "Get a cons with its VALUE in ALIST.
+And VALUE is a list."
+  (catch 'result
+    (when alist
+      (dolist (e alist)
+        (when (memq (cdr e) value)
+          (throw 'result e))))))
+
 (defun sniem--nth-utill (start end list)
   "Get elements in LIST from START to END.
 START & END can be nil."
