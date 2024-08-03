@@ -570,9 +570,11 @@ Argument STRING is the string get from the input."
     (">" 'sniem-mark-jump-next)
     ("c" 'sniem-special-clipboard-clear)
     ("x" 'sniem-special-clipboard-pop)
-    ("f" 'sniem-linked-file-pannel)
+    ("f" 'sniem-linked-file-pannel)     ;NOTE: Maybe useless
     ("R" 'sniem-edit-marked-content)
     ("I" 'sniem-ignore-or-enable-marked-content)
+    ("T" 'sniem-handle-tag-mark)
+    ("j" 'sniem-jump-to-tag-mark)
     ("P" (lambda ()
            (interactive)
            (funcall-interactively #'sniem-paste nil t)))
@@ -635,15 +637,15 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
     
     (if (eq mark 0)
         ;; Clear marked-contents
-        (let ((target-contents (read-number "Clear [1]untagged, [2]tagged, [0]all:")))
-          (when (and (or (= target-contents 0)
-                         (= target-contents 1))
+        (let ((target-contents (read-char "Clear [1]untagged, [2]tagged, [0]all:")))
+          (when (and (or (= target-contents ?0)
+                         (= target-contents ?1))
                      (car sniem-mark-content-overlay))
             (dolist (ov (car sniem-mark-content-overlay))
               (delete-overlay ov))
             (setf (car sniem-mark-content-overlay) nil))
-          (when (and (or (= target-contents 0)
-                         (= target-contents 2))
+          (when (and (or (= target-contents ?0)
+                         (= target-contents ?2))
                      (nth 1 sniem-mark-content-overlay))
             (dolist (ov (nth 1 sniem-mark-content-overlay))
               (delete-overlay (cdr ov)))
@@ -655,7 +657,7 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
             existed-index 0)
       (unless existed-ov
         (setq existed-ov (sniem--assoc-with-list-value (overlays-at (point))
-                                                  (nth 1 sniem-mark-content-overlay))
+                                                       (nth 1 sniem-mark-content-overlay))
               existed-index 1))
 
       (if existed-ov
@@ -724,6 +726,59 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
   "Remove the first untagged marked content from list."
   (interactive)
   (pop (car sniem-mark-content-overlay)))
+
+(defun sniem-handle-tag-mark ()
+  "Give marked-content a tag or remove a tag."
+  (interactive)
+  (let* ((tagged-ov nil)
+         (point-ovs (overlays-at (point)))
+         (target-ov (or (sniem--list-memq (car sniem-mark-content-overlay)
+                                       point-ovs)
+                        (prog1 (sniem--assoc-with-list-value
+                                point-ovs
+                                (nth 1 sniem-mark-content-overlay))
+                          (setq tagged-ov t)))))
+    (unless target-ov
+      (user-error "[Sniem]: There's no marked content under your cursor!"))
+    (if tagged-ov
+        (progn
+          (setf (nth 1 sniem-mark-content-overlay)
+                (delete target-ov (nth 1 sniem-mark-content-overlay)))
+          (setf (car sniem-mark-content-overlay)
+                (append (list (cdr target-ov)) (car sniem-mark-content-overlay)))
+          (message "[Sniem]: Successfully removed tag of current mark."))
+      (let* ((function-name "Current Function Name")
+             (tag-name (completing-read "Enter tag name:"
+                                        (list function-name))))
+        (when (string-equal function-name tag-name)
+          ;; TODO: Fetch the function name with tree sitter
+          ;; (setq tag-name ....)
+          )
+        (setf (car sniem-mark-content-overlay)
+              (delete target-ov (car sniem-mark-content-overlay)))
+        (setf (nth 1 sniem-mark-content-overlay)
+              (append (list (cons tag-name target-ov))
+                      (nth 1 sniem-mark-content-overlay)))
+        (message "[Sniem]: Successfully added tag for current mark.")))))
+
+(defun sniem-jump-to-tag-mark ()
+  "Jump to a tagged marked-content."
+  (interactive)
+  (let ((ovs (nth 1 sniem-mark-content-overlay))
+        tags tag-name target-ov)
+    (unless ovs
+      (user-error "[Sniem]: Cannot find tagged marked content!"))
+    (dolist (ov ovs)
+      (setq tags (append tags (list (car ov)))))
+    (setq tag-name (completing-read "Enter target tag:" tags nil t))
+    (setq target-ov (alist-get tag-name ovs nil nil #'string-equal))
+    (goto-char (overlay-start target-ov))))
+
+;; TODO: Remove these lines
+;; (defun sniem-show-mark-tag ()
+;;   "Show the tag of current marked content."
+;;   (interactive)
+;;   )
 
 (defun sniem--mark-refresh-timer ()
   "The timer to refresh marked-content overlays with wrong range."

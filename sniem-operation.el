@@ -349,16 +349,17 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
                           (cons (region-beginning) (region-end))
                         (bounds-of-thing-at-point 'word)))
          (marked-contents '("nil"))
-         replace-region-p replaced ov c-ov tmp)
+         replace-region-p replaced ovs ov c-ov tmp)
     (when (and (region-active-p)
-               sniem-mark-content-overlay
-               (listp sniem-mark-content-overlay)
+               (car sniem-mark-content-overlay)
+               (listp (car sniem-mark-content-overlay))
                (null replace-word))
+      (setq ovs (car sniem-mark-content-overlay))
       (setq replace-region-p
             (completing-read "Enter the marked-content or nil to input word: "
                              (progn
-                               (dotimes (i (length sniem-mark-content-overlay))
-                                 (setq ov (nth i sniem-mark-content-overlay))
+                               (dotimes (i (length ovs))
+                                 (setq ov (nth i ovs))
                                  (setq marked-contents
                                        (append marked-contents
                                                (list (format
@@ -375,18 +376,18 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
             (setq tmp (progn (string-match "^\\(.*\\)- \\(.*\\)" replace-region-p)
                              (match-string 1 replace-region-p))
                   c-ov (nth (1- (string-to-number tmp))
-                            sniem-mark-content-overlay)) ;`tmp' is the number of the overlay, `c-ov' is the overlay needs to replace.
+                            ovs)) ;`tmp' is the number of the overlay, `c-ov' is the overlay needs to replace.
             (goto-char (overlay-start c-ov))
             (setq replaced (substring replace-region-p (+ 2 (length tmp)))) ;Set the rest of the contents for replace.
             (delete-region (overlay-start c-ov)
                            (overlay-end c-ov))
             (insert word)
             (delete-overlay c-ov)
-            (setq-local sniem-mark-content-overlay
-                        (append (list
-                                 (make-overlay (- (point) (length word)) (point)))
-                                (delete c-ov sniem-mark-content-overlay)))
-            (overlay-put (car sniem-mark-content-overlay) 'face 'region))
+
+            (setq ov (make-overlay (- (point) (length word)) (point)))
+            (setf (car sniem-mark-content-overlay)
+                  (append (list ov) (delete c-ov ovs)))
+            (overlay-put ov 'face 'region))
           (delete-region (region-beginning) (region-end))
           (deactivate-mark))
       (setq replaced (or replace-word
@@ -1439,39 +1440,43 @@ Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
   (let ((current-point (point)))
-    (if (or (eq 0 type) sniem-ignore-marked-content (null sniem-mark-content-overlay))
+    (if (or (eq 0 type)
+            sniem-ignore-marked-content
+            ;; NOTE: This function can only jump to untagged marked-contents.
+            (null (car sniem-mark-content-overlay)))
         (goto-char sniem-last-point)
 
       (goto-char
-       (if (= 1 (length sniem-mark-content-overlay))
-           (overlay-start (car sniem-mark-content-overlay)) ;Goto the first marked-content if there's only one overlay.
+       (let ((ovs (car sniem-mark-content-overlay)))
+         (if (= 1 (length ovs))
+             (overlay-start (car ovs)) ;Goto the first marked-content if there's only one overlay.
 
-         (let ((current-ov (sniem--list-memq sniem-mark-content-overlay
-                                             (overlays-at (point)) 'index))
-               (notice (lambda (n)
-                         (message "[Sniem]: Jumped to: %d" n)))
-               next-ov)
-           (cond ((and (numberp type)
-                       (<= type (length sniem-mark-content-overlay)))
-                  (funcall notice type)
-                  (overlay-start (nth (1- type) sniem-mark-content-overlay)))
+           (let ((current-ov (sniem--list-memq ovs
+                                               (overlays-at (point)) 'index))
+                 (notice (lambda (n)
+                           (message "[Sniem]: Jumped to: %d" n)))
+                 next-ov)
+             (cond ((and (numberp type)
+                         (<= type (length ovs)))
+                    (funcall notice type)
+                    (overlay-start (nth (1- type) ovs)))
 
-                 ((null current-ov)
-                  (funcall notice 1)
-                  (overlay-start (car sniem-mark-content-overlay)))
+                   ((null current-ov)
+                    (funcall notice 1)
+                    (overlay-start (car ovs)))
 
-                 ((and (numberp type)
-                       (> type (length sniem-mark-content-overlay)))
-                  (user-error "[Sniem]: The number %d of marked-content can't be found!"
-                              type))
+                   ((and (numberp type)
+                         (> type (length ovs)))
+                    (user-error "[Sniem]: The number %d of marked-content can't be found!"
+                                type))
 
-                 (t (setq next-ov (nth (1+ current-ov) sniem-mark-content-overlay))
-                    (if (null next-ov)
-                        (progn
-                          (funcall notice 1)
-                          (overlay-start (car sniem-mark-content-overlay))) ;If the current overlay is the last, goto the first one.
-                      (funcall notice (+ 2 current-ov))
-                      (overlay-start next-ov))))))))
+                   (t (setq next-ov (nth (1+ current-ov) ovs))
+                      (if (null next-ov)
+                          (progn
+                            (funcall notice 1)
+                            (overlay-start (car ovs))) ;If the current overlay is the last, goto the first one.
+                        (funcall notice (+ 2 current-ov))
+                        (overlay-start next-ov)))))))))
 
     (unless (or sniem-last-point-locked non-point-set)
       (setq-local sniem-last-point current-point))))
