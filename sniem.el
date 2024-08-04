@@ -743,8 +743,10 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
           (setf (car sniem-mark-content-overlay)
                 (append (list (cdr target-ov)) (car sniem-mark-content-overlay)))
           (message "[Sniem]: Successfully removed tag of current mark."))
-      (let* ((tag-name (completing-read "Enter tag name:"
-                                        (list (which-function)))))
+      (let* ((func-name (which-function))
+             (tag-name (completing-read "Enter tag name:"
+                                        (when func-name
+                                          (list func-name)))))
         (setf (car sniem-mark-content-overlay)
               (delete target-ov (car sniem-mark-content-overlay)))
         (setf (nth 1 sniem-mark-content-overlay)
