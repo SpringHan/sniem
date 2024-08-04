@@ -145,6 +145,8 @@
           ((minibufferp))
           (t (sniem-change-mode 'motion)))
     ;; TODO: Add mark content refresh timer.
+    (setq sniem-mark-ov-check-timer
+          (run-with-idle-timer 2 3 #'sniem--mark-refresh-timer))
     (unless sniem-initialized
       (add-to-ordered-list 'emulation-mode-map-alists
                            `((sniem-minibuffer-keypad-mode . ,sniem-minibuffer-keypad-state-keymap)))
@@ -166,6 +168,8 @@
   (sniem-normal-mode -1)
   (sniem-insert-mode -1)
   (sniem-motion-mode -1)
+  (cancel-timer sniem-mark-ov-check-timer)
+  (setq sniem-mark-ov-check-timer nil)
   (when sniem-initialized
     (sniem-init-hook)
     (sniem-init-advice)
@@ -386,14 +390,6 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-initialize ()
   "Initialize sniem."
   (sniem-mode t))
-
-;; TODO: Delete function
-;; (defun sniem--ele-exists-p (ele list)
-;;   "Check if ELE is belong to the LIST."
-;;   (catch 'exists
-;;     (dolist (item list)
-;;       (when (equal ele item)
-;;         (throw 'exists t)))))
 
 (defun sniem-cursor-change ()
   "Change cursor type."
@@ -733,7 +729,7 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
   (let* ((tagged-ov nil)
          (point-ovs (overlays-at (point)))
          (target-ov (or (sniem--list-memq (car sniem-mark-content-overlay)
-                                       point-ovs)
+                                          point-ovs)
                         (prog1 (sniem--assoc-with-list-value
                                 point-ovs
                                 (nth 1 sniem-mark-content-overlay))
@@ -747,13 +743,8 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
           (setf (car sniem-mark-content-overlay)
                 (append (list (cdr target-ov)) (car sniem-mark-content-overlay)))
           (message "[Sniem]: Successfully removed tag of current mark."))
-      (let* ((function-name "Current Function Name")
-             (tag-name (completing-read "Enter tag name:"
-                                        (list function-name))))
-        (when (string-equal function-name tag-name)
-          ;; TODO: Fetch the function name with tree sitter
-          ;; (setq tag-name ....)
-          )
+      (let* ((tag-name (completing-read "Enter tag name:"
+                                        (list (which-function)))))
         (setf (car sniem-mark-content-overlay)
               (delete target-ov (car sniem-mark-content-overlay)))
         (setf (nth 1 sniem-mark-content-overlay)
