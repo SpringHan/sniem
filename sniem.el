@@ -389,7 +389,8 @@ But when it's recording kmacro and there're region, deactivate mark."
 
 (defun sniem-initialize ()
   "Initialize sniem."
-  (sniem-mode t))
+  (sniem-mode t)
+  (setq-default sniem-mark-content-overlay '(nil nil)))
 
 (defun sniem-cursor-change ()
   "Change cursor type."
