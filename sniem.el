@@ -144,7 +144,6 @@
            (sniem-change-mode 'insert))
           ((minibufferp))
           (t (sniem-change-mode 'motion)))
-    ;; TODO: Add mark content refresh timer.
     (setq sniem-mark-ov-check-timer
           (run-with-idle-timer 2 3 #'sniem--mark-refresh-timer))
     (unless sniem-initialized
@@ -390,7 +389,7 @@ But when it's recording kmacro and there're region, deactivate mark."
 (defun sniem-initialize ()
   "Initialize sniem."
   (sniem-mode t)
-  (setq-default sniem-mark-content-overlay '(nil nil)))
+  (setq sniem-mark-content-overlay '(nil nil)))
 
 (defun sniem-cursor-change ()
   "Change cursor type."
@@ -611,8 +610,6 @@ Argument STRING is the string get from the input."
   "Mark/unmark the content.
 MARK means mark forcibly. In the meanwhile, it means give it edit face."
   (interactive "P")
-  (unless (local-variable-p 'sniem-mark-content-overlay)
-    (make-local-variable 'sniem-mark-content-overlay))
   (let* ((add-ov (lambda (ov)
                    (setf (car sniem-mark-content-overlay)
                          (append (list ov) (car sniem-mark-content-overlay)))))
@@ -722,10 +719,13 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
 (defun sniem-mark-content-pop ()
   "Remove the first untagged marked content from list."
   (interactive)
-  (pop (car sniem-mark-content-overlay)))
+  (let ((ov (pop (car sniem-mark-content-overlay)))),
+    (delete-overlay ov)))
 
 (defun sniem-handle-tag-mark ()
-  "Give marked-content a tag or remove a tag."
+  "Give marked-content a tag or remove a tag.
+If there's a tag whose name is same as the new one,
+replace it with the new one."
   (interactive)
   (let* ((tagged-ov nil)
          (point-ovs (overlays-at (point)))
@@ -744,16 +744,28 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
           (setf (car sniem-mark-content-overlay)
                 (append (list (cdr target-ov)) (car sniem-mark-content-overlay)))
           (message "[Sniem]: Successfully removed tag of current mark."))
+
       (let* ((func-name (which-function))
              (tag-name (completing-read "Enter tag name:"
                                         (when func-name
-                                          (list func-name)))))
+                                          (list func-name))))
+             (origin-ref (gv-ref (alist-get
+                                  tag-name
+                                  (nth 1 sniem-mark-content-overlay)
+                                  nil nil #'string-equal))))
         (setf (car sniem-mark-content-overlay)
               (delete target-ov (car sniem-mark-content-overlay)))
-        (setf (nth 1 sniem-mark-content-overlay)
-              (append (list (cons tag-name target-ov))
-                      (nth 1 sniem-mark-content-overlay)))
-        (message "[Sniem]: Successfully added tag for current mark.")))))
+
+        (if (overlayp (gv-deref origin-ref))
+            ;; Replace the original one with the new one
+            (progn
+              (delete-overlay (gv-deref origin-ref))
+              (setf (gv-deref origin-ref) target-ov)
+              (message "[Sniem]: Replaced the original tag with current mark."))
+          (setf (nth 1 sniem-mark-content-overlay)
+                (append (list (cons tag-name target-ov))
+                        (nth 1 sniem-mark-content-overlay)))
+          (message "[Sniem]: Successfully added tag for current mark."))))))
 
 (defun sniem-jump-to-tag-mark ()
   "Jump to a tagged marked-content."
@@ -766,6 +778,8 @@ MARK means mark forcibly. In the meanwhile, it means give it edit face."
       (setq tags (append tags (list (car ov)))))
     (setq tag-name (completing-read "Enter target tag:" tags nil t))
     (setq target-ov (alist-get tag-name ovs nil nil #'string-equal))
+    (unless (eq (current-buffer) (overlay-buffer target-ov))
+      (switch-to-buffer (overlay-buffer target-ov)))
     (goto-char (overlay-start target-ov))))
 
 ;; TODO: Remove these lines
@@ -795,6 +809,21 @@ Adjusting them if it's true."
           (move-overlay ov start (1+ start))
         (unless (= (point-min) start))
         (move-overlay ov (1- start) start)))))
+
+(defun sniem--remove-marked-contents ()
+  "Remove marked contents in current buffer."
+  (when (buffer-file-name)
+    (let (remain-untagged remain-tagged)
+      (dolist (ov (car sniem-mark-content-overlay))
+        (unless (eq (current-buffer) (overlay-buffer ov))
+          (add-to-list 'remain-untagged ov t)))
+
+      (dolist (ov (nth 1 sniem-mark-content-overlay))
+        (unless (eq (current-buffer) (overlay-buffer (cdr ov)))
+          (add-to-list 'remain-tagged ov t)))
+
+      (setf (car sniem-mark-content-overlay) remain-untagged)
+      (setf (nth 1 sniem-mark-content-overlay) remain-tagged))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
@@ -940,7 +969,8 @@ Or convert in turn."
                  (setq-local sniem-object-catch-prefix-string-p nil))))
     (funcall fn 'minibuffer-setup-hook
              (lambda ()
-               (define-key (current-local-map) (kbd "SPC") #'sniem-minibuffer-keypad-start-or-stop)))))
+               (define-key (current-local-map) (kbd "SPC") #'sniem-minibuffer-keypad-start-or-stop)))
+    (funcall fn 'kill-buffer-hook #'sniem--remove-marked-contents)))
 
 (defun sniem-init-advice ()
   "The init function for advice."

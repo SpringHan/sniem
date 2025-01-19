@@ -1439,47 +1439,59 @@ is true."
 Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
-  (let ((current-point (point)))
+  (let ((current-point (point))
+        (ovs (sniem--get-marked-ov)))
     (if (or (eq 0 type)
             sniem-ignore-marked-content
             ;; NOTE: This function can only jump to untagged marked-contents.
-            (null (car sniem-mark-content-overlay)))
+            (null ovs))
         (goto-char sniem-last-point)
 
       (goto-char
-       (let ((ovs (car sniem-mark-content-overlay)))
-         (if (= 1 (length ovs))
-             (overlay-start (car ovs)) ;Goto the first marked-content if there's only one overlay.
+       (if (= 1 (length ovs))
+           ;; Goto the first marked-content if there's only one overlay.
+           (if (eq (current-buffer) (overlay-buffer (car ovs)))
+               (overlay-start (car ovs))
+             sniem-last-point) 
 
-           (let ((current-ov (sniem--list-memq ovs
-                                               (overlays-at (point)) 'index))
-                 (notice (lambda (n)
-                           (message "[Sniem]: Jumped to: %d" n)))
-                 next-ov)
-             (cond ((and (numberp type)
-                         (<= type (length ovs)))
-                    (funcall notice type)
-                    (overlay-start (nth (1- type) ovs)))
+         (let ((current-ov (sniem--list-memq ovs
+                                             (overlays-at (point)) 'index))
+               (notice (lambda (n)
+                         (message "[Sniem]: Jumped to: %d" n)))
+               next-ov)
+           (cond ((and (numberp type)
+                       (<= type (length ovs)))
+                  (funcall notice type)
+                  (overlay-start (nth (1- type) ovs)))
 
-                   ((null current-ov)
-                    (funcall notice 1)
-                    (overlay-start (car ovs)))
+                 ;; There's no overlay under cursor
+                 ((null current-ov)
+                  (funcall notice 1)
+                  (overlay-start (car ovs)))
 
-                   ((and (numberp type)
-                         (> type (length ovs)))
-                    (user-error "[Sniem]: The number %d of marked-content can't be found!"
-                                type))
+                 ((and (numberp type)
+                       (> type (length ovs)))
+                  (user-error "[Sniem]: The number %d of marked-content can't be found!"
+                              type))
 
-                   (t (setq next-ov (nth (1+ current-ov) ovs))
-                      (if (null next-ov)
-                          (progn
-                            (funcall notice 1)
-                            (overlay-start (car ovs))) ;If the current overlay is the last, goto the first one.
-                        (funcall notice (+ 2 current-ov))
-                        (overlay-start next-ov)))))))))
+                 (t (setq next-ov (nth (1+ current-ov) ovs))
+                    (if (null next-ov)
+                        (progn
+                          (funcall notice 1)
+                          (overlay-start (car ovs))) ;If the current overlay is the last, goto the first one.
+                      (funcall notice (+ 2 current-ov))
+                      (overlay-start next-ov))))))))
 
     (unless (or sniem-last-point-locked non-point-set)
       (setq-local sniem-last-point current-point))))
+
+(defun sniem--get-marked-ov ()
+  "Get untagged marked-content overlays in current buffer."
+  (let (ovs)
+    (dolist (ov (car sniem-mark-content-overlay))
+      (when (eq (current-buffer) (overlay-buffer ov))
+        (add-to-list 'ovs ov t)))
+    ovs))
 
 (provide 'sniem-operation)
 
