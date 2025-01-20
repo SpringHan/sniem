@@ -1490,7 +1490,7 @@ Optional argument NON-POINT-SET means not change the last-point."
   (let (ovs)
     (dolist (ov (car sniem-mark-content-overlay))
       (when (eq (current-buffer) (overlay-buffer ov))
-        (add-to-list 'ovs ov t)))
+        (setq ovs (append ovs (list ov)))))
     ovs))
 
 (provide 'sniem-operation)

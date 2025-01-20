@@ -34,8 +34,12 @@
   "Hint after MOTION."
   (let (overlay point)
     (when sniem-motion-hint-overlays
+      (when sniem-motion-hint-remove-timer
+        (cancel-timer sniem-motion-hint-remove-timer)
+        (setq sniem-motion-hint-remove-timer nil))
       (mapc #'delete-overlay sniem-motion-hint-overlays)
       (setq sniem-motion-hint-overlays nil))
+
     (save-mark-and-excursion
       (catch 'stop
         (dotimes (i 10)
@@ -52,10 +56,16 @@
                                                     (_ ""))))
             (setq point (point))
             (push overlay sniem-motion-hint-overlays)))))
-    (sit-for sniem-motion-hint-sit-time)
-    (mapc #'delete-overlay sniem-motion-hint-overlays)
-    (setq sniem-motion-hint-overlays nil)
-    (setq-local sniem-motion-hint-motion motion)))
+    (setq-local sniem-motion-hint-motion motion)
+    (setq sniem-motion-hint-remove-timer
+          (run-with-timer sniem-motion-hint-sit-time nil
+                          #'sniem--motion-hint-remove))))
+
+(defun sniem--motion-hint-remove ()
+  "Remove motion hint overlays."
+  (when sniem-motion-hint-overlays
+    (mapc #'delete-overlay sniem-motion-hint-overlays))
+  (setq sniem-motion-hint-remove-timer nil))
 
 (defun sniem-move-with-hint-num (num)
   "Move with NUM to eval the last `sniem-motion-hint-motion'."

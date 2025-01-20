@@ -289,6 +289,12 @@ The other one stores tagged contents."
   :type 'string
   :group 'sniem)
 
+(defcustom sniem-mark-content-file
+  (locate-user-emacs-file "sniem-marked-content")
+  "The file used to store marked-content."
+  :type 'string
+  :group 'sniem)
+
 (defcustom sniem-search-timer nil
   "The timer for searching."
   :type 'timer
@@ -296,6 +302,11 @@ The other one stores tagged contents."
 
 (defcustom sniem-mark-ov-check-timer nil
   "The timer used to avoid disappearance of mark-content overlay."
+  :type 'timer
+  :group 'sniem)
+
+(defcustom sniem-motion-hint-remove-timer nil
+  "The timer used to remove motion hint."
   :type 'timer
   :group 'sniem)
 

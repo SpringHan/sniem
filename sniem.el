@@ -2,7 +2,7 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.0
+;; Version: 1.2
 ;; Package-Requires: ((emacs "27.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: convenience, united-editing-method
@@ -388,8 +388,7 @@ But when it's recording kmacro and there're region, deactivate mark."
 
 (defun sniem-initialize ()
   "Initialize sniem."
-  (sniem-mode t)
-  (setq sniem-mark-content-overlay '(nil nil)))
+  (sniem-mode t))
 
 (defun sniem-cursor-change ()
   "Change cursor type."
@@ -782,12 +781,6 @@ replace it with the new one."
       (switch-to-buffer (overlay-buffer target-ov)))
     (goto-char (overlay-start target-ov))))
 
-;; TODO: Remove these lines
-;; (defun sniem-show-mark-tag ()
-;;   "Show the tag of current marked content."
-;;   (interactive)
-;;   )
-
 (defun sniem--mark-refresh-timer ()
   "The timer to refresh marked-content overlays with wrong range."
   (when (car sniem-mark-content-overlay)
@@ -816,14 +809,56 @@ Adjusting them if it's true."
     (let (remain-untagged remain-tagged)
       (dolist (ov (car sniem-mark-content-overlay))
         (unless (eq (current-buffer) (overlay-buffer ov))
-          (add-to-list 'remain-untagged ov t)))
+          (setq remain-untagged (append remain-untagged (list ov)))))
 
       (dolist (ov (nth 1 sniem-mark-content-overlay))
         (unless (eq (current-buffer) (overlay-buffer (cdr ov)))
-          (add-to-list 'remain-tagged ov t)))
+          (setq remain-tagged (append remain-tagged (list ov)))))
 
       (setf (car sniem-mark-content-overlay) remain-untagged)
       (setf (nth 1 sniem-mark-content-overlay) remain-tagged))))
+
+(defun sniem--save-tagged-overlays ()
+  "Save tagged overlays when killing emacs."
+  (unless (file-exists-p sniem-mark-content-file)
+    (make-empty-file sniem-mark-content-file))
+
+  (let ((ovs (nth 1 sniem-mark-content-overlay)))
+    (with-temp-file sniem-mark-content-file
+      (unless (null ovs)
+        (insert "(")
+        (let (file)
+          (dolist (ov ovs)
+            (setq file (buffer-file-name (overlay-buffer (cdr ov))))
+            (when (stringp file)
+              (insert (format "(\"%s\" \"%s\" %d %d)\n"
+	                            file (car ov)
+                              (overlay-start (cdr ov))
+                              (overlay-end (cdr ov)))))))
+        (insert ")")))))
+
+(defun sniem--restore-tagged-overlays ()
+  "Restore tagged overlays when initializing emacs."
+  (when (file-exists-p sniem-mark-content-file)
+    (with-temp-buffer
+      (insert-file-contents sniem-mark-content-file)
+
+      (unless (= (point) (point-max))
+        (let ((ovs (car (read-from-string (buffer-substring-no-properties
+                                           (point-min) (point-max)))))
+              buf temp-ov restored-ovs)
+          (dolist (ov ovs)
+            (setq buf (get-file-buffer (car ov)))
+
+            (when (bufferp buf)
+              (setq temp-ov (make-overlay (nth 2 ov) (nth 3 ov) buf))
+              (overlay-put temp-ov 'face 'region)
+              (push (cons (nth 1 ov) temp-ov) restored-ovs)))
+
+          (when restored-ovs
+            (setf (nth 1 sniem-mark-content-overlay)
+                  (append restored-ovs
+                          (nth 1 sniem-mark-content-overlay)))))))))
 
 (defun sniem-show-last-point (&optional hide)
   "Show the last point.
@@ -970,7 +1005,8 @@ Or convert in turn."
     (funcall fn 'minibuffer-setup-hook
              (lambda ()
                (define-key (current-local-map) (kbd "SPC") #'sniem-minibuffer-keypad-start-or-stop)))
-    (funcall fn 'kill-buffer-hook #'sniem--remove-marked-contents)))
+    (funcall fn 'kill-buffer-hook #'sniem--remove-marked-contents)
+    (funcall fn 'kill-emacs-hook #'sniem--save-tagged-overlays)))
 
 (defun sniem-init-advice ()
   "The init function for advice."
