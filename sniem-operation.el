@@ -937,7 +937,10 @@ STRING1 and STRING2 are the strings to compair."
 (sniem-define-motion sniem-beginning-of-line ()
   "Beginning of line."
   (if (bolp)
-      (call-interactively #'indent-for-tab-command)
+      (if (not sniem-wrong-indentation)
+          (call-interactively #'indent-for-tab-command)
+        (while (memq (char-after) '(32 9))
+          (forward-char)))
     (beginning-of-line)))
 
 (sniem-define-motion sniem-end-of-line ()

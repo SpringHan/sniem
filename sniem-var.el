@@ -47,6 +47,9 @@
   :type 'number
   :group 'sniem)
 
+(defvar-local sniem-wrong-indentation nil
+  "Whether emacs doesn't have suitable indentation for current file.")
+
 (defcustom sniem-last-point-overlay nil
   "The overlay for last point."
   :type 'overlay

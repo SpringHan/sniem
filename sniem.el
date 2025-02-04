@@ -570,6 +570,7 @@ Argument STRING is the string get from the input."
     ("I" 'sniem-ignore-or-enable-marked-content)
     ("T" 'sniem-handle-tag-mark)
     ("j" 'sniem-jump-to-tag-mark)
+    ("N" 'sniem-ignore-or-enable-indentation)
     ("P" (lambda ()
            (interactive)
            (funcall-interactively #'sniem-paste nil t)))
@@ -984,6 +985,17 @@ Or convert in turn."
     (setq index (sniem--index prefix from))
     (when index
       (nth index to))))
+
+(defun sniem-ignore-or-enable-indentation ()
+  "Ignore or enable indentation of current file."
+  (interactive)
+  (setq-local sniem-wrong-indentation
+              (if sniem-wrong-indentation
+                  (progn
+                    (message "[Sniem]: Enabled indentation of current file.")
+                    nil)
+                (message "[Sniem]: Ignored indentation of current file.")
+                t)))
 
 ;;; Initialize
 (sniem-set-leader-key ",")
