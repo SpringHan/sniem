@@ -134,7 +134,7 @@
   (sniem-expand-mode -1))
 
 (defun sniem--enable ()
-  "Unable sniem."
+  "Enable sniem."
   (unless (apply #'derived-mode-p sniem-close-mode-alist)
     (unless sniem-space-command
       (setq-local sniem-space-command (key-binding (kbd "SPC"))))
