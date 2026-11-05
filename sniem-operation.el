@@ -565,14 +565,15 @@ If SPECIAL is non-nil, paste from the special clipboard."
       (goto-char (cdr regionp))
       (push-mark (car regionp) t t)
       (sniem-delete t))
-    (insert (nth (if (and regionp
-                          (null special))
-                     (+ n i)
-                   (1- (+ n i)))
-                 ;; Select the clipboard
-                 (if special
-                     sniem-special-clipboard
-                   kill-ring)))))
+    (insert (substring-no-properties
+             (nth (if (and regionp,
+                           (null special))
+                      (+ n i)
+                    (1- (+ n i)))
+                  ;; Select the clipboard
+                  (if special
+                      sniem-special-clipboard
+                    kill-ring))))))
 
 (defun sniem-paste--output-contents (n special)
   "Output contents for `sniem-paste'.

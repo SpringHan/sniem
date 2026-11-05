@@ -2,7 +2,7 @@
 
 ;; Author: SpringHan
 ;; Maintainer: SpringHan
-;; Version: 1.2
+;; Version: 1.3
 ;; Package-Requires: ((emacs "27.1") (s "2.12.0") (dash "1.12.0"))
 ;; Homepage: https://github.com/SpringHan/sniem.git
 ;; Keywords: convenience, united-editing-method
