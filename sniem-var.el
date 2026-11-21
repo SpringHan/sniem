@@ -90,16 +90,6 @@
   :type 'boolean
   :group 'sniem)
 
-(defcustom sniem-delete-edit nil
-  "If it's in delete edit."
-  :type 'boolean
-  :group 'sniem)
-
-(defcustom sniem-change-edit nil
-  "If it's in change edit."
-  :type 'boolean
-  :group 'sniem)
-
 (defcustom sniem-insert-to-normal-hook nil
   "The hook running when changing insert to normal."
   :type 'hook

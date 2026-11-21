@@ -408,13 +408,9 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
 
 (defun sniem-delete (action)
   "Delete ACTION."
-  (interactive (list (if sniem-delete-edit
-                         (progn
-                           (setq-local sniem-delete-edit nil)
-                           ?p)
-                       (if (region-active-p)
-                           t
-                         (read-char sniem-delete-message)))))
+  (interactive (list (if (region-active-p)
+                         t
+                       (read-char sniem-delete-message))))
   (sniem-search--modify-cancel-selection t)
   (pcase action
     ((pred symbolp)
@@ -427,7 +423,7 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
                  sniem-mark-line))
           (1+ (region-end))
         (region-end))))
-    (100 (if (= (line-beginning-position) (line-end-position))
+    (?d (if (= (line-beginning-position) (line-end-position))
              (progn
                (if (bobp)
                    (delete-char 1)
@@ -441,11 +437,10 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
          (when (eobp)
            (beginning-of-line)))
     (9 (sniem-delete-region (line-beginning-position) (line-end-position)))
-    (112 (sniem-delete-region sniem-last-point (point))
+    (?p (sniem-delete-region sniem-last-point (point))
          (when sniem-last-point-locked
            (sniem-lock-unlock-last-point)))
-    (101 (setq-local sniem-delete-edit t)
-         (sniem-lock-unlock-last-point t))))
+    (?e (kill-line))))
 
 (defun sniem-delete-in-region ()
   "Delete in region."
@@ -467,19 +462,14 @@ Argument END is the end point of the region."
 (defun sniem-change (action)
   "Change contents.
 Argument ACTION is the action of change."
-  (interactive (list (if sniem-change-edit
-                         (progn
-                           (setq-local sniem-change-edit nil)
-                           112)
-                       (if (region-active-p)
-                           t
-                         (read-char sniem-change-message)))))
+  (interactive (list (if (region-active-p)
+                         t
+                       (read-char sniem-change-message))))
   (pcase action
     ((pred symbolp) (sniem-delete t) (sniem-insert))
-    (99 (sniem-delete 9) (indent-according-to-mode) (sniem-insert))
-    (112 (sniem-delete 112) (sniem-insert))
-    (101 (setq-local sniem-change-edit t)
-         (sniem-lock-unlock-last-point t))))
+    (?c (sniem-delete 9) (indent-according-to-mode) (sniem-insert))
+    (?p (sniem-delete 112) (sniem-insert))
+    (?e (kill-line) (sniem-insert))))
 
 (defun sniem-change-in-region ()
   "Change in region."
