@@ -30,6 +30,41 @@
 (declare-function sniem-digit-argument-read-char "sniem")
 (declare-function sniem-digit-argument-fn-get "sniem")
 
+(defun sniem--last-point-position ()
+  "Return the last point position in the current buffer, if valid.
+The position is nil when the marker is dead or belongs to another
+buffer, or when an older integer value is out of range."
+  (let ((position (cond
+                   ((markerp sniem-last-point)
+                    (when (eq (marker-buffer sniem-last-point)
+                              (current-buffer))
+                      (marker-position sniem-last-point)))
+                   ((integerp sniem-last-point)
+                    sniem-last-point))))
+    (when (and position
+               (<= (point-min) position)
+               (<= position (point-max)))
+      position)))
+
+(defun sniem--set-last-point (position)
+  "Record POSITION as the buffer's last point.
+Reuse the existing marker so overlays and any code holding it keep
+tracking the same position."
+  (setq position (max (point-min) (min position (point-max))))
+  (if (and (markerp sniem-last-point)
+           (eq (marker-buffer sniem-last-point) (current-buffer)))
+      (move-marker sniem-last-point position)
+    (setq-local sniem-last-point (copy-marker position)))
+  sniem-last-point)
+
+(defun sniem--last-point-span ()
+  "Return the ordered range between the last point and point.
+The range is empty when both positions are equal.  Return nil when
+there is no usable last point."
+  (let ((last-point (sniem--last-point-position)))
+    (when last-point
+      (cons (min last-point (point)) (max last-point (point))))))
+
 (defun sniem-motion-hint (motion)
   "Hint after MOTION."
   (let (overlay point)

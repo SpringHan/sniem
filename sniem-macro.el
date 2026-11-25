@@ -25,6 +25,8 @@
 
 ;;; Code:
 
+(declare-function sniem--set-last-point "sniem-common")
+
 (defmacro sniem-define-motion (name arg docstring &rest body)
   "Define motion for sniem.
 Argument NAME is the name of motion.
@@ -46,7 +48,7 @@ Optional argument BODY is the main body of motion function."
        ,docstring
        ,inter
        (unless (or sniem-last-point-locked non-point-set)
-         (setq-local sniem-last-point (point)))
+         (sniem--set-last-point (point)))
        ,@body)))
 
 (provide 'sniem-macro)

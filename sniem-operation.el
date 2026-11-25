@@ -37,6 +37,22 @@
 (declare-function sniem-lock-unlock-last-point "sniem")
 (declare-function sniem-shift--not-alpha-p "sniem")
 
+(defun sniem--read-menu-action (prompt)
+  "Read a menu action with PROMPT, previewing the last-point span.
+The preview is removed before the chosen action runs, so the
+operation itself starts from a clean display state."
+  (let ((span (sniem--last-point-span))
+        preview)
+    (when (and sniem-span-preview
+               span (< (car span) (cdr span))
+               (not executing-kbd-macro))
+      (setq preview (make-overlay (car span) (cdr span)))
+      (overlay-put preview 'face 'sniem-span-preview-face))
+    (unwind-protect
+        (read-char prompt)
+      (when (overlayp preview)
+        (delete-overlay preview)))))
+
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
   (interactive)
@@ -114,7 +130,7 @@
 
 (defun sniem-mark (type)
   "Mark the object with action TYPE."
-  (interactive (list (read-char sniem-mark-message)))
+  (interactive (list (sniem--read-menu-action sniem-mark-message)))
   (pcase type
     (?l
      (beginning-of-line)
@@ -122,9 +138,12 @@
      (end-of-line)
      (setq-local sniem-mark-line t))
     (?p
-     (push-mark sniem-last-point t t)
-     (when sniem-last-point-locked
-       (sniem-lock-unlock-last-point)))
+     (let ((last-point (sniem--last-point-position)))
+       (unless last-point
+         (user-error "[Sniem]: There's no last point to mark from!"))
+       (push-mark last-point t t)
+       (when sniem-last-point-locked
+         (sniem-lock-unlock-last-point))))
     (?m (push-mark (point) t t))
     (?f (mark-defun))
     (?b (push-mark (point-min) t t)
@@ -410,7 +429,7 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
   "Delete ACTION."
   (interactive (list (if (region-active-p)
                          t
-                       (read-char sniem-delete-message))))
+                       (sniem--read-menu-action sniem-delete-message))))
   (sniem-search--modify-cancel-selection t)
   (pcase action
     ((pred symbolp)
@@ -437,9 +456,12 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
          (when (eobp)
            (beginning-of-line)))
     (9 (sniem-delete-region (line-beginning-position) (line-end-position)))
-    (?p (sniem-delete-region sniem-last-point (point))
-         (when sniem-last-point-locked
-           (sniem-lock-unlock-last-point)))
+    (?p (let ((span (sniem--last-point-span)))
+          (unless span
+            (user-error "[Sniem]: There's no last point to delete from!"))
+          (sniem-delete-region (car span) (cdr span))
+          (when sniem-last-point-locked
+            (sniem-lock-unlock-last-point))))
     (?e (kill-line))))
 
 (defun sniem-delete-in-region ()
@@ -455,16 +477,20 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
 (defun sniem-delete-region (start end)
   "Like `delete-region', but it will eval `kill-ring-save' to copy the region.
 Argument START is the start point of the region.
-Argument END is the end point of the region."
-  (kill-ring-save start end)
-  (delete-region start end))
+Argument END is the end point of the region.
+The bounds are ordered here because `last-point' can be after point."
+  (let ((beg (min start end))
+        (fin (max start end)))
+    (when (< beg fin)
+      (kill-ring-save beg fin)
+      (delete-region beg fin))))
 
 (defun sniem-change (action)
   "Change contents.
 Argument ACTION is the action of change."
   (interactive (list (if (region-active-p)
                          t
-                       (read-char sniem-change-message))))
+                       (sniem--read-menu-action sniem-change-message))))
   (pcase action
     ((pred symbolp) (sniem-delete t) (sniem-insert))
     (?c (sniem-delete 9) (indent-according-to-mode) (sniem-insert))
@@ -486,7 +512,7 @@ Argument ACTION is the action of change."
 If SPECIAL is non-nil, yank it to the special clipboard."
   (interactive (list (if (region-active-p)
                          t
-                       (read-char sniem-yank-message))))
+                       (sniem--read-menu-action sniem-yank-message))))
   (let ((yank-function (if special
                            #'sniem-yank--special
                          #'kill-ring-save)))
@@ -496,9 +522,13 @@ If SPECIAL is non-nil, yank it to the special clipboard."
                     (if (= (point-max) (line-end-position))
                         (line-end-position)
                       (1+ (line-end-position)))))
-      (112 (funcall yank-function sniem-last-point (point))
-           (when sniem-last-point-locked
-             (sniem-lock-unlock-last-point))))))
+      (112 (let ((span (sniem--last-point-span)))
+             (unless span
+               (user-error "[Sniem]: There's no last point to yank from!"))
+             (when (< (car span) (cdr span))
+               (funcall yank-function (car span) (cdr span)))
+             (when sniem-last-point-locked
+               (sniem-lock-unlock-last-point)))))))
 
 (defun sniem-yank-in-region (&optional special)
   "Yank in region.
@@ -1435,19 +1465,23 @@ Optional argument TYPE is the type of the point to go.
 Optional argument NON-POINT-SET means not change the last-point."
   (interactive "P")
   (let ((current-point (point))
+        (last-point (sniem--last-point-position))
         (ovs (sniem--get-marked-ov)))
     (if (or (eq 0 type)
             sniem-ignore-marked-content
             ;; NOTE: This function can only jump to untagged marked-contents.
             (null ovs))
-        (goto-char sniem-last-point)
+        (if last-point
+            (goto-char last-point)
+          (user-error "[Sniem]: There's no last point to go to!"))
 
       (goto-char
        (if (= 1 (length ovs))
            ;; Goto the first marked-content if there's only one overlay.
            (if (eq (current-buffer) (overlay-buffer (car ovs)))
                (overlay-start (car ovs))
-             sniem-last-point) 
+             (or last-point
+                 (user-error "[Sniem]: There's no last point to go to!")))
 
          (let ((current-ov (sniem--list-memq ovs
                                              (overlays-at (point)) 'index))
@@ -1478,7 +1512,7 @@ Optional argument NON-POINT-SET means not change the last-point."
                       (overlay-start next-ov))))))))
 
     (unless (or sniem-last-point-locked non-point-set)
-      (setq-local sniem-last-point current-point))))
+      (sniem--set-last-point current-point))))
 
 (defun sniem--get-marked-ov ()
   "Get untagged marked-content overlays in current buffer."

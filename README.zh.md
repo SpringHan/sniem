@@ -92,7 +92,8 @@ keymap；切换到其中一种状态时，其它状态会被关闭。
 ### `last-point`
 
 大多数动作由 `sniem-define-motion` 宏定义，它会在动作执行前把当前位置记录为
-`sniem-last-point`。实际使用中该值是缓冲区局部的。
+`sniem-last-point`。该值是缓冲区局部的 marker，因此它之前的编辑会让它随文本一起
+移动。
 
 - 删除、修改、复制和标记菜单中的 `p` 子命令都以 `last-point` 到光标之间的范围
   作为操作对象。
@@ -231,6 +232,9 @@ Sniem 内置对四种布局的支持：`qwerty`、`colemak`、`dvorak` 和 `dvp`
 名称以 `-in-region` 结尾的命令作用于区域内部（从区域起点后一个字符到终点前一个
 字符），因此可以和 object catch 自然配合。有活动区域时，普通的 `d`、`c` 和 `y`
 命令会直接作用于该区域，而不是显示菜单。
+
+打开 `m`、`d`、`c` 或 `y` 菜单时，Sniem 会短暂高亮 `last-point` 到光标之间的范围。
+读取菜单按键后高亮就会被移除，因此 `p` 子命令作用的就是刚才显示的那一段。
 
 ### Expand 状态
 
@@ -546,9 +550,10 @@ mode line 时，可以手动添加：
   `sniem-pair-message`、`sniem-paste-message`、`sniem-linked-file-message`
   包含相应菜单的提示文本。把它们设为 nil 即可去掉提示。
 - `sniem-motion-hint-sit-time` 控制动作提示的显示时间（默认 1 秒）。
-- `sniem-motion-hint-face`、`sniem-edit-content-face` 和
+- `sniem-motion-hint-face`、`sniem-edit-content-face`、`sniem-span-preview-face` 和
   `sniem-mark-content-file` 分别控制动作提示的字体、以“编辑”参数标记内容时使用的
-  字体，以及带标签标记的存储文件。
+  字体、菜单范围预览的字体，以及带标签标记的存储文件。
+- `sniem-span-preview` 控制读取菜单按键时是否预览 `last-point` 范围（默认开启）。
 - `sniem-ignore-or-enable-indentation`（通过 `SPC N`）让
   `sniem-beginning-of-line` 在缩进不可靠的缓冲区中不执行缩进。
 
@@ -572,7 +577,7 @@ mode line 时，可以手动添加：
 | `sniem-mark-jump.el` | 注释标记（`TODO`、`BUG`、`NOTE` 及自定义类型）。 |
 | `sniem-linked-file.el` | 保存在项目根目录的关联文件组。 |
 | `sniem-cheatsheet.el` | 生成布局速查表。 |
-| `sniem-common.el` | 共享辅助函数：动作提示、数字读取、列表工具。 |
+| `sniem-common.el` | 共享辅助函数：last-point marker 访问器、动作提示、数字读取、列表工具。 |
 | `sniem-macro.el` | `sniem-define-motion` 宏。 |
 
 ### 各部分如何协作

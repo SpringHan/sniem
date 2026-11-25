@@ -97,7 +97,8 @@ When `sniem-mode` is enabled in a buffer, `sniem--enable` captures the buffer's 
 ### `last-point`
 
 Most motions are defined with the `sniem-define-motion` macro, which records the point
-*before* the motion as `sniem-last-point`. The value is buffer-local in practice.
+*before* the motion as `sniem-last-point`. The value is a buffer-local marker, so edits
+before it move it along with the text.
 
 - The `p` sub-commands of the delete, change, yank, and mark menus operate from
   `last-point` to the cursor.
@@ -238,6 +239,10 @@ Commands whose names end in `-in-region` operate on the inside of the region —
 character after its beginning to one character before its end — so they compose naturally
 with object catch. When a region is active, the plain `d`, `c`, and `y` commands act on
 it directly instead of showing their menus.
+
+When one of the `m`, `d`, `c`, or `y` menus is opened, Sniem briefly highlights the span
+between `last-point` and point. The highlight is removed when the menu key is read, so a
+`p` sub-command acts on exactly the span that was shown.
 
 ### Expand state
 
@@ -572,9 +577,11 @@ added in one call.
   prompts for the corresponding menus. Set them to nil to remove the prompts.
 - `sniem-motion-hint-sit-time` controls how long motion hints are displayed (default 1
   second).
-- `sniem-motion-hint-face`, `sniem-edit-content-face`, and `sniem-mark-content-file`
-  control the hint face, the face for content marked with an "edit" argument, and the
-  tagged-mark storage file.
+- `sniem-motion-hint-face`, `sniem-edit-content-face`, `sniem-span-preview-face`, and
+  `sniem-mark-content-file` control the hint face, the face for content marked with an
+  "edit" argument, the menu span preview face, and the tagged-mark storage file.
+- `sniem-span-preview` controls whether the last-point span is previewed while a menu
+  key is being read (on by default).
 - `sniem-ignore-or-enable-indentation` (via `SPC N`) tells `sniem-beginning-of-line`
   not to run indentation for buffers whose indentation is unreliable.
 
@@ -598,7 +605,7 @@ added in one call.
 | `sniem-mark-jump.el` | Comment marks (`TODO`, `BUG`, `NOTE`, and custom types). |
 | `sniem-linked-file.el` | Linked-file groups stored in the project root. |
 | `sniem-cheatsheet.el` | Generation of the layout cheatsheet. |
-| `sniem-common.el` | Shared helpers: motion hint, numeric reader, list utilities. |
+| `sniem-common.el` | Shared helpers: last-point marker accessors, motion hint, numeric reader, list utilities. |
 | `sniem-macro.el` | The `sniem-define-motion` macro. |
 
 ### How the pieces fit together

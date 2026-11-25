@@ -45,6 +45,9 @@
 (require 'sniem-mark-jump)
 (require 'sniem-linked-file)
 
+(declare-function sniem--last-point-position "sniem-common")
+(declare-function sniem--set-last-point "sniem-common")
+
 
 (define-minor-mode sniem-mode
   "Hands-eased united editing method mode."
@@ -295,7 +298,7 @@ PRE-ARG is the prefix arg."
 (defun sniem-move-last-point ()
   "Move the last point to current point."
   (interactive)
-  (setq-local sniem-last-point (point))
+  (sniem--set-last-point (point))
   (sniem-lock-unlock-last-point))
 
 (defun sniem-lock-unlock-last-point (&optional lock)
@@ -304,6 +307,8 @@ When LOCK is non-nil, forcibly lock the last point."
   (interactive)
   (if sniem-search-result-overlays
       (sniem-mark-content t)
+    (unless (sniem--last-point-position)
+      (sniem--set-last-point (point)))
     (setq-local sniem-last-point-locked (if (and (null lock) sniem-last-point-locked)
                                             nil
                                           t))
@@ -862,18 +867,24 @@ Adjusting them if it's true."
                           (nth 1 sniem-mark-content-overlay)))))))))
 
 (defun sniem-show-last-point (&optional hide)
-  "Show the last point.
-Optional argument HIDE is t, the last point will be show."
+  "Show the last point, or hide it when HIDE is non-nil."
   (let ((cursor-color
          `((t (:foreground ,(frame-parameter nil 'background-color))
-              :background ,(frame-parameter nil 'cursor-color)))))
-    (if (or sniem-last-point-overlay hide)
+              :background ,(frame-parameter nil 'cursor-color))))
+        (position (sniem--last-point-position)))
+    (if (or sniem-last-point-overlay hide (null position))
         (progn
-          (delete-overlay sniem-last-point-overlay)
+          (when (overlayp sniem-last-point-overlay)
+            (delete-overlay sniem-last-point-overlay))
           (setq-local sniem-last-point-overlay nil))
-      (setq-local sniem-last-point-overlay
-                  (make-overlay sniem-last-point (1+ sniem-last-point) (current-buffer) t t))
-      (overlay-put sniem-last-point-overlay 'face cursor-color))))
+      (let ((start (if (and (= position (point-max))
+                            (> position (point-min)))
+                       (1- position)
+                     position)))
+        (setq-local sniem-last-point-overlay
+                    (make-overlay start (min (1+ start) (point-max))
+                                  (current-buffer) t t))
+        (overlay-put sniem-last-point-overlay 'face cursor-color)))))
 
 (defun sniem-set-quit-insert-key (key)
   "Set the `sniem-quit-insert' KEY."

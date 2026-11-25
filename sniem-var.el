@@ -42,9 +42,14 @@
   :type 'keymap
   :group 'sniem)
 
-(defcustom sniem-last-point nil
-  "The last point."
-  :type 'number
+(defvar-local sniem-last-point nil
+  "Marker for the buffer's last point.
+A marker is used instead of an integer so edits before the position
+keep it attached to the same text.")
+
+(defcustom sniem-span-preview t
+  "If non-nil, preview the last-point span while reading a menu action."
+  :type 'boolean
   :group 'sniem)
 
 (defvar-local sniem-wrong-indentation nil
@@ -440,6 +445,11 @@ It can be like: (length . (character1 character 2))."
   `((t (:foreground ,(frame-parameter nil 'foreground-color)
                     :background "#FF0000")))
   "The face of edit content."
+  :group 'sniem)
+
+(defface sniem-span-preview-face
+  '((t (:inherit secondary-selection :extend t)))
+  "The face for the last-point span preview."
   :group 'sniem)
 
 (provide 'sniem-var)
