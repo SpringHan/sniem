@@ -52,6 +52,13 @@ keep it attached to the same text.")
   :type 'boolean
   :group 'sniem)
 
+(defcustom sniem-last-point-trail-hint t
+  "If non-nil, show visible last-point trail positions in menus.
+The hints use the motion-hint face and only appear in the selected
+window while a menu action is being read."
+  :type 'boolean
+  :group 'sniem)
+
 (defvar-local sniem-last-point-trail nil
   "Markers for previous last points, most recent first.")
 

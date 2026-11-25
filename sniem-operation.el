@@ -39,20 +39,24 @@
 (declare-function sniem-shift--not-alpha-p "sniem")
 
 (defun sniem--read-menu-action (prompt)
-  "Read a menu action with PROMPT, previewing the last-point span.
-The preview is removed before the chosen action runs, so the
-operation itself starts from a clean display state."
-  (let ((span (sniem--last-point-span))
-        preview)
-    (when (and sniem-span-preview
-               span (< (car span) (cdr span))
-               (not executing-kbd-macro))
-      (setq preview (make-overlay (car span) (cdr span)))
-      (overlay-put preview 'face 'sniem-span-preview-face))
+  "Read a menu action with PROMPT.
+The last-point span and visible trail positions are previewed.  A
+number selects a visible trail position and keeps the menu open; RET
+confirms it, while a non-digit key confirms it and acts."
+  (let ((state (list :window (selected-window)
+                     :preview nil
+                     :hints nil
+                     :positions nil)))
     (unwind-protect
-        (read-char prompt)
-      (when (overlayp preview)
-        (delete-overlay preview)))))
+        (progn
+          (sniem--menu-preview-refresh state)
+          (let (result)
+            (while (not (cdr result))
+              (setq result (sniem--menu-key prompt state))
+              (when (car result)
+                (sniem--menu-preview-refresh state)))
+            (cdr result)))
+      (sniem--menu-preview-cleanup state))))
 
 (defun sniem-insert ()
   "Insert at the current point or the beginning of mark region."
@@ -1476,6 +1480,159 @@ Markers from other buffers and duplicate positions are skipped."
           (push marker markers))))
     (nreverse markers)))
 
+(defun sniem--last-point-trail-hint-overlay (position index window)
+  "Return an overlay marking POSITION as trail hint INDEX in WINDOW.
+At `point-max' the badge is placed after the last character because
+there is no following text to attach it to."
+  (let ((badge (concat (propertize (number-to-string index)
+                                   'face 'sniem-motion-hint-face)
+                       " "))
+        overlay)
+    (if (= position (point-max))
+        (progn
+          (setq overlay (make-overlay (max (point-min) (1- position))
+                                      position))
+          (overlay-put overlay 'after-string badge))
+      (setq overlay (make-overlay position (1+ position)))
+      (overlay-put overlay 'before-string badge))
+    (overlay-put overlay 'window window)
+    (overlay-put overlay 'priority 2)
+    overlay))
+
+(defun sniem--last-point-trail-hints (window)
+  "Return (OVERLAYS . POSITIONS) for visible trail entries in WINDOW.
+POSITIONS is an alist of (INDEX . POSITION), numbered in visible order.
+The current last point and point are skipped so the span endpoints are
+not duplicated."
+  (let ((current (sniem--last-point-position))
+        (here (point))
+        (index 0)
+        overlays
+        positions)
+    (when (and (window-live-p window)
+               (eq (window-buffer window) (current-buffer)))
+      (dolist (marker (sniem--last-point-trail-markers))
+        (let ((position (marker-position marker)))
+          (when (and (not (= position here))
+                     (not (and current (= position current)))
+                     (or (pos-visible-in-window-p position window)
+                         (and (= position (point-max))
+                              (pos-visible-in-window-p
+                               (max (point-min) (1- position))
+                               window))))
+            (setq index (1+ index))
+            (push (cons index position) positions)
+            (push (sniem--last-point-trail-hint-overlay
+                   position index window)
+                  overlays)))))
+    (cons (nreverse overlays) (nreverse positions))))
+
+(defun sniem--menu-preview-refresh (state)
+  "Refresh the span and trail previews recorded in STATE."
+  (let ((window (plist-get state :window))
+        (preview (plist-get state :preview))
+        (span (sniem--last-point-span)))
+    (if (and sniem-span-preview
+             span (< (car span) (cdr span))
+             (not executing-kbd-macro))
+        (progn
+          (unless (and (overlayp preview) (overlay-start preview))
+            (setq preview (make-overlay (car span) (cdr span)))
+            (overlay-put preview 'face 'sniem-span-preview-face))
+          (move-overlay preview (car span) (cdr span))
+          (setf (plist-get state :preview) preview))
+      (when (overlayp preview)
+        (delete-overlay preview))
+      (setf (plist-get state :preview) nil))
+    (mapc #'delete-overlay (plist-get state :hints))
+    (if (and sniem-last-point-trail-hint
+             (not executing-kbd-macro))
+        (let ((hints (sniem--last-point-trail-hints window)))
+          (setf (plist-get state :hints) (car hints)
+                (plist-get state :positions) (cdr hints)))
+      (setf (plist-get state :hints) nil
+            (plist-get state :positions) nil))
+    (when (or (plist-get state :preview) (plist-get state :hints))
+      (redisplay))))
+
+(defun sniem--menu-preview-cleanup (state)
+  "Remove the span and trail previews recorded in STATE."
+  (when (overlayp (plist-get state :preview))
+    (delete-overlay (plist-get state :preview)))
+  (mapc #'delete-overlay (plist-get state :hints)))
+
+(defun sniem--select-trail-position (position)
+  "Make POSITION the last point and keep a locked display in sync."
+  (sniem--set-last-point position)
+  (when sniem-last-point-locked
+    (when (overlayp sniem-last-point-overlay)
+      (delete-overlay sniem-last-point-overlay)
+      (setq-local sniem-last-point-overlay nil))
+    (sniem-show-last-point)))
+
+(defun sniem--trail-number-position (digits positions)
+  "Return the position for trail number DIGITS in POSITIONS."
+  (let ((number (and (> (length digits) 0)
+                     (string-to-number digits))))
+    (when (and number (> number 0))
+      (cdr (assoc number positions)))))
+
+(defun sniem--read-trail-number (positions digits)
+  "Read a multi-digit trail number starting with DIGITS.
+POSITIONS maps visible numbers to positions.  RET applies the number
+and keeps the menu open; another key applies it and becomes the menu
+action.  Return (SELECTED . ACTION) for the caller."
+  (let ((max (caar (last positions))))
+    (catch 'done
+      (while t
+        (let* ((prompt (if (= 0 (length digits))
+                           "Trail number (RET to select; non-digit acts): "
+                         (format "Trail #%s (RET to select; non-digit acts): "
+                                 digits)))
+               (key (read-char prompt))
+               (position (sniem--trail-number-position digits positions)))
+          (cond
+           ((null key)
+            (throw 'done (cons nil nil)))
+           ((and (characterp key) (<= ?0 key ?9))
+            (setq digits (concat digits (char-to-string key)))
+            (when (> (string-to-number digits) max)
+              (message "[Sniem]: No visible trail hint #%s." digits)
+              (throw 'done (cons nil nil))))
+           ((memq key '(?\r ?\n))
+            (if position
+                (progn
+                  (sniem--select-trail-position position)
+                  (message "[Sniem]: Last point set from trail #%s." digits)
+                  (throw 'done (cons t nil)))
+              (message "[Sniem]: No visible trail hint #%s." digits)
+              (throw 'done (cons nil nil))))
+           ((memq key '(?\d ?\C-h))
+            (if (> (length digits) 1)
+                (setq digits (substring digits 0 -1))
+              (throw 'done (cons nil nil))))
+           (t
+            (if position
+                (progn
+                  (sniem--select-trail-position position)
+                  (throw 'done (cons t key)))
+              (message "[Sniem]: No visible trail hint #%s." digits)
+              (throw 'done (cons nil nil))))))))))
+
+(defun sniem--menu-key (prompt state)
+  "Read one menu key and handle trail number selection.
+Return (SELECTED . ACTION).  SELECTED is non-nil when a trail position
+was applied; ACTION nil means the menu should keep reading."
+  (let ((key (read-char prompt))
+        (positions (plist-get state :positions)))
+    (cond
+     ((null key) (cons nil nil))
+     ((and (characterp key)
+           (<= ?0 key ?9)
+           positions)
+      (sniem--read-trail-number positions (char-to-string key)))
+     (t (cons nil key)))))
+
 (defun sniem--last-point-trail-text (position)
   "Return a short line snippet at POSITION for the trail prompt."
   (let (start end)
@@ -1660,12 +1817,7 @@ so callers decide whether point should move."
   "Make a previous last point current without moving point."
   (interactive)
   (let ((position (sniem--read-last-point-trail)))
-    (sniem--set-last-point position)
-    (when sniem-last-point-locked
-      (when (overlayp sniem-last-point-overlay)
-        (delete-overlay sniem-last-point-overlay)
-        (setq-local sniem-last-point-overlay nil))
-      (sniem-show-last-point))
+    (sniem--select-trail-position position)
     (message "[Sniem]: Last point restored from line %d."
              (line-number-at-pos position))))
 

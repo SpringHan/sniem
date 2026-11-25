@@ -550,6 +550,12 @@ mode line 时，可以手动添加：
 - `sniem-last-point-trail-size`：为 `sniem-last-point-from-trail` 和
   `sniem-goto-last-point-from-trail` 保留的旧 `last-point` 数量（默认 16）。
 - `sniem-span-preview`：是否显示菜单范围预览。
+- `sniem-last-point-trail-hint`：读取菜单按键时，是否给当前窗口内可见的回溯位置
+  显示编号徽标（默认开启）。它独立于 `sniem-span-preview`。
+- 菜单打开时输入一个可见的回溯编号，会把该位置设为当前 `last-point` 并让菜单继续
+  等待。`RET` 确认编号；按其它菜单键则确认编号并立即执行。编号可以是多位数。
+  `sniem-delete` 中的 `9` 是 ASCII 9，也就是 `TAB`，不是数字 `9`；因此数字 `9`
+  仍然可以直接选择 trail #9，不需要加前缀。
 - `sniem-last-point-trail` 是缓冲区局部的回溯 marker 列表，应视为状态而非配置。
 
 ### 标记、配对与连接符
@@ -587,6 +593,9 @@ mode line 时，可以手动添加：
   `sniem-mark-content-file` 分别控制动作提示的字体、以“编辑”参数标记内容时使用的
   字体、菜单范围预览的字体，以及带标签标记的存储文件。
 - `sniem-span-preview` 控制读取菜单按键时是否预览 `last-point` 范围（默认开启）。
+- `sniem-last-point-trail-hint` 控制范围预览旁边的回溯编号徽标。徽标按当前窗口内
+  的可见顺序编号，使用 `sniem-motion-hint-face`，并且只显示在选中的窗口中。
+  输入编号会选中对应回溯位置；`RET` 保持菜单打开，其它键则选中并立即执行。
 - `sniem-ignore-or-enable-indentation`（通过 `SPC N`）让
   `sniem-beginning-of-line` 在缩进不可靠的缓冲区中不执行缩进。
 

@@ -577,6 +577,14 @@ added in one call.
 - `sniem-last-point-trail-size` — number of previous `last-point` values kept for
   `sniem-last-point-from-trail` and `sniem-goto-last-point-from-trail` (default 16).
 - `sniem-span-preview` — whether the menu span preview is shown.
+- `sniem-last-point-trail-hint` — whether visible trail positions are marked with
+  numbered badges while a menu is waiting for a key (on by default). It is independent
+  of `sniem-span-preview`.
+- While a menu is open, typing a visible trail number makes that position the current
+  `last-point` and keeps the menu open. `RET` confirms the number; another menu key
+  confirms it and acts immediately. Numbers may be multiple digits, and there is no
+  conflict with the `TAB` line action in `sniem-delete`: its `9` in the code is ASCII 9
+  (`TAB`), so the digit `9` still selects trail #9 normally.
 - `sniem-last-point-trail` is the buffer-local list of trail markers. Treat it as state,
   not configuration.
 
@@ -620,6 +628,10 @@ added in one call.
   "edit" argument, the menu span preview face, and the tagged-mark storage file.
 - `sniem-span-preview` controls whether the last-point span is previewed while a menu
   key is being read (on by default).
+- `sniem-last-point-trail-hint` controls the numbered trail badges shown alongside that
+  preview. Badges are numbered in visible order, use `sniem-motion-hint-face`, and only
+  appear in the selected window. Typing a number selects that trail position; `RET`
+  keeps the menu open, while another key selects and acts.
 - `sniem-ignore-or-enable-indentation` (via `SPC N`) tells `sniem-beginning-of-line`
   not to run indentation for buffers whose indentation is unreliable.
 
