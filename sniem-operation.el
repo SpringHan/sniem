@@ -35,6 +35,7 @@
 (declare-function sniem-change-mode "sniem")
 (declare-function sniem-mark-content "sniem")
 (declare-function sniem-lock-unlock-last-point "sniem")
+(declare-function sniem-show-last-point "sniem")
 (declare-function sniem-shift--not-alpha-p "sniem")
 
 (defun sniem--read-menu-action (prompt)
@@ -1458,6 +1459,227 @@ is true."
                   (push-mark end-point t t))
               (setq beg-point (1+ beg-point))
               (push-mark beg-point t t)))))))
+
+(defun sniem--last-point-trail-markers ()
+  "Return live last-point trail markers, most recent first.
+Markers from other buffers and duplicate positions are skipped."
+  (let (markers seen)
+    (dolist (marker sniem-last-point-trail)
+      (let ((position (and (markerp marker)
+                           (eq (marker-buffer marker) (current-buffer))
+                           (marker-position marker))))
+        (when (and position
+                   (<= (point-min) position)
+                   (<= position (point-max))
+                   (not (memq position seen)))
+          (push position seen)
+          (push marker markers))))
+    (nreverse markers)))
+
+(defun sniem--last-point-trail-text (position)
+  "Return a short line snippet at POSITION for the trail prompt."
+  (let (start end)
+    (save-excursion
+      (goto-char position)
+      (setq start (line-beginning-position)
+            end (min (line-end-position) (+ start 60))))
+    (let ((text (replace-regexp-in-string
+                 "\\`[ \t]+" ""
+                 (buffer-substring-no-properties start end))))
+      (if (> (length text) 50)
+          (concat (substring text 0 47) "...")
+        text))))
+
+(defun sniem--last-point-trail-candidates ()
+  "Build completion candidates for the last-point trail.
+Each candidate is a cons of a display string and its marker.  The
+current last point and the current point are excluded because they are
+already available without a jump."
+  (let ((current (sniem--last-point-position))
+        (here (point))
+        (here-line (line-number-at-pos))
+        (index 0)
+        entries)
+    (dolist (marker (sniem--last-point-trail-markers))
+      (let ((position (marker-position marker)))
+        (unless (or (and current (= position current))
+                    (= position here))
+          (setq index (1+ index))
+          (let* ((line (line-number-at-pos position))
+                 (column (save-excursion
+                           (goto-char position)
+                           (current-column)))
+                 (delta (- line here-line))
+                 (relative (cond ((> delta 0) (format "+%dL" delta))
+                                 ((< delta 0) (format "%dL" delta))
+                                 (t "same-line")))
+                 (label (format "%2d  %-9s L%-4d C%-3d  %s"
+                                index relative line column
+                                (sniem--last-point-trail-text position))))
+            (push (cons label marker) entries)))))
+    (nreverse entries)))
+
+(defvar sniem--last-point-trail-preview-state nil
+  "Dynamic state used while previewing last-point trail candidates.")
+
+(defvar sniem--last-point-trail-command nil
+  "Command that started the current last-point trail completion.
+Completion front ends use it to distinguish the active session from
+an earlier one.")
+
+(defun sniem--last-point-trail-current-candidate ()
+  "Return the candidate currently highlighted by the completion UI.
+Ivy, Vertico and Helm expose their selection directly.  Other front
+ends fall back to the minibuffer input, which previews a candidate
+only after the input matches it exactly."
+  (cond
+   ((and (boundp 'ivy-mode)
+         (symbol-value 'ivy-mode)
+         (boundp 'ivy-last)
+         (symbol-value 'ivy-last)
+         (fboundp 'ivy-state-current)
+         (fboundp 'ivy-state-caller)
+         (eq (funcall 'ivy-state-caller (symbol-value 'ivy-last))
+             sniem--last-point-trail-command))
+    (funcall 'ivy-state-current (symbol-value 'ivy-last)))
+   ((and (boundp 'vertico-mode)
+         (symbol-value 'vertico-mode)
+         (fboundp 'vertico--candidate))
+    (funcall 'vertico--candidate))
+   ((and (boundp 'helm-mode)
+         (symbol-value 'helm-mode)
+         (fboundp 'helm-alive-p)
+         (fboundp 'helm-get-selection)
+         (funcall 'helm-alive-p))
+    (funcall 'helm-get-selection))
+   (t
+    (minibuffer-contents-no-properties))))
+
+(defun sniem--last-point-trail-candidate-position (candidate entries)
+  "Return the marker position for CANDIDATE in ENTRIES."
+  (when (consp candidate)
+    (setq candidate (car candidate)))
+  (when (stringp candidate)
+    (let ((entry (assoc (substring-no-properties candidate) entries)))
+      (when entry
+        (marker-position (cdr entry))))))
+
+(defun sniem--last-point-trail-show (state position)
+  "Move point to POSITION and scroll it into view for the preview.
+STATE records the buffer and window captured before completion."
+  (let ((buffer (plist-get state :buffer))
+        (window (plist-get state :window)))
+    (when (buffer-live-p buffer)
+      (with-current-buffer buffer
+        (goto-char position))
+      (when (and (window-live-p window)
+                 (eq (window-buffer window) buffer))
+        (set-window-point window position)
+        (unless (pos-visible-in-window-p position window)
+          (with-selected-window window
+            (recenter)))))))
+
+(defun sniem--last-point-trail-preview ()
+  "Preview the trail candidate highlighted in the minibuffer."
+  (when-let* ((state sniem--last-point-trail-preview-state)
+              (candidate (ignore-errors
+                           (sniem--last-point-trail-current-candidate)))
+              (position (sniem--last-point-trail-candidate-position
+                         candidate (plist-get state :entries))))
+    (unless (eql position (plist-get state :last))
+      (setf (plist-get state :last) position)
+      (sniem--last-point-trail-show state position))))
+
+(defun sniem--last-point-trail-restore (state)
+  "Restore point and window start saved in STATE."
+  (let ((buffer (plist-get state :buffer))
+        (window (plist-get state :window))
+        (origin (plist-get state :origin))
+        (start (plist-get state :window-start)))
+    (when (buffer-live-p buffer)
+      (let ((position (with-current-buffer buffer
+                        (min (max origin (point-min)) (point-max)))))
+        (with-current-buffer buffer
+          (goto-char position))
+        (when (and (window-live-p window)
+                   (eq (window-buffer window) buffer))
+          (set-window-point window position)
+          (when (and start
+                     (with-current-buffer buffer
+                       (and (<= (point-min) start)
+                            (<= start (point-max)))))
+            (set-window-start window start)))))))
+
+(defun sniem--read-last-point-trail ()
+  "Prompt for a position from the last-point trail and return it.
+While the prompt is open, the highlighted candidate is previewed in
+its buffer.  Point and window start are restored before returning,
+so callers decide whether point should move."
+  (let* ((entries (sniem--last-point-trail-candidates))
+         (origin (point))
+         (buffer (current-buffer))
+         (window (if (eq (window-buffer (selected-window)) buffer)
+                     (selected-window)
+                   (get-buffer-window buffer t)))
+         (window-start (and window (window-start window)))
+         (state (list :buffer buffer
+                      :origin origin
+                      :window window
+                      :window-start window-start
+                      :entries entries
+                      :last nil))
+         (sniem--last-point-trail-preview-state state)
+         (sniem--last-point-trail-command
+          (or this-command 'sniem--read-last-point-trail))
+         minibuffer
+         position)
+    (unless entries
+      (user-error "[Sniem]: No other last point in the trail!"))
+    (unwind-protect
+        (progn
+          (minibuffer-with-setup-hook
+              (lambda ()
+                (setq minibuffer (current-buffer))
+                ;; Run after the completion front end updates its state.
+                (add-hook 'post-command-hook
+                          #'sniem--last-point-trail-preview 90 t)
+                (sniem--last-point-trail-preview))
+            (setq position
+                  (sniem--last-point-trail-candidate-position
+                   (completing-read "Last point from trail: " entries nil t)
+                   entries)))
+          (or position
+              (user-error "[Sniem]: No last point selected!")))
+      (when (buffer-live-p minibuffer)
+        (with-current-buffer minibuffer
+          (remove-hook 'post-command-hook
+                       #'sniem--last-point-trail-preview t)))
+      (sniem--last-point-trail-restore state))))
+
+(defun sniem-last-point-from-trail ()
+  "Make a previous last point current without moving point."
+  (interactive)
+  (let ((position (sniem--read-last-point-trail)))
+    (sniem--set-last-point position)
+    (when sniem-last-point-locked
+      (when (overlayp sniem-last-point-overlay)
+        (delete-overlay sniem-last-point-overlay)
+        (setq-local sniem-last-point-overlay nil))
+      (sniem-show-last-point))
+    (message "[Sniem]: Last point restored from line %d."
+             (line-number-at-pos position))))
+
+(defun sniem-goto-last-point-from-trail ()
+  "Jump to a previous last point from the trail.
+The point left behind becomes the new last point unless it is locked."
+  (interactive)
+  (let ((position (sniem--read-last-point-trail))
+        (origin (point)))
+    (goto-char position)
+    (unless sniem-last-point-locked
+      (sniem--set-last-point origin))
+    (message "[Sniem]: Jumped to line %d from the last-point trail."
+             (line-number-at-pos))))
 
 (defun sniem-goto-last-point (&optional type non-point-set)
   "Goto `sniem-last-point'.

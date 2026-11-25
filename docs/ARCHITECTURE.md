@@ -17,9 +17,9 @@ concern so a feature can be changed without touching the whole state machine.
 | --- | --- |
 | `sniem.el` | Entry point. Defines the global and state minor modes, state transitions, keypad, numeric argument reader, shift handling, last-point commands, marked content, the state string, and the setup/advice layer. |
 | `sniem-var.el` | Data only: `defcustom`/`defvar`/`defvar-local` declarations, default keymaps, prompt messages, faces, and mode lists. |
-| `sniem-common.el` | Shared low-level helpers: motion hint, numeric argument reader, string/list utilities, and the last-point marker accessors. |
+| `sniem-common.el` | Shared low-level helpers: motion hint, numeric argument reader, string/list utilities, last-point marker accessors, and trail recording. |
 | `sniem-macro.el` | The `sniem-define-motion` macro, which wraps motions with last-point recording. |
-| `sniem-operation.el` | Editing commands and motions: insert/append, delete/change/yank/paste, search, pairs, keyboard macros, span previews, and last-point/jump commands. |
+| `sniem-operation.el` | Editing commands and motions: insert/append, delete/change/yank/paste, search, pairs, keyboard macros, span previews, last-point/jump commands, and the trail UI. |
 | `sniem-object-catch.el` | Pair detection and region catching, plus the state used by `EXPAND` navigation. |
 | `sniem-mark-jump.el` | Comment marks (`TODO`, `BUG`, `NOTE`, and custom types). |
 | `sniem-linked-file.el` | Project-root file groups for reopening related files together. |
@@ -125,15 +125,78 @@ current buffer and the buffer bounds and returns nil when the value is unusable.
 `sniem-define-motion` expands into a `defun` that runs the motion body. Before the body,
 it records `(point)` as the last point unless:
 
-- `sniem-last-point-locked` is non-nil, or
-- the motion was called with the generated `non-point-set` argument.
+- `sniem-last-point-locked` is non-nil,
+- the motion was called with the generated `non-point-set` argument, or
+- the motion is in `sniem-last-point-small-motions` and a last point already exists.
+
+The small-motion exemption keeps plain character and line movement (`sniem-forward-char`,
+`sniem-backward-char`, `sniem-next-line`, `sniem-prev-line`, and the line boundary
+commands) from destroying an origin. A small motion still initializes the last point when
+it is nil, so last-point operations remain usable in a fresh buffer. A non-nil prefix
+argument other than the integer 1 (or -1) also makes a small motion record the point,
+because a repeated move is no longer local.
 
 Composite motions pass `non-point-set` to their inner motions so only the outermost
-motion updates the marker.
+motion updates the marker. All `sniem-5-*` motions, word/symbol motion, find, paging,
+line jumps, object catch, and comment-mark jumps therefore replace the last point.
 
 `sniem-move-last-point` (`.`) explicitly moves the marker to point, then toggles the
 lock state through `sniem-lock-unlock-last-point`. That toggle is existing behavior and
 is intentionally preserved.
+
+### Trail
+
+`sniem-last-point-trail` is a buffer-local list of markers for previous last points,
+most recent first. Its maximum length is `sniem-last-point-trail-size` (16 by default).
+
+Recording happens inside `sniem--set-last-point`: when the marker is about to change
+position, the old position is passed to `sniem--record-last-point`. That helper drops
+dead markers, markers from other buffers, and duplicate positions, then caps the list.
+Motions that do not update the last point therefore do not disturb the trail.
+
+Commands:
+
+- `sniem-last-point-from-trail` prompts for a trail entry and makes it the current last
+  point without moving point. If the last point is locked, the lock overlay is refreshed
+  to the restored position. This is the command to use when a multi-motion navigation
+  lost the intended origin: select the origin first, then run the `p` operation.
+- `sniem-goto-last-point-from-trail` prompts for a trail entry and jumps to it. The point
+  left behind becomes the new last point unless the last point is locked.
+
+Neither command is bound in the default leader keymap. The commands are opt-in so a
+default binding cannot shadow a user's leader configuration.
+
+The completion labels show the trail index, relative line distance, absolute line and
+column, and a short line snippet. The current last point and the current point are
+excluded from the candidates because they need no jump. Trail markers are filtered for
+the current buffer and the current narrowing before they are displayed.
+
+### Trail preview
+
+`sniem--read-last-point-trail` captures point, the window showing the buffer, and that
+window's start before prompting. While the minibuffer is active it installs
+`sniem--last-point-trail-preview` late in the minibuffer-local `post-command-hook`, so
+it runs after the completion front end has updated its selection.
+
+The preview asks the active front end for its current candidate through
+`sniem--last-point-trail-current-candidate`:
+
+- ivy via `ivy-state-current`, only when `ivy-state-caller` matches the command that
+  started the prompt, which avoids reading a stale session;
+- vertico via `vertico--candidate`;
+- helm via `helm-get-selection` while `helm-alive-p`;
+- otherwise the exact minibuffer input is used, so the default completion UI previews
+  only after the input spells a complete candidate.
+
+`sniem--last-point-trail-candidate-position` maps the label back to a trail marker.
+`sniem--last-point-trail-show` moves point and scrolls only when the target is outside
+the visible window; it does not create or lock a last point. An `unwind-protect` removes
+the hook and restores point and window start on every exit path, including `C-g`.
+`sniem-last-point-from-trail` therefore leaves the cursor where it was, while
+`sniem-goto-last-point-from-trail` moves to the selected position after the restore.
+
+The preview helpers are internal, and all completion-front-end calls are guarded with
+`fboundp`/`boundp` so neither ivy, vertico, nor helm becomes a dependency.
 
 ### Reading a span
 
@@ -325,6 +388,14 @@ currently bound to those keys. It requires `sniem-keyboard-layout` to be set.
 
 - Treat `sniem-last-point` as a marker. Use the accessors; do not call `goto-char` on the
   raw variable.
+- Not every motion changes the last point. Small motions in
+  `sniem-last-point-small-motions` skip an existing last point and only initialize a nil
+  one, unless a meaningful prefix argument repeats them.
+- `sniem--set-last-point` pushes the previous position onto the trail. Do not call it for
+  transient bookkeeping; use `sniem--last-point-position` for reads.
+- Treat `sniem-last-point-trail` as state. Its entries are markers and can be dead,
+  foreign, duplicated, or outside the current narrowing; filter them before display.
+- The normal-state `n` and `N` are lock/jump; the trail commands are leader `n`/`N`.
 - `sniem--last-point-span` is ordered but may be empty. Check for an empty span before
   copying or previewing.
 - The marker may be dead or belong to another buffer. `sniem--last-point-position`
@@ -346,6 +417,8 @@ currently bound to those keys. It requires `sniem-keyboard-layout` to be set.
 
 - Bindings: `sniem-leader-set-key`, `sniem-normal-set-key`, `sniem-expand-set-key`,
   `sniem-set-leader-key`.
+- Last-point behavior: `sniem-last-point-small-motions`,
+  `sniem-last-point-trail-size`, `sniem-span-preview`.
 - Layouts: `sniem-set-keyboard-layout`, `sniem-keyboard-layout`.
 - Pairs: `sniem-object-catch-global-symbol-alist`,
   `sniem-object-catch-mode-defalist`.

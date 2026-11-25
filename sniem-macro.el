@@ -26,6 +26,7 @@
 ;;; Code:
 
 (declare-function sniem--set-last-point "sniem-common")
+(declare-function sniem--last-point-position "sniem-common")
 
 (defmacro sniem-define-motion (name arg docstring &rest body)
   "Define motion for sniem.
@@ -48,7 +49,13 @@ Optional argument BODY is the main body of motion function."
        ,docstring
        ,inter
        (unless (or sniem-last-point-locked non-point-set)
-         (sniem--set-last-point (point)))
+         ;; A repeated small motion is no longer local.
+         (when (or (not (memq ',name sniem-last-point-small-motions))
+                   (null (sniem--last-point-position))
+                   (and current-prefix-arg
+                        (not (and (integerp current-prefix-arg)
+                                  (= 1 (abs current-prefix-arg))))))
+           (sniem--set-last-point (point))))
        ,@body)))
 
 (provide 'sniem-macro)

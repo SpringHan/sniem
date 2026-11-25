@@ -13,8 +13,8 @@ home row.
 
 - **Five lightweight states** — `NORMAL`, `INSERT`, `MOTION`, `EXPAND`, and
   `MINIBUFFER-KEYPAD` — implemented as independent buffer-local minor modes.
-- **`last-point`** — every motion remembers where it started; most editing commands can
-  operate on the range between `last-point` and the cursor.
+- **`last-point`** — larger motions remember the point they started from; local cursor
+  movement leaves an existing origin alone, and recent origins are kept in a trail.
 - **Leader key** with a keypad for `C-`, `M-`, and `C-M-` prefixes.
 - **Object catch** — select the nearest pair, its parent, or a pair of a given type,
   with awareness of nesting, strings, and escapes.
@@ -96,9 +96,16 @@ When `sniem-mode` is enabled in a buffer, `sniem--enable` captures the buffer's 
 
 ### `last-point`
 
-Most motions are defined with the `sniem-define-motion` macro, which records the point
-*before* the motion as `sniem-last-point`. The value is a buffer-local marker, so edits
-before it move it along with the text.
+Motions are defined with the `sniem-define-motion` macro. For a motion that counts as a
+large move, it records the point *before* the motion as `sniem-last-point`; the value is a
+buffer-local marker, so edits before it move it along with the text.
+
+To keep local navigation from destroying an origin, the motions in
+`sniem-last-point-small-motions` do not replace an existing last point: plain character
+and line movement (`h`, `j`, `k`, `l`) and `b`/`B`. They still initialize it when it is
+nil, and a numeric prefix makes a repeated small motion count as a large move. Larger
+jumps — word/symbol motion, `f`/`F`, paging, the `sniem-5-*` motions, line jumps, object
+catch, and comment-mark jumps — do replace it.
 
 - The `p` sub-commands of the delete, change, yank, and mark menus operate from
   `last-point` to the cursor.
@@ -108,6 +115,26 @@ before it move it along with the text.
 - `N` (`sniem-goto-last-point`) jumps back to it. If marked content exists in the
   buffer, `N` visits the marked contents instead; a numeric prefix selects a specific
   one, and repeated invocations cycle through them when there are several.
+- Every change to `last-point` pushes the previous value onto a buffer-local trail.
+  `sniem-last-point-from-trail` makes a trail entry the current `last-point` without
+  moving point, so the next `p` operation can use that origin.
+  `sniem-goto-last-point-from-trail` jumps to a trail entry instead. The trail keeps
+  `sniem-last-point-trail-size` entries (16 by default).
+- The two trail commands are not bound by default so they cannot shadow personal leader
+  bindings. Bind them where they fit:
+
+  ```elisp
+  (sniem-leader-set-key
+   "C-n" #'sniem-last-point-from-trail
+   "C-N" #'sniem-goto-last-point-from-trail)
+  ```
+
+- With ivy, vertico, or helm, moving through the completion candidates previews the
+  location in the buffer. Canceling restores the original point and window position;
+  `sniem-last-point-from-trail` also returns to the original point after selection.
+
+The normal-state `n` and `N` keep their lock/jump behavior and are not affected by the
+trail commands.
 
 ### Leader key
 
@@ -542,6 +569,17 @@ added in one call.
 (add-to-list 'sniem-close-mode-alist 'special-mode)
 ```
 
+### Last-point behavior
+
+- `sniem-last-point-small-motions` — motions that keep an existing `last-point` intact.
+  They still initialize it when it is nil; a numeric prefix makes a repeated small
+  motion count as a large one.
+- `sniem-last-point-trail-size` — number of previous `last-point` values kept for
+  `sniem-last-point-from-trail` and `sniem-goto-last-point-from-trail` (default 16).
+- `sniem-span-preview` — whether the menu span preview is shown.
+- `sniem-last-point-trail` is the buffer-local list of trail markers. Treat it as state,
+  not configuration.
+
 ### Marks, pairs, and connectors
 
 - `sniem-mark-connectors` controls which characters are treated as part of a symbol
@@ -600,12 +638,12 @@ added in one call.
 | --- | --- |
 | `sniem.el` | Entry point: modes, state switching, keypad, numeric argument, shift, `last-point`, marked content, state string, key/layout helpers. |
 | `sniem-var.el` | All `defcustom`/`defvar`/`defface` declarations and the default keymaps. |
-| `sniem-operation.el` | Editing commands, motions, search, paste, pairs, and keyboard macros. |
+| `sniem-operation.el` | Editing commands, motions, search, paste, pairs, keyboard macros, and the last-point trail UI. |
 | `sniem-object-catch.el` | Pair detection and selection, plus `EXPAND` navigation. |
 | `sniem-mark-jump.el` | Comment marks (`TODO`, `BUG`, `NOTE`, and custom types). |
 | `sniem-linked-file.el` | Linked-file groups stored in the project root. |
 | `sniem-cheatsheet.el` | Generation of the layout cheatsheet. |
-| `sniem-common.el` | Shared helpers: last-point marker accessors, motion hint, numeric reader, list utilities. |
+| `sniem-common.el` | Shared helpers: last-point marker and trail accessors, motion hint, numeric reader, list utilities. |
 | `sniem-macro.el` | The `sniem-define-motion` macro. |
 
 ### How the pieces fit together
@@ -616,8 +654,9 @@ added in one call.
    `emulation-mode-map-alists`.
 3. Each state is a buffer-local minor mode with its own keymap. `sniem-change-mode`
    switches between them, updates the cursor, and runs the transition hooks.
-4. Commands update `sniem-last-point` (through `sniem-define-motion`) and manage
-   overlays for search results, marked content, motion hints, and the last point.
+4. Larger motions record `sniem-last-point` (through `sniem-define-motion`) and push the
+   previous value onto a buffer-local trail. Commands manage overlays for search
+   results, marked content, motion hints, and the last point.
 5. Optional integrations and add-ons (wdired, org, yasnippet, awesome-tray, linked
    files, comment marks) are layered on top without changing the core state machine.
 

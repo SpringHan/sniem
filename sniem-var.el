@@ -52,6 +52,26 @@ keep it attached to the same text.")
   :type 'boolean
   :group 'sniem)
 
+(defvar-local sniem-last-point-trail nil
+  "Markers for previous last points, most recent first.")
+
+(defcustom sniem-last-point-trail-size 16
+  "Maximum number of previous last points kept in the trail."
+  :type 'integer
+  :group 'sniem)
+
+(defcustom sniem-last-point-small-motions
+  '(sniem-forward-char sniem-backward-char
+    sniem-next-line sniem-prev-line
+    sniem-beginning-of-line sniem-end-of-line)
+  "Small motions that never replace an existing last point.
+They still initialize it when it is nil, so last-point operations
+remain available in a fresh buffer.  A repeated small motion (one
+with a numeric prefix) is treated as a larger move.  Add motions here
+to keep local cursor adjustments from destroying an origin."
+  :type '(repeat symbol)
+  :group 'sniem)
+
 (defvar-local sniem-wrong-indentation nil
   "Whether emacs doesn't have suitable indentation for current file.")
 

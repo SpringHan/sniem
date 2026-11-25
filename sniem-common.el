@@ -46,15 +46,42 @@ buffer, or when an older integer value is out of range."
                (<= position (point-max)))
       position)))
 
+(defun sniem--record-last-point (position)
+  "Record POSITION in the last-point trail, most recent first.
+Dead, foreign, and duplicate positions are dropped so the trail stays
+useful as a short history."
+  (let (markers)
+    (dolist (marker sniem-last-point-trail)
+      (let ((entry-position (and (markerp marker)
+                                 (eq (marker-buffer marker) (current-buffer))
+                                 (marker-position marker))))
+        (when (and entry-position
+                   (<= (point-min) entry-position)
+                   (<= entry-position (point-max))
+                   (/= entry-position position))
+          (push marker markers))))
+    (setq sniem-last-point-trail
+          (cons (copy-marker position) (nreverse markers)))
+    (let ((size (max 1 (or sniem-last-point-trail-size 16))))
+      (when (> (length sniem-last-point-trail) size)
+        (setq sniem-last-point-trail
+              (butlast sniem-last-point-trail
+                       (- (length sniem-last-point-trail) size))))))
+  sniem-last-point-trail)
+
 (defun sniem--set-last-point (position)
   "Record POSITION as the buffer's last point.
 Reuse the existing marker so overlays and any code holding it keep
-tracking the same position."
-  (setq position (max (point-min) (min position (point-max))))
-  (if (and (markerp sniem-last-point)
-           (eq (marker-buffer sniem-last-point) (current-buffer)))
-      (move-marker sniem-last-point position)
-    (setq-local sniem-last-point (copy-marker position)))
+tracking the same position.  The previous position is pushed onto the
+last-point trail before the marker moves."
+  (let ((old-position (sniem--last-point-position)))
+    (setq position (max (point-min) (min position (point-max))))
+    (unless (or (null old-position) (= old-position position))
+      (sniem--record-last-point old-position))
+    (if (and (markerp sniem-last-point)
+             (eq (marker-buffer sniem-last-point) (current-buffer)))
+        (move-marker sniem-last-point position)
+      (setq-local sniem-last-point (copy-marker position))))
   sniem-last-point)
 
 (defun sniem--last-point-span ()

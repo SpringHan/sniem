@@ -12,8 +12,8 @@
 
 - **五种轻量状态**：`NORMAL`、`INSERT`、`MOTION`、`EXPAND` 和
   `MINIBUFFER-KEYPAD`，每一种都是独立的缓冲区局部 minor mode。
-- **`last-point`**：每个动作都会记住起点，大多数编辑命令可以作用在 `last-point` 与
-  光标之间。
+- **`last-point`**：大跨度动作会记住起点，局部光标移动不会破坏已有起点，最近的起点会
+  保留在回溯列表中。
 - **Leader 键**，并附带用于 `C-`、`M-`、`C-M-` 前缀的 keypad。
 - **Object catch**：抓取最近的配对、其父级配对，或指定类型的配对，并能识别嵌套、
   字符串与转义字符。
@@ -91,9 +91,15 @@ keymap；切换到其中一种状态时，其它状态会被关闭。
 
 ### `last-point`
 
-大多数动作由 `sniem-define-motion` 宏定义，它会在动作执行前把当前位置记录为
-`sniem-last-point`。该值是缓冲区局部的 marker，因此它之前的编辑会让它随文本一起
-移动。
+动作由 `sniem-define-motion` 宏定义。对于被视为大跨度移动的动作，它会在执行前把当前
+位置记录为 `sniem-last-point`；该值是缓冲区局部的 marker，因此它之前的编辑会让它随
+文本一起移动。
+
+为了避免局部移动破坏起点，`sniem-last-point-small-motions` 中的动作不会替换已有的
+`last-point`：普通的字符/行移动（`h`、`j`、`k`、`l`）以及 `b`/`B`。当它为 nil 时，
+这些动作仍会初始化它；带数字前缀的重复小动作会被视为大跨度移动。更大的跳跃——单词/
+符号移动、`f`/`F`、翻页、`sniem-5-*` 动作、行跳转、object catch 和注释标记跳转——
+则会替换它。
 
 - 删除、修改、复制和标记菜单中的 `p` 子命令都以 `last-point` 到光标之间的范围
   作为操作对象。
@@ -103,6 +109,24 @@ keymap；切换到其中一种状态时，其它状态会被关闭。
 - `N`（`sniem-goto-last-point`）跳回 `last-point`。如果缓冲区中存在标记内容，`N`
   会改为在这些标记内容之间跳转；数字前缀可以指定其中一个，有多个标记时重复执行则会
   循环。
+- 每次 `last-point` 改变时，旧值会被压入一个缓冲区局部的回溯列表。
+  `sniem-last-point-from-trail` 会从列表中选择一个位置作为新的 `last-point`，
+  但不移动光标，因此后续 `p` 操作可以用它作为起点。
+  `sniem-goto-last-point-from-trail` 则直接跳到所选位置。列表默认保留
+  `sniem-last-point-trail-size` 个位置（16 个）。
+- 两个回溯命令默认不绑定按键，避免覆盖个人的 leader 配置。可以按需绑定：
+
+  ```elisp
+  (sniem-leader-set-key
+   "C-n" #'sniem-last-point-from-trail
+   "C-N" #'sniem-goto-last-point-from-trail)
+  ```
+
+- 在 ivy、vertico、helm 等补全界面中选择候选时，光标会同步跳到对应位置预览；
+  取消选择会恢复原来的光标和窗口位置。`sniem-last-point-from-trail` 确认后也会
+  回到原位置，只更新 `last-point`。
+
+normal 状态下的 `n` 和 `N` 仍保持原来的锁定/跳转行为，不受回溯命令影响。
 
 ### Leader 键
 
@@ -519,6 +543,15 @@ mode line 时，可以手动添加：
 (add-to-list 'sniem-close-mode-alist 'special-mode)
 ```
 
+### last-point 行为
+
+- `sniem-last-point-small-motions`：不会替换已有 `last-point` 的动作。当它为 nil 时，
+  这些动作仍会初始化它；带数字前缀的重复小动作会被视为大跨度移动。
+- `sniem-last-point-trail-size`：为 `sniem-last-point-from-trail` 和
+  `sniem-goto-last-point-from-trail` 保留的旧 `last-point` 数量（默认 16）。
+- `sniem-span-preview`：是否显示菜单范围预览。
+- `sniem-last-point-trail` 是缓冲区局部的回溯 marker 列表，应视为状态而非配置。
+
 ### 标记、配对与连接符
 
 - `sniem-mark-connectors` 控制标记时哪些字符会被视为符号的一部分。可以用
@@ -572,12 +605,12 @@ mode line 时，可以手动添加：
 | --- | --- |
 | `sniem.el` | 入口：状态、状态切换、keypad、数字参数、Shift、`last-point`、标记内容、状态字符串、按键与布局辅助函数。 |
 | `sniem-var.el` | 所有 `defcustom`/`defvar`/`defface` 声明以及默认 keymap。 |
-| `sniem-operation.el` | 编辑命令、动作、搜索、粘贴、配对与键盘宏。 |
+| `sniem-operation.el` | 编辑命令、动作、搜索、粘贴、配对、键盘宏，以及 last-point 回溯列表界面。 |
 | `sniem-object-catch.el` | 配对检测与选择，以及 `EXPAND` 导航。 |
 | `sniem-mark-jump.el` | 注释标记（`TODO`、`BUG`、`NOTE` 及自定义类型）。 |
 | `sniem-linked-file.el` | 保存在项目根目录的关联文件组。 |
 | `sniem-cheatsheet.el` | 生成布局速查表。 |
-| `sniem-common.el` | 共享辅助函数：last-point marker 访问器、动作提示、数字读取、列表工具。 |
+| `sniem-common.el` | 共享辅助函数：last-point marker 与回溯列表访问器、动作提示、数字读取、列表工具。 |
 | `sniem-macro.el` | `sniem-define-motion` 宏。 |
 
 ### 各部分如何协作
@@ -587,8 +620,8 @@ mode line 时，可以手动添加：
    keymap 安装到 `emulation-mode-map-alists`。
 3. 每个状态都是带独立 keymap 的缓冲区局部 minor mode。`sniem-change-mode` 在它们
    之间切换，更新光标，并运行状态转换钩子。
-4. 命令通过 `sniem-define-motion` 更新 `sniem-last-point`，并管理搜索结果、标记
-   内容、动作提示和 `last-point` 的覆盖层。
+4. 大跨度动作通过 `sniem-define-motion` 更新 `sniem-last-point`，并把旧值压入缓冲区
+   局部的回溯列表。命令负责管理搜索结果、标记内容、动作提示和 `last-point` 的覆盖层。
 5. 可选集成与附加功能（wdired、org、yasnippet、awesome-tray、关联文件、注释标记）
    叠加在核心状态机之上，而不会改变核心逻辑。
 
