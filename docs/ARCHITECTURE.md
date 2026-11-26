@@ -244,7 +244,8 @@ form calls `sniem--read-menu-action`. That helper keeps a small state plist (win
 show-trail flag, span overlay, trail overlays, and the visible-number alist) and reads
 menu keys through `sniem--menu-key`. `sniem--menu-preview-refresh` creates or updates the
 span overlay and rebuilds the trail hints; `sniem--menu-preview-cleanup` removes
-everything in an `unwind-protect`. The span face is `sniem-span-preview-face`.
+everything in an `unwind-protect`. The span face is `sniem-span-preview-face`, which
+inherits `isearch` (falling back to `region`) and extends to the end of the line.
 
 Trail hints are created only when `sniem-last-point-trail-hint` is non-nil and the menu
 is in `sniem-last-point-trail-hint-menus`. The default list is `(sniem-delete

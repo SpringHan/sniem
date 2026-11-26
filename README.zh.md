@@ -596,7 +596,8 @@ mode line 时，可以手动添加：
 - `sniem-motion-hint-sit-time` 控制动作提示的显示时间（默认 1 秒）。
 - `sniem-motion-hint-face`、`sniem-edit-content-face`、`sniem-span-preview-face` 和
   `sniem-mark-content-file` 分别控制动作提示的字体、以“编辑”参数标记内容时使用的
-  字体、菜单范围预览的字体，以及带标签标记的存储文件。
+  字体、菜单范围预览的字体，以及带标签标记的存储文件。范围预览字体继承 `isearch`
+  （`isearch` 不可用时回退到 `region`），因此会跟随主题的高对比搜索颜色。
 - `sniem-span-preview` 控制读取菜单按键时是否预览 `last-point` 范围（默认开启）。
 - `sniem-last-point-trail-hint` 控制范围预览旁边的回溯编号徽标。徽标按当前窗口内
   的可见顺序编号，使用 `sniem-motion-hint-face`，并且只显示在选中的窗口中。

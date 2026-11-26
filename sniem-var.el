@@ -482,8 +482,10 @@ It can be like: (length . (character1 character 2))."
   :group 'sniem)
 
 (defface sniem-span-preview-face
-  '((t (:inherit secondary-selection :extend t)))
-  "The face for the last-point span preview."
+  '((t (:inherit (isearch region) :extend t)))
+  "The face for the last-point span preview.
+`isearch' is normally the highest-contrast selection face in a theme;
+`region' is a fallback for themes that leave `isearch' mostly plain."
   :group 'sniem)
 
 (provide 'sniem-var)

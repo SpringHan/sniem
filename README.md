@@ -631,7 +631,9 @@ added in one call.
   second).
 - `sniem-motion-hint-face`, `sniem-edit-content-face`, `sniem-span-preview-face`, and
   `sniem-mark-content-file` control the hint face, the face for content marked with an
-  "edit" argument, the menu span preview face, and the tagged-mark storage file.
+  "edit" argument, the menu span preview face, and the tagged-mark storage file. The span
+  preview face inherits `isearch` (falling back to `region`) so it follows the theme's
+  high-contrast search color.
 - `sniem-span-preview` controls whether the last-point span is previewed while a menu
   key is being read (on by default).
 - `sniem-last-point-trail-hint` controls the numbered trail badges shown alongside that
