@@ -59,6 +59,13 @@ window while a menu action is being read."
   :type 'boolean
   :group 'sniem)
 
+(defcustom sniem-last-point-trail-hint-menus
+  '(sniem-delete sniem-change sniem-yank)
+  "Menus that show visible last-point trail hints.
+The `t' key in `sniem-mark' toggles its membership at runtime."
+  :type '(repeat symbol)
+  :group 'sniem)
+
 (defvar-local sniem-last-point-trail nil
   "Markers for previous last points, most recent first.")
 
@@ -434,7 +441,7 @@ It can be like: (length . (character1 character 2))."
 (defvar sniem-center-message "[z]Center, [t]op, [b]uttom:"
   "The message for `sniem-center'.")
 
-(defvar sniem-mark-message "[m]Normal mark, [p]Mark to last point, [l]ine, [w]ord, [s]ymbol, [SPC]Mark with space around:"
+(defvar sniem-mark-message "[m]Normal mark, [p]Mark to last point, [l]ine, [w]ord, [s]ymbol, [SPC]Mark with space around, [t]Trail hints:"
   "The message for `sniem-mark'.")
 
 (defvar sniem-delete-message "[d]Line, [p]Delete from last point, [D]Clear line contents:"

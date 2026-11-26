@@ -241,27 +241,44 @@ last-point semantics.
 
 When a menu that can use the last point is opened (`m`, `d`, `c`, `y`), the interactive
 form calls `sniem--read-menu-action`. That helper keeps a small state plist (window,
-span overlay, trail overlays, and the visible-number alist) and reads menu keys through
-`sniem--menu-key`. `sniem--menu-preview-refresh` creates or updates the span overlay and
-rebuilds the trail hints; `sniem--menu-preview-cleanup` removes everything in an
-`unwind-protect`. The span face is `sniem-span-preview-face`.
+show-trail flag, span overlay, trail overlays, and the visible-number alist) and reads
+menu keys through `sniem--menu-key`. `sniem--menu-preview-refresh` creates or updates the
+span overlay and rebuilds the trail hints; `sniem--menu-preview-cleanup` removes
+everything in an `unwind-protect`. The span face is `sniem-span-preview-face`.
 
-When `sniem-last-point-trail-hint` is non-nil, `sniem--last-point-trail-hints` reuses
-`sniem--last-point-trail-markers`, skips the current last point and point, and keeps only
-positions visible in the selected window. It returns `(OVERLAYS . POSITIONS)`, where
-`POSITIONS` is an alist of visible number to marker position. Each remaining position
-gets a numbered badge in visible order. The badge is a `before-string` on an overlay
-restricted to the selected window, with `sniem-motion-hint-face` and a higher priority
-than the span. At `point-max` the badge uses `after-string` because there is no following
-character to attach to.
+Trail hints are created only when `sniem-last-point-trail-hint` is non-nil and the menu
+is in `sniem-last-point-trail-hint-menus`. The default list is `(sniem-delete
+sniem-change sniem-yank)`. `sniem-mark` is deliberately excluded because its hint badges
+are inserted before the word or symbol being marked and therefore shift the current line;
+mark is used mostly for word, symbol, and line selection. When hints are enabled,
+`sniem--last-point-trail-hints` reuses `sniem--last-point-trail-markers`, skips the
+current last point and point, and keeps only positions visible in the selected window. It
+returns `(OVERLAYS . POSITIONS)`, where `POSITIONS` is an alist of visible number to
+marker position. Each remaining position gets a numbered badge in visible order. The
+badge is a `before-string` on an overlay restricted to the selected window, with
+`sniem-motion-hint-face` and a higher priority than the span. At `point-max` the badge
+uses `after-string` because there is no following character to attach to.
+
+#### Mark trail-hint toggle
+
+`sniem-mark` reads its action through `sniem--read-mark-menu-action`. That wrapper calls
+`sniem--read-menu-action` with the `sniem-mark` menu symbol, and loops when the returned
+action is `?t`. The helper `sniem--toggle-mark-trail-hint` adds or removes `sniem-mark`
+from `sniem-last-point-trail-hint-menus` with `setq`/`delq`, then the wrapper reads the
+menu again. The menu stays open and the next read immediately shows or hides the hints.
+The toggle changes the runtime value only; it does not persist a customized value. If the
+master switch `sniem-last-point-trail-hint` is nil, the list still changes but no hints are
+shown, and the toggle reports that global hints are off. `t` is not otherwise a mark
+action, so this does not shadow an existing one.
 
 #### Trail selection in menus
 
-Typing a digit while a menu is open enters `sniem--read-trail-number` when the visible
-number alist is non-empty. The reader accepts multiple digits. `RET` applies the number
-and returns to the menu; another key applies the number and is returned as the menu
-action, so `12 p` selects trail #12 and then runs `p`. `DEL`/`C-h` removes the last digit.
-`sniem--select-trail-position` sets the last point and refreshes a locked overlay.
+Typing a digit while a hint-enabled menu is open enters `sniem--read-trail-number` when
+the visible number alist is non-empty. The reader accepts multiple digits. `RET` applies
+the number and returns to the menu; another key applies the number and is returned as the
+menu action, so `12 p` selects trail #12 and then runs `p`. `DEL`/`C-h` removes the last
+digit. `sniem--select-trail-position` sets the last point and refreshes a locked overlay.
+Menus without hints have no number alist, so their digits remain ordinary menu keys.
 
 There are no reserved digit keys in the current menus. Be careful with
 `sniem-delete`'s line action: its `9` in the `pcase` is character code 9, which is
@@ -277,15 +294,17 @@ are cleaned up.
 The previews are intentionally transient: they exist only while the menu key is being
 read, so `C-g` and non-`p` choices leave no overlay behind. All overlays are removed in
 the same `unwind-protect`. They are suppressed while a keyboard macro is executing, to
-avoid creating overlays for every replayed command. `sniem-span-preview` and
-`sniem-last-point-trail-hint` are independent switches.
+avoid creating overlays for every replayed command. `sniem-span-preview`,
+`sniem-last-point-trail-hint`, and `sniem-last-point-trail-hint-menus` are independent
+controls.
 
 ## Editing operations
 
 Menu-based commands read a menu character; a visible trail number may be entered first:
 
 - `sniem-mark`: line, from last point, plain mark, defun, whole buffer, word, symbol, or
-  surrounding-space variants.
+  surrounding-space variants. `t` toggles this menu in
+  `sniem-last-point-trail-hint-menus` and re-reads the menu.
 - `sniem-delete`: line, from last point, or to end of line.
 - `sniem-change`: line, from last point, or to end of line.
 - `sniem-yank`: line or from last point.
@@ -443,6 +462,8 @@ currently bound to those keys. It requires `sniem-keyboard-layout` to be set.
 - The menu span preview and trail hints must be removed with `unwind-protect`;
   `read-char` can be aborted with `C-g`.
 - Menu trail numbers come from the visible-number alist, not from trail order.
+- `sniem-mark` is excluded from trail hints by default; its `t` toggle only changes
+  `sniem-last-point-trail-hint-menus` at runtime, and must not silently persist it.
 - `sniem-delete`'s line action is character 9 (`TAB`), not the printable digit 9;
   digit 9 must remain an ordinary trail number.
 - `sniem-show-last-point` must tolerate a position at `point-max`.
@@ -453,7 +474,7 @@ currently bound to those keys. It requires `sniem-keyboard-layout` to be set.
   `sniem-set-leader-key`.
 - Last-point behavior: `sniem-last-point-small-motions`,
   `sniem-last-point-trail-size`, `sniem-span-preview`,
-  `sniem-last-point-trail-hint`.
+  `sniem-last-point-trail-hint`, `sniem-last-point-trail-hint-menus`.
 - Layouts: `sniem-set-keyboard-layout`, `sniem-keyboard-layout`.
 - Pairs: `sniem-object-catch-global-symbol-alist`,
   `sniem-object-catch-mode-defalist`.

@@ -38,12 +38,17 @@
 (declare-function sniem-show-last-point "sniem")
 (declare-function sniem-shift--not-alpha-p "sniem")
 
-(defun sniem--read-menu-action (prompt)
-  "Read a menu action with PROMPT.
-The last-point span and visible trail positions are previewed.  A
-number selects a visible trail position and keeps the menu open; RET
-confirms it, while a non-digit key confirms it and acts."
+(defun sniem--read-menu-action (prompt &optional menu)
+  "Read a menu action with PROMPT, previewing the last-point span.
+Trail hints are shown when MENU is nil or is listed in
+`sniem-last-point-trail-hint-menus'.  A number selects a visible
+trail position and keeps the menu open; RET confirms it, while a
+non-digit key confirms it and acts."
   (let ((state (list :window (selected-window)
+                     :show-trail
+                     (and sniem-last-point-trail-hint
+                          (or (null menu)
+                              (memq menu sniem-last-point-trail-hint-menus)))
                      :preview nil
                      :hints nil
                      :positions nil)))
@@ -133,9 +138,33 @@ confirms it, while a non-digit key confirms it and acts."
     (?t (recenter-top-bottom 0))
     (?b (recenter-top-bottom -1))))
 
+(defun sniem--toggle-mark-trail-hint ()
+  "Toggle `sniem-mark' in `sniem-last-point-trail-hint-menus'."
+  (if (memq 'sniem-mark sniem-last-point-trail-hint-menus)
+      (progn
+        (setq sniem-last-point-trail-hint-menus
+              (delq 'sniem-mark sniem-last-point-trail-hint-menus))
+        (message "[Sniem]: Mark trail hints disabled."))
+    (setq sniem-last-point-trail-hint-menus
+          (cons 'sniem-mark sniem-last-point-trail-hint-menus))
+    (if sniem-last-point-trail-hint
+        (message "[Sniem]: Mark trail hints enabled.")
+      (message "[Sniem]: Mark trail hints enabled in the menu list; global trail hints are off."))))
+
+(defun sniem--read-mark-menu-action ()
+  "Read a mark menu action, toggling trail hints on `t'."
+  (let (action)
+    (while (not action)
+      (setq action
+            (sniem--read-menu-action sniem-mark-message 'sniem-mark))
+      (when (eq action ?t)
+        (sniem--toggle-mark-trail-hint)
+        (setq action nil)))
+    action))
+
 (defun sniem-mark (type)
   "Mark the object with action TYPE."
-  (interactive (list (sniem--read-menu-action sniem-mark-message)))
+  (interactive (list (sniem--read-mark-menu-action)))
   (pcase type
     (?l
      (beginning-of-line)
@@ -434,7 +463,8 @@ When Optional REPLACE-WORD is non-nil, replace original one with it."
   "Delete ACTION."
   (interactive (list (if (region-active-p)
                          t
-                       (sniem--read-menu-action sniem-delete-message))))
+                       (sniem--read-menu-action
+                        sniem-delete-message 'sniem-delete))))
   (sniem-search--modify-cancel-selection t)
   (pcase action
     ((pred symbolp)
@@ -495,7 +525,8 @@ The bounds are ordered here because `last-point' can be after point."
 Argument ACTION is the action of change."
   (interactive (list (if (region-active-p)
                          t
-                       (sniem--read-menu-action sniem-change-message))))
+                       (sniem--read-menu-action
+                        sniem-change-message 'sniem-change))))
   (pcase action
     ((pred symbolp) (sniem-delete t) (sniem-insert))
     (?c (sniem-delete 9) (indent-according-to-mode) (sniem-insert))
@@ -517,7 +548,8 @@ Argument ACTION is the action of change."
 If SPECIAL is non-nil, yank it to the special clipboard."
   (interactive (list (if (region-active-p)
                          t
-                       (sniem--read-menu-action sniem-yank-message))))
+                       (sniem--read-menu-action
+                        sniem-yank-message 'sniem-yank))))
   (let ((yank-function (if special
                            #'sniem-yank--special
                          #'kill-ring-save)))
@@ -1545,7 +1577,7 @@ not duplicated."
         (delete-overlay preview))
       (setf (plist-get state :preview) nil))
     (mapc #'delete-overlay (plist-get state :hints))
-    (if (and sniem-last-point-trail-hint
+    (if (and (plist-get state :show-trail)
              (not executing-kbd-macro))
         (let ((hints (sniem--last-point-trail-hints window)))
           (setf (plist-get state :hints) (car hints)

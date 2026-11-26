@@ -221,7 +221,7 @@ Selection and structure:
 
 | Key | Command | Description |
 | --- | --- | --- |
-| `m` | `sniem-mark` | Mark line, word, symbol, defun, buffer, from `last-point`, or with surrounding spaces. |
+| `m` | `sniem-mark` | Mark line, word, symbol, defun, buffer, from `last-point`, or with surrounding spaces. In the menu, `t` toggles trail hints. |
 | `M` | `sniem-expand-enter-or-quit` | Toggle `EXPAND` state. |
 | `'` | `sniem-mark-motion` | Adjust the active region: a following `'` swaps the edge, `q` shrinks, `;` grows. |
 | `RET` | `sniem-expand-with-catch` | Catch the nearest pair and enter `EXPAND`. |
@@ -580,11 +580,17 @@ added in one call.
 - `sniem-last-point-trail-hint` — whether visible trail positions are marked with
   numbered badges while a menu is waiting for a key (on by default). It is independent
   of `sniem-span-preview`.
-- While a menu is open, typing a visible trail number makes that position the current
-  `last-point` and keeps the menu open. `RET` confirms the number; another menu key
-  confirms it and acts immediately. Numbers may be multiple digits, and there is no
-  conflict with the `TAB` line action in `sniem-delete`: its `9` in the code is ASCII 9
-  (`TAB`), so the digit `9` still selects trail #9 normally.
+- `sniem-last-point-trail-hint-menus` — menus that show those badges. It defaults to
+  `sniem-delete`, `sniem-change`, and `sniem-yank`; `sniem-mark` is excluded because the
+  badges sit before the word/symbol being marked and shift the current line. In the
+  mark menu, `t` adds or removes `sniem-mark` at runtime and immediately shows or hides
+  the hints for the next read. The toggle is not persisted; customize the option to
+  make it permanent.
+- In a menu that shows trail hints, typing a visible trail number makes that position
+  the current `last-point` and keeps the menu open. `RET` confirms the number; another
+  menu key confirms it and acts immediately. Numbers may be multiple digits, and there
+  is no conflict with the `TAB` line action in `sniem-delete`: its `9` in the code is
+  ASCII 9 (`TAB`), so the digit `9` still selects trail #9 normally.
 - `sniem-last-point-trail` is the buffer-local list of trail markers. Treat it as state,
   not configuration.
 

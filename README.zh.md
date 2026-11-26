@@ -212,7 +212,7 @@ Sniem 内置对四种布局的支持：`qwerty`、`colemak`、`dvorak` 和 `dvp`
 
 | 按键 | 命令 | 说明 |
 | --- | --- | --- |
-| `m` | `sniem-mark` | 标记行、单词、符号、函数定义、整个缓冲区，或从 `last-point` 起，或连同两侧空格一起标记。 |
+| `m` | `sniem-mark` | 标记行、单词、符号、函数定义、整个缓冲区，或从 `last-point` 起，或连同两侧空格一起标记。菜单中按 `t` 切换 trail 提示。 |
 | `M` | `sniem-expand-enter-or-quit` | 切换 `EXPAND` 状态。 |
 | `'` | `sniem-mark-motion` | 调整活动区域：随后按 `'` 交换端点，`q` 收缩，`;` 扩展。 |
 | `RET` | `sniem-expand-with-catch` | 抓取最近的配对并进入 `EXPAND`。 |
@@ -552,10 +552,15 @@ mode line 时，可以手动添加：
 - `sniem-span-preview`：是否显示菜单范围预览。
 - `sniem-last-point-trail-hint`：读取菜单按键时，是否给当前窗口内可见的回溯位置
   显示编号徽标（默认开启）。它独立于 `sniem-span-preview`。
-- 菜单打开时输入一个可见的回溯编号，会把该位置设为当前 `last-point` 并让菜单继续
-  等待。`RET` 确认编号；按其它菜单键则确认编号并立即执行。编号可以是多位数。
-  `sniem-delete` 中的 `9` 是 ASCII 9，也就是 `TAB`，不是数字 `9`；因此数字 `9`
-  仍然可以直接选择 trail #9，不需要加前缀。
+- `sniem-last-point-trail-hint-menus`：显示这些徽标的菜单列表。默认只有
+  `sniem-delete`、`sniem-change`、`sniem-yank`；`sniem-mark` 默认不在其中，因为
+  徽标会插在待标记的 word/symbol 前面并撑开当前行。在 mark 菜单中按 `t` 可以在运行时
+  把 `sniem-mark` 加入/移出该列表，并立即显示或隐藏下一次读取菜单时的提示。
+  这个切换不会写入配置；要永久生效请自定义该列表。
+- 在显示 trail 提示的菜单中，输入一个可见的回溯编号，会把该位置设为当前
+  `last-point` 并让菜单继续等待。`RET` 确认编号；按其它菜单键则确认编号并立即执行。
+  编号可以是多位数。`sniem-delete` 中的 `9` 是 ASCII 9，也就是 `TAB`，不是数字
+  `9`；因此数字 `9` 仍然可以直接选择 trail #9，不需要加前缀。
 - `sniem-last-point-trail` 是缓冲区局部的回溯 marker 列表，应视为状态而非配置。
 
 ### 标记、配对与连接符
